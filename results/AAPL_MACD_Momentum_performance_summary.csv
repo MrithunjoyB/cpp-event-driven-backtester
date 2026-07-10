@@ -1,0 +1,2 @@
+ticker,strategy,total_return,annualized_return,volatility,sharpe,max_drawdown,win_rate,profit_factor,num_trades,average_trade_return,transaction_cost_adjusted_return
+AAPL,MACD_Momentum,0.977425,0.120763,0.183094,0.714737,-0.214663,0.454545,1.681096,110,0.016715,0.680047

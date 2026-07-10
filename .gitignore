@@ -1,0 +1,10 @@
+build/
+build_backtester
+backtester_tests
+*.o
+*.out
+*.dSYM/
+__pycache__/
+.DS_Store
+.venv/
+venv/

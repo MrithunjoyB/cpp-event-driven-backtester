@@ -1,0 +1,2 @@
+ticker,strategy,total_return,annualized_return,volatility,sharpe,max_drawdown,win_rate,profit_factor,num_trades,average_trade_return,transaction_cost_adjusted_return
+MSFT,RSI_Mean_Reversion,0.827357,0.106068,0.212815,0.580232,-0.206509,0.833333,5.507288,37,0.040900,0.747724

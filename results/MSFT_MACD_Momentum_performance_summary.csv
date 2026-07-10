@@ -1,0 +1,2 @@
+ticker,strategy,total_return,annualized_return,volatility,sharpe,max_drawdown,win_rate,profit_factor,num_trades,average_trade_return,transaction_cost_adjusted_return
+MSFT,MACD_Momentum,-0.123127,-0.021732,0.177452,-0.035105,-0.398443,0.350000,0.966344,121,0.000534,-0.297496
