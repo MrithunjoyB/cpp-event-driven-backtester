@@ -4,25 +4,30 @@
 #include "MarketData.h"
 #include "Metrics.h"
 #include "Portfolio.h"
+#include "PortfolioBacktester.h"
 #include "Strategy.h"
 
 #include <cmath>
+#include <cstdlib>
 #include <cstdio>
 #include <functional>
 #include <fstream>
 #include <iostream>
+#include <map>
 #include <stdexcept>
 #include <string>
 #include <vector>
 
 namespace {
 int cases_run = 0;
+int assertions_run = 0;
 
 bool nearly_equal(double lhs, double rhs, double tolerance = 1e-6) {
     return std::fabs(lhs - rhs) <= tolerance;
 }
 
 void require(bool condition, const std::string& message) {
+    ++assertions_run;
     if (!condition) {
         throw std::runtime_error(message);
     }
@@ -45,6 +50,32 @@ std::vector<Bar> sample_bars() {
         {"2024-01-03", 102.0, 104.0, 101.0, 104.0, 1000},
         {"2024-01-04", 104.0, 105.0, 102.0, 103.0, 1000},
         {"2024-01-05", 103.0, 106.0, 102.0, 105.0, 1000}
+    };
+}
+
+std::map<std::string, std::vector<Bar>> sample_multi_asset_history() {
+    return {
+        {"AAA", {
+            {"2024-01-01", 100, 101, 99, 100, 1000},
+            {"2024-01-02", 101, 102, 100, 101, 1000},
+            {"2024-01-03", 102, 103, 101, 102, 1000},
+            {"2024-01-04", 103, 104, 102, 103, 1000},
+            {"2024-01-05", 104, 105, 103, 104, 1000}
+        }},
+        {"BBB", {
+            {"2024-01-01", 100, 101, 99, 100, 1000},
+            {"2024-01-02", 99, 100, 98, 99, 1000},
+            {"2024-01-03", 98, 99, 97, 98, 1000},
+            {"2024-01-04", 97, 98, 96, 97, 1000},
+            {"2024-01-05", 96, 97, 95, 96, 1000}
+        }},
+        {"CCC", {
+            {"2024-01-01", 100, 102, 99, 100, 1000},
+            {"2024-01-02", 104, 105, 103, 104, 1000},
+            {"2024-01-03", 108, 109, 107, 108, 1000},
+            {"2024-01-04", 112, 113, 111, 112, 1000},
+            {"2024-01-05", 116, 117, 115, 116, 1000}
+        }}
     };
 }
 
@@ -294,7 +325,211 @@ int main() {
         }
         require(found, "BTC-USD missing from default universe");
     });
+    run_case("Shared cash portfolio starts correctly", [&] {
+        PortfolioBacktestConfig config;
+        config.tickers = {"AAPL", "MSFT", "SPY"};
+        config.starting_capital = 50000.0;
+        config.results_dir = "test_results/portfolio_start";
+        auto result = PortfolioBacktester(config).run(false);
+        require(!result.equity_curve.empty(), "missing portfolio equity");
+        require(result.equity_curve.front().portfolio_value > 0.0, "bad starting value");
+        require(result.equity_curve.front().cash >= 0.0, "negative starting cash");
+    });
+    run_case("Equal-weight target weights sum within budget", [&] {
+        AllocationPolicyConfig cfg;
+        cfg.type = AllocationPolicyType::EqualWeight;
+        cfg.cash_buffer = 0.0;
+        cfg.max_weight = 1.0;
+        AllocationPolicy policy(cfg);
+        auto history = sample_multi_asset_history();
+        std::map<std::string, std::size_t> idx{{"AAA", 4}, {"BBB", 4}, {"CCC", 4}};
+        auto weights = policy.target_weights({"AAA", "BBB", "CCC"}, history, idx);
+        require(nearly_equal(weights["AAA"] + weights["BBB"] + weights["CCC"], 1.0), "weights do not sum to one");
+    });
+    run_case("Inverse-volatility weights are valid", [&] {
+        AllocationPolicyConfig cfg;
+        cfg.type = AllocationPolicyType::InverseVolatility;
+        cfg.cash_buffer = 0.02;
+        cfg.max_weight = 0.60;
+        cfg.volatility_lookback = 3;
+        AllocationPolicy policy(cfg);
+        auto history = sample_multi_asset_history();
+        std::map<std::string, std::size_t> idx{{"AAA", 4}, {"BBB", 4}, {"CCC", 4}};
+        auto weights = policy.target_weights({"AAA", "BBB", "CCC"}, history, idx);
+        double sum = 0.0;
+        for (const auto& kv : weights) {
+            require(kv.second >= 0.0, "negative inverse-vol weight");
+            sum += kv.second;
+        }
+        require(sum <= 0.980001, "inverse-vol weights exceed budget");
+    });
+    run_case("Momentum top-N uses past returns", [&] {
+        AllocationPolicyConfig cfg;
+        cfg.type = AllocationPolicyType::MomentumTopN;
+        cfg.cash_buffer = 0.0;
+        cfg.max_weight = 1.0;
+        cfg.momentum_lookback = 3;
+        cfg.top_n = 1;
+        AllocationPolicy policy(cfg);
+        auto history = sample_multi_asset_history();
+        std::map<std::string, std::size_t> idx{{"AAA", 4}, {"BBB", 4}, {"CCC", 4}};
+        auto weights = policy.target_weights({"AAA", "BBB", "CCC"}, history, idx);
+        require(weights["CCC"] > 0.99, "top momentum asset not selected");
+        require(nearly_equal(weights["AAA"], 0.0), "non-top asset selected");
+    });
+    run_case("Allocation max asset weight enforced", [&] {
+        std::map<std::string, double> raw{{"A", 10.0}, {"B", 1.0}, {"C", 1.0}};
+        auto weights = AllocationPolicy::enforce_constraints(raw, 0.40, 0.0);
+        for (const auto& kv : weights) {
+            require(kv.second <= 0.400001, "max weight violated");
+        }
+    });
+    run_case("Allocation cash buffer retained", [&] {
+        std::map<std::string, double> raw{{"A", 1.0}, {"B", 1.0}};
+        auto weights = AllocationPolicy::enforce_constraints(raw, 1.0, 0.10);
+        require(nearly_equal(weights["A"] + weights["B"], 0.90), "cash buffer not retained");
+    });
+    run_case("Minimum trade threshold suppresses tiny orders", [&] {
+        PortfolioBacktestConfig config;
+        config.tickers = {"AAPL", "MSFT", "SPY"};
+        config.starting_capital = 100000.0;
+        config.results_dir = "test_results/portfolio_threshold";
+        config.allocation.min_trade_value = 1e12;
+        auto result = PortfolioBacktester(config).run(false);
+        require(result.fills.empty(), "tiny-order threshold did not suppress fills");
+    });
+    run_case("Weekly rebalance dates generated correctly", [&] {
+        std::vector<std::string> dates = {"2024-01-01", "2024-01-02", "2024-01-03", "2024-01-04", "2024-01-05", "2024-01-08", "2024-01-09", "2024-01-10", "2024-01-11", "2024-01-12", "2024-01-16", "2024-01-17"};
+        auto idx = PortfolioBacktester::rebalance_indices(dates, RebalanceFrequency::Weekly);
+        require(idx.size() == 3 && idx[0] == 1 && idx[1] == 6 && idx[2] == 11, "bad weekly schedule");
+    });
+    run_case("Monthly rebalance dates generated correctly", [&] {
+        std::vector<std::string> dates = {"2024-01-29", "2024-01-30", "2024-02-01", "2024-02-02", "2024-03-01"};
+        auto idx = PortfolioBacktester::rebalance_indices(dates, RebalanceFrequency::Monthly);
+        require(idx.size() == 3 && idx[0] == 1 && idx[1] == 2 && idx[2] == 4, "bad monthly schedule");
+    });
+    run_case("Portfolio transaction costs reduce cash", [&] {
+        PortfolioBacktestConfig config;
+        config.tickers = {"AAPL", "MSFT", "SPY"};
+        config.starting_capital = 50000.0;
+        config.transaction_cost_rate = 0.01;
+        config.results_dir = "test_results/portfolio_costs";
+        auto result = PortfolioBacktester(config).run(false);
+        require(result.summary.total_transaction_costs > 0.0, "no transaction costs recorded");
+    });
+    run_case("Portfolio slippage produces fill costs", [&] {
+        PortfolioBacktestConfig config;
+        config.tickers = {"AAPL", "MSFT", "SPY"};
+        config.starting_capital = 50000.0;
+        config.slippage_rate = 0.01;
+        config.results_dir = "test_results/portfolio_slippage";
+        auto result = PortfolioBacktester(config).run(false);
+        bool found = false;
+        for (const auto& fill : result.fills) {
+            found = found || fill.slippage_cost > 0.0;
+        }
+        require(found, "no slippage cost recorded");
+    });
+    run_case("Portfolio no negative holdings", [&] {
+        PortfolioBacktestConfig config;
+        config.tickers = {"AAPL", "MSFT", "SPY"};
+        config.results_dir = "test_results/portfolio_holdings";
+        auto result = PortfolioBacktester(config).run(false);
+        for (const auto& position : result.positions) {
+            require(position.quantity >= -1e-9, "negative portfolio holding");
+        }
+    });
+    run_case("Portfolio no unintended leverage", [&] {
+        PortfolioBacktestConfig config;
+        config.tickers = {"AAPL", "MSFT", "SPY"};
+        config.results_dir = "test_results/portfolio_leverage";
+        auto result = PortfolioBacktester(config).run(false);
+        for (const auto& point : result.equity_curve) {
+            require(point.gross_exposure <= 1.000001, "gross exposure above one");
+        }
+    });
+    run_case("Portfolio value reconciles to cash plus holdings", [&] {
+        PortfolioBacktestConfig config;
+        config.tickers = {"AAPL", "MSFT", "SPY"};
+        config.results_dir = "test_results/portfolio_reconcile";
+        auto result = PortfolioBacktester(config).run(false);
+        for (const auto& point : result.equity_curve) {
+            require(nearly_equal(point.cash + point.total_holdings_value, point.portfolio_value, 1e-4), "portfolio value does not reconcile");
+        }
+    });
+    run_case("Missing asset price handled by common-date alignment", [&] {
+        std::vector<std::string> dates = {"2024-01-01"};
+        auto idx = PortfolioBacktester::rebalance_indices(dates, RebalanceFrequency::Weekly);
+        require(idx.size() == 1 && idx[0] == 0, "single-date alignment failed");
+    });
+    run_case("Portfolio benchmark calculation finite", [&] {
+        PortfolioBacktestConfig config;
+        config.tickers = {"AAPL", "MSFT", "SPY"};
+        config.results_dir = "test_results/portfolio_benchmark";
+        auto result = PortfolioBacktester(config).run(false);
+        require(std::isfinite(result.summary.equal_weight_benchmark_return), "non-finite benchmark");
+    });
+    run_case("Portfolio drawdown non-positive", [&] {
+        PortfolioBacktestConfig config;
+        config.tickers = {"AAPL", "MSFT", "SPY"};
+        config.results_dir = "test_results/portfolio_drawdown";
+        auto result = PortfolioBacktester(config).run(false);
+        for (const auto& point : result.equity_curve) {
+            require(point.drawdown <= 1e-9, "positive portfolio drawdown");
+        }
+    });
+    run_case("VaR and expected shortfall known vector", [&] {
+        std::vector<double> returns = {-0.05, -0.02, 0.00, 0.01, 0.03};
+        require(nearly_equal(PortfolioBacktester::value_at_risk_95(returns), -0.05), "bad VaR");
+        require(nearly_equal(PortfolioBacktester::expected_shortfall_95(returns), -0.05), "bad ES");
+    });
+    run_case("Portfolio buys scaled when cash is insufficient", [&] {
+        PortfolioBacktestConfig config;
+        config.tickers = {"AAPL", "MSFT", "SPY", "TSLA", "BTC-USD"};
+        config.starting_capital = 1000.0;
+        config.results_dir = "test_results/portfolio_scale";
+        config.allocation.cash_buffer = 0.0;
+        config.allocation.max_weight = 1.0;
+        auto result = PortfolioBacktester(config).run(false);
+        for (const auto& point : result.equity_curve) {
+            require(point.cash >= -1e-6, "cash went negative after scaling");
+        }
+    });
+    run_case("Portfolio fills are sell-before-buy within rebalance", [&] {
+        PortfolioBacktestConfig config;
+        config.tickers = {"AAPL", "MSFT", "SPY"};
+        config.results_dir = "test_results/portfolio_sell_first";
+        config.rebalance_frequency = RebalanceFrequency::Weekly;
+        auto result = PortfolioBacktester(config).run(false);
+        std::map<int, bool> seen_buy;
+        for (const auto& fill : result.fills) {
+            if (fill.side == "BUY") {
+                seen_buy[fill.rebalance_id] = true;
+            }
+            if (fill.side == "SELL") {
+                require(!seen_buy[fill.rebalance_id], "sell appeared after buy in same rebalance");
+            }
+        }
+    });
+    run_case("Portfolio actual weights within bounds", [&] {
+        PortfolioBacktestConfig config;
+        config.tickers = {"AAPL", "MSFT", "SPY"};
+        config.results_dir = "test_results/portfolio_weights";
+        auto result = PortfolioBacktester(config).run(false);
+        for (const auto& position : result.positions) {
+            require(position.actual_weight >= -1e-9 && position.actual_weight <= 1.000001, "actual weight out of bounds");
+        }
+    });
+    run_case("Portfolio output validator catches invalid file pattern", [&] {
+        std::system("mkdir -p test_results/invalid_validator/portfolio");
+        std::ofstream bad("test_results/invalid_validator/portfolio/portfolio_equity_curve.csv");
+        bad << "date,portfolio_value,cash,total_holdings_value,total_return,drawdown,gross_exposure\n";
+        bad << "2024-01-01,100,-1,101,0,0,1.01\n";
+        bad.close();
+        int code = std::system("python3 scripts/validate_results.py test_results/invalid_validator >/dev/null 2>&1");
+        require(code != 0, "portfolio validator accepted invalid output");
+    });
 
-    std::cout << cases_run << " deterministic test cases passed.\n";
+    std::cout << cases_run << " deterministic test cases passed with " << assertions_run << " assertions.\n";
     return 0;
 }

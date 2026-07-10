@@ -11,6 +11,8 @@ add_executable(backtester
     src/MarketData.cpp
     src/Strategy.cpp
     src/Portfolio.cpp
+    src/AllocationPolicy.cpp
+    src/PortfolioBacktester.cpp
     src/ExecutionHandler.cpp
     src/Backtester.cpp
     src/Analysis.cpp
@@ -25,6 +27,8 @@ if(BUILD_TESTING)
         src/MarketData.cpp
         src/Strategy.cpp
         src/Portfolio.cpp
+        src/AllocationPolicy.cpp
+        src/PortfolioBacktester.cpp
         src/ExecutionHandler.cpp
         src/Backtester.cpp
         src/Analysis.cpp

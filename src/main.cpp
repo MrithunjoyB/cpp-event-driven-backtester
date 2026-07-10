@@ -1,5 +1,6 @@
 #include "Analysis.h"
 #include "Backtester.h"
+#include "PortfolioBacktester.h"
 #include "Strategy.h"
 
 #include <iomanip>
@@ -136,10 +137,30 @@ int main(int argc, char** argv) {
 
         if (!config_path.empty()) {
             ExperimentConfig experiment = Analysis::load_experiment_config(config_path);
-            Analysis::run_research_experiment(experiment);
-            Analysis::run_portfolio_research(experiment, experiment.experiment_name.find("inverse") != std::string::npos ? "inverse_volatility" : "equal_weight");
-            Analysis::run_bootstrap_research(experiment);
-            std::cout << "Research experiment written to " << experiment.output_dir << "\n";
+            if (!experiment.allocation_policy.empty()) {
+                PortfolioBacktestConfig portfolio_config;
+                portfolio_config.tickers = experiment.tickers;
+                portfolio_config.starting_capital = experiment.starting_capital;
+                portfolio_config.transaction_cost_rate = experiment.commission_bps / 10000.0;
+                portfolio_config.slippage_rate = experiment.slippage_bps / 10000.0;
+                portfolio_config.results_dir = experiment.portfolio_output_dir;
+                portfolio_config.benchmark_ticker = experiment.benchmark;
+                portfolio_config.rebalance_frequency = PortfolioBacktester::parse_frequency(experiment.rebalance_frequency);
+                portfolio_config.allocation.type = AllocationPolicy::parse_type(experiment.allocation_policy);
+                portfolio_config.allocation.max_weight = experiment.max_weight;
+                portfolio_config.allocation.cash_buffer = experiment.cash_buffer;
+                portfolio_config.allocation.min_trade_value = experiment.min_trade_value;
+                portfolio_config.allocation.volatility_lookback = experiment.volatility_lookback;
+                portfolio_config.allocation.momentum_lookback = experiment.momentum_lookback;
+                portfolio_config.allocation.top_n = experiment.top_n;
+                PortfolioBacktestResult result = PortfolioBacktester(portfolio_config).run(true);
+                std::cout << "Shared-cash portfolio experiment written to " << portfolio_config.results_dir
+                          << " with return " << result.summary.total_return << "\n";
+            } else {
+                Analysis::run_research_experiment(experiment);
+                Analysis::run_bootstrap_research(experiment);
+                std::cout << "Research experiment written to " << experiment.output_dir << "\n";
+            }
         } else if (mode == "single" || (!ticker.empty() && !strategy_name.empty())) {
             BacktestConfig config = base_config;
             config.ticker = ticker.empty() ? "AAPL" : ticker;

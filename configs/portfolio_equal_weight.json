@@ -13,5 +13,14 @@
   "minimum_trade_requirement": 3,
   "regime_classification_method": "trend_200_sma_60_return_vol_20_expanding_median",
   "random_seed": 45,
-  "output_directory": "results/research/portfolio_equal_weight"
+  "allocation_policy": "equal_weight",
+  "rebalance_frequency": "monthly",
+  "max_weight": 0.40,
+  "cash_buffer": 0.02,
+  "min_trade_value": 25,
+  "volatility_lookback": 60,
+  "momentum_lookback": 126,
+  "top_n": 3,
+  "output_directory": "results/research/portfolio_equal_weight",
+  "portfolio_output_directory": "results/portfolio"
 }

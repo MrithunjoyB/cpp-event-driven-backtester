@@ -35,6 +35,15 @@ struct ExperimentConfig {
     std::string regime_method{"trend_200_sma_60_return_vol_20_expanding_median"};
     unsigned int random_seed{42};
     std::string output_dir{"results/research/default_research"};
+    std::string allocation_policy;
+    std::string rebalance_frequency{"monthly"};
+    double max_weight{0.40};
+    double cash_buffer{0.02};
+    double min_trade_value{25.0};
+    int volatility_lookback{60};
+    int momentum_lookback{126};
+    int top_n{3};
+    std::string portfolio_output_dir{"results/portfolio"};
 };
 
 class Analysis {

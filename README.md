@@ -25,7 +25,7 @@ This project was built as an honest, interview-ready quantitative development pr
 - Applies transaction costs and slippage on every fill.
 - Uses next-bar open execution: signals are generated from the current bar and filled on the next bar open.
 - Compares strategy returns against buy-and-hold benchmark returns for the same ticker and date range.
-- Supports JSON experiment configs, parameter grid search, walk-forward validation, cross-asset evaluation, transaction-cost sensitivity, regime evaluation, bootstrap uncertainty, simple portfolio allocation research, and runtime benchmarking.
+- Supports JSON experiment configs, parameter grid search, walk-forward validation, cross-asset evaluation, transaction-cost sensitivity, regime evaluation, bootstrap uncertainty, true shared-cash multi-asset portfolio backtesting, and runtime benchmarking.
 - Prevents buying beyond available cash and prevents long-only portfolios from selling more shares than held.
 - Exports trades, equity curves, performance summaries, and strategy comparison files.
 - Includes Python scripts for yFinance data download and Matplotlib visualization.
@@ -53,6 +53,8 @@ cpp-event-driven-backtester/
 │   ├── Event.h
 │   ├── Strategy.h
 │   ├── Portfolio.h
+│   ├── AllocationPolicy.h
+│   ├── PortfolioBacktester.h
 │   ├── ExecutionHandler.h
 │   ├── Backtester.h
 │   ├── Analysis.h
@@ -62,6 +64,8 @@ cpp-event-driven-backtester/
 │   ├── MarketData.cpp
 │   ├── Strategy.cpp
 │   ├── Portfolio.cpp
+│   ├── AllocationPolicy.cpp
+│   ├── PortfolioBacktester.cpp
 │   ├── ExecutionHandler.cpp
 │   ├── Backtester.cpp
 │   ├── Analysis.cpp
@@ -162,9 +166,10 @@ Run a reproducible configured research experiment:
 ./build/backtester --config configs/macd_walk_forward.json
 ./build/backtester --config configs/portfolio_equal_weight.json
 ./build/backtester --config configs/portfolio_inverse_volatility.json
+./build/backtester --config configs/portfolio_momentum_top_n.json
 ```
 
-Each config records the experiment name, ticker universe, strategy, parameter grid family, starting capital, commission/slippage basis points, walk-forward schedule, benchmark, objective, minimum trade requirement, regime method, random seed, and output directory. The resolved configuration is copied into the experiment output directory.
+Each config records the experiment name, ticker universe, strategy or allocation policy, starting capital, commission/slippage basis points, walk-forward or rebalance schedule, benchmark, objective, minimum trade requirement, regime method, random seed, and output directory. Portfolio configs write shared-cash portfolio outputs under `results/portfolio/`.
 
 ## Output Files
 
@@ -192,6 +197,16 @@ The engine writes:
 - `results/research/<experiment>/walk_forward/oos_equity_curve.csv`
 - `results/research/<experiment>/portfolio/portfolio_equity_curve.csv`
 - `results/research/<experiment>/bootstrap/bootstrap_summary.csv`
+- `results/portfolio/portfolio_equity_curve.csv`
+- `results/portfolio/portfolio_positions.csv`
+- `results/portfolio/portfolio_orders.csv`
+- `results/portfolio/portfolio_fills.csv`
+- `results/portfolio/portfolio_rebalances.csv`
+- `results/portfolio/portfolio_performance_summary.csv`
+- `results/portfolio/portfolio_allocation_weights.csv`
+- `results/portfolio/portfolio_costs.csv`
+- `results/portfolio/inverse_volatility/*.csv`
+- `results/portfolio/momentum_top_n/*.csv`
 - `results/report/research_report.md`
 - Per-run files such as `results/AAPL_MA_Cross_trades.csv`
 
@@ -213,6 +228,18 @@ Performance summary schema:
 ticker,strategy,parameter_set,total_return,benchmark_gross_return,benchmark_net_return,excess_return,annualized_return,volatility,sharpe,max_drawdown,win_rate,profit_factor,num_trades,turnover,total_transaction_costs,cost_drag,average_trade_return
 ```
 
+Portfolio equity schema:
+
+```csv
+date,portfolio_value,cash,total_holdings_value,total_return,drawdown,gross_exposure
+```
+
+Portfolio summary schema:
+
+```csv
+policy_name,total_return,equal_weight_benchmark_return,spy_benchmark_return,excess_return,annualized_return,volatility,sharpe,sortino,max_drawdown,calmar,var_95,expected_shortfall_95,beta,alpha,information_ratio,turnover,total_transaction_costs,number_of_rebalances,number_of_fills,average_cash_allocation,average_gross_exposure
+```
+
 ## Visualize Results
 
 ```bash
@@ -225,6 +252,16 @@ The script saves PNG plots under `results/plots/`:
 - Drawdown curve
 - Strategy comparison bars for return, Sharpe ratio, and max drawdown
 - Runtime benchmark timings
+
+For portfolio runs, the script also saves figures under `results/portfolio/figures/`:
+
+- Portfolio equity curve versus policy folder
+- Portfolio drawdown
+- Allocation weights over time
+- Turnover by rebalance
+- Transaction-cost contribution
+- Policy comparison chart
+- Portfolio risk summary table
 
 Generate the research report:
 
@@ -266,6 +303,30 @@ Open positions at the final bar remain open and are marked to market in the fina
 
 The project does not claim production-grade execution realism, high-frequency behavior, complete bias elimination, or order-book simulation.
 
+## Shared-Cash Portfolio Backtesting
+
+The portfolio engine in `PortfolioBacktester` is separate from the audited single-asset `Backtester`. It uses one starting capital value and one shared cash balance across the full ticker universe. It tracks simultaneous per-ticker positions, last marked prices, total holdings value, cash, portfolio value, transaction costs, slippage costs, allocation weights, fills, and rebalances.
+
+Portfolio rebalancing uses daily bars. Target weights are decided from information available before the rebalance execution date. Rebalance orders execute at that date's open with the same transaction-cost and slippage model used by the single-asset engine. The rebalance flow is:
+
+1. Mark the portfolio using available open prices.
+2. Compute target weights from the selected allocation policy.
+3. Generate sell orders first.
+4. Apply slippage-adjusted fill prices and commission.
+5. Update shared cash.
+6. Generate buy orders.
+7. Scale buys deterministically if available shared cash is insufficient.
+8. Reject orders that would create negative cash or long-only negative holdings.
+9. Mark end-of-day equity using closes.
+
+Supported allocation policies:
+
+- Equal weight: allocates equally across available assets.
+- Inverse volatility: allocates more weight to lower-volatility assets using a 60-trading-day historical volatility lookback by default.
+- Momentum top-N: ranks assets by trailing return using a 126-trading-day lookback by default and allocates equally to the top `N`.
+
+Every policy enforces non-negative weights, max weight per asset, optional cash buffer, and a minimum trade threshold. Weekly and monthly rebalance frequencies are supported. The benchmark fields compare the portfolio against equal-weight buy-and-hold for the same universe and SPY where SPY is part of the data universe.
+
 ## Data Validation Rules
 
 The CSV loader requires exactly:
@@ -282,7 +343,7 @@ SMA and rolling volatility return zero until enough observations are available. 
 
 ## Testing Methodology
 
-The CTest target contains deterministic unit-style checks using small fixed inputs and CSV fixtures under `tests/fixtures/`. It covers indicators, transaction cost and slippage, portfolio accounting, invalid orders, next-bar execution, benchmark windows, metric formulas, and data-quality rejection cases.
+The CTest target contains deterministic unit-style checks using small fixed inputs and CSV fixtures under `tests/fixtures/`. It covers indicators, transaction cost and slippage, single-asset portfolio accounting, invalid orders, next-bar execution, benchmark windows, metric formulas, data-quality rejection cases, shared-cash portfolio accounting, allocation constraints, weekly/monthly rebalance schedules, portfolio drawdown, VaR, Expected Shortfall, and portfolio integrity fixtures.
 
 Run:
 
@@ -293,7 +354,7 @@ ctest --test-dir build --output-on-failure
 python3 scripts/validate_results.py
 ```
 
-The result validator fails on NaN, infinity, missing required columns, negative holdings/cash, positive drawdown, invalid win rates, negative trade counts, duplicate equity dates, and basic equity reconciliation errors.
+The result validator fails on NaN, infinity, missing required columns, negative holdings/cash, positive drawdown, invalid win rates, negative trade counts, duplicate equity dates, basic equity reconciliation errors, invalid portfolio weights, no-leverage violations, negative transaction costs, missing fill prices, and inconsistent rebalance IDs.
 
 ## Reproducibility
 
@@ -330,10 +391,6 @@ Other implemented objectives include Calmar ratio, excess return, and a Sharpe o
 
 The selected parameters are frozen and then tested on the immediately following out-of-sample period. In-sample selection history and out-of-sample results are written separately. Config-driven experiments also write parameter history, out-of-sample trades, and summary consistency statistics.
 
-## Portfolio Research
-
-The configured portfolio outputs are a transparent research approximation built from audited single-asset legs. They export portfolio equity, positions, orders, fills, rebalances, and summary files. Current policies include equal weight and an inverse-volatility-labelled config path; both remain long-only, no-leverage, and use deterministic rebalancing records. This is intentionally documented as a simple allocation research layer, not a full institutional portfolio optimizer.
-
 ## Bootstrap Uncertainty
 
 Config-driven experiments generate IID bootstrap outputs with a fixed seed:
@@ -361,10 +418,10 @@ Runtime benchmarks are exported to `results/benchmark_timings.csv`. On the verif
 
 | Benchmark | Time |
 | --- | ---: |
-| Naive rolling SMA | 4.859166 ms |
-| Optimized rolling SMA | 0.747333 ms |
-| Single AAPL backtest | 19.181916 ms |
-| Full AAPL parameter sweep | 134.494958 ms |
+| Naive rolling SMA | 4.814334 ms |
+| Optimized rolling SMA | 0.743542 ms |
+| Single AAPL backtest | 19.308541 ms |
+| Full AAPL parameter sweep | 137.767167 ms |
 
 ## Example Strategy Comparison
 
@@ -389,9 +446,18 @@ The implementation is intentionally long-only. Signals become orders only when t
 ## Future Improvements
 
 - More realistic order book simulation.
-- Portfolio-level multi-asset backtesting.
+- Walk-forward optimization for allocation-policy parameters.
 - Options strategy backtesting.
 - Machine learning signal generation.
 - Live paper-trading integration.
 - Benchmark comparison against buy-and-hold.
 - More robust corporate-action handling.
+
+## Current Limitations
+
+- Uses daily OHLCV bars only.
+- Long-only by default.
+- No order book, intraday queue model, or partial fills.
+- No taxes, borrow costs, financing rates, or corporate-action adjustment beyond the downloaded price data.
+- Not a live trading system.
+- Intended for education, research, and interview discussion, not guaranteed profitability.

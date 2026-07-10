@@ -1,5 +1,5 @@
 {
-  "experiment_name": "portfolio_inverse_volatility",
+  "experiment_name": "portfolio_momentum_top_n",
   "ticker_universe": ["AAPL", "MSFT", "SPY", "TSLA", "BTC-USD"],
   "strategy": "MA_Cross",
   "starting_capital": 100000,
@@ -12,8 +12,8 @@
   "parameter_selection_objective": "sharpe_min_trades",
   "minimum_trade_requirement": 3,
   "regime_classification_method": "trend_200_sma_60_return_vol_20_expanding_median",
-  "random_seed": 46,
-  "allocation_policy": "inverse_volatility",
+  "random_seed": 47,
+  "allocation_policy": "momentum_top_n",
   "rebalance_frequency": "monthly",
   "max_weight": 0.40,
   "cash_buffer": 0.02,
@@ -21,6 +21,6 @@
   "volatility_lookback": 60,
   "momentum_lookback": 126,
   "top_n": 3,
-  "output_directory": "results/research/portfolio_inverse_volatility",
-  "portfolio_output_directory": "results/portfolio/inverse_volatility"
+  "output_directory": "results/research/portfolio_momentum_top_n",
+  "portfolio_output_directory": "results/portfolio/momentum_top_n"
 }

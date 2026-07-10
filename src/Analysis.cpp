@@ -662,6 +662,15 @@ ExperimentConfig Analysis::load_experiment_config(const std::string& filepath) {
     config.regime_method = json_string(text, "regime_classification_method", config.regime_method);
     config.random_seed = static_cast<unsigned int>(json_number(text, "random_seed", config.random_seed));
     config.output_dir = json_string(text, "output_directory", "results/research/" + config.experiment_name);
+    config.allocation_policy = json_string(text, "allocation_policy", config.allocation_policy);
+    config.rebalance_frequency = json_string(text, "rebalance_frequency", config.rebalance_frequency);
+    config.max_weight = json_number(text, "max_weight", config.max_weight);
+    config.cash_buffer = json_number(text, "cash_buffer", config.cash_buffer);
+    config.min_trade_value = json_number(text, "min_trade_value", config.min_trade_value);
+    config.volatility_lookback = static_cast<int>(json_number(text, "volatility_lookback", config.volatility_lookback));
+    config.momentum_lookback = static_cast<int>(json_number(text, "momentum_lookback", config.momentum_lookback));
+    config.top_n = static_cast<int>(json_number(text, "top_n", config.top_n));
+    config.portfolio_output_dir = json_string(text, "portfolio_output_directory", config.portfolio_output_dir);
     return config;
 }
 

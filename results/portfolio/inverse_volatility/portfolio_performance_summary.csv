@@ -1,0 +1,2 @@
+policy_name,total_return,equal_weight_benchmark_return,spy_benchmark_return,excess_return,annualized_return,volatility,sharpe,sortino,max_drawdown,calmar,var_95,expected_shortfall_95,beta,alpha,information_ratio,turnover,total_transaction_costs,number_of_rebalances,number_of_fills,average_cash_allocation,average_gross_exposure
+inverse_volatility,4.298465,6.457664,1.114723,-2.159198,0.321576,0.274858,1.155114,1.420532,-0.395710,0.812656,-0.024474,-0.039641,0.848914,-0.012471,-0.926491,13.376056,2006.384120,72,248,0.013885,0.986115
