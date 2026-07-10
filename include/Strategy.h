@@ -59,6 +59,19 @@ private:
     int last_state_{0};
 };
 
+class VolatilityBreakoutStrategy : public Strategy {
+public:
+    VolatilityBreakoutStrategy(int lookback = 20, double volatility_multiplier = 1.5);
+    std::string name() const override;
+    std::string parameters() const override;
+    SignalEvent on_market_event(const MarketEvent& event, const std::vector<Bar>& history) override;
+    std::unique_ptr<Strategy> clone() const override;
+
+private:
+    int lookback_;
+    double volatility_multiplier_;
+};
+
 double simple_moving_average(const std::vector<Bar>& history, std::size_t end_index, int window);
 double rsi(const std::vector<Bar>& history, std::size_t end_index, int period);
 std::vector<double> daily_returns(const std::vector<double>& prices);

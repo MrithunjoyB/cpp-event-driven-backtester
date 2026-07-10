@@ -1,0 +1,7 @@
+metric,value
+paths,1000
+seed,45
+terminal_wealth_p05,93213.5
+terminal_wealth_p50,207959
+terminal_wealth_p95,447779
+probability_of_loss,0.061

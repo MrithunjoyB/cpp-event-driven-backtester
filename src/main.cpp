@@ -110,6 +110,7 @@ int main(int argc, char** argv) {
         std::string ticker = get_arg(argc, argv, "--ticker", "");
         std::string strategy_name = get_arg(argc, argv, "--strategy", "");
         std::string mode = get_arg(argc, argv, "--mode", "compare");
+        std::string config_path = get_arg(argc, argv, "--config", "");
         std::string start_date = get_arg(argc, argv, "--start", "");
         std::string end_date = get_arg(argc, argv, "--end", "");
         double capital = get_double_arg(argc, argv, "--capital", 100000.0);
@@ -133,7 +134,13 @@ int main(int argc, char** argv) {
                   << std::setw(12) << "WinRate"
                   << std::setw(8) << "Trades" << '\n';
 
-        if (mode == "single" || (!ticker.empty() && !strategy_name.empty())) {
+        if (!config_path.empty()) {
+            ExperimentConfig experiment = Analysis::load_experiment_config(config_path);
+            Analysis::run_research_experiment(experiment);
+            Analysis::run_portfolio_research(experiment, experiment.experiment_name.find("inverse") != std::string::npos ? "inverse_volatility" : "equal_weight");
+            Analysis::run_bootstrap_research(experiment);
+            std::cout << "Research experiment written to " << experiment.output_dir << "\n";
+        } else if (mode == "single" || (!ticker.empty() && !strategy_name.empty())) {
             BacktestConfig config = base_config;
             config.ticker = ticker.empty() ? "AAPL" : ticker;
             Backtester backtester(config);

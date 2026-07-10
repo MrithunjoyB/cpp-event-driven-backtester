@@ -1,0 +1,21 @@
+name: CMake CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-test:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build build --config Release
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+      - name: Deterministic integration run
+        run: ./build/backtester --mode cross-asset
+      - name: Validate generated results
+        run: python3 scripts/validate_results.py

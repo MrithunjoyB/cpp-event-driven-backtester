@@ -19,10 +19,30 @@ struct BenchmarkTiming {
     std::size_t observations{0};
 };
 
+struct ExperimentConfig {
+    std::string experiment_name{"default_research"};
+    std::vector<std::string> tickers;
+    std::string strategy{"MA_Cross"};
+    double starting_capital{100000.0};
+    double commission_bps{10.0};
+    double slippage_bps{5.0};
+    int train_days{756};
+    int test_days{126};
+    int step_days{126};
+    std::string benchmark{"SPY"};
+    std::string objective{"sharpe_min_trades"};
+    int minimum_trades{3};
+    std::string regime_method{"trend_200_sma_60_return_vol_20_expanding_median"};
+    unsigned int random_seed{42};
+    std::string output_dir{"results/research/default_research"};
+};
+
 class Analysis {
 public:
+    static ExperimentConfig load_experiment_config(const std::string& filepath);
     static std::vector<StrategySpec> default_strategy_specs();
     static std::vector<StrategySpec> grid_strategy_specs();
+    static std::vector<StrategySpec> grid_strategy_specs(const std::string& strategy_name);
     static std::vector<std::string> default_tickers();
 
     static std::vector<PerformanceSummary> run_cross_asset(const BacktestConfig& base_config);
@@ -31,8 +51,10 @@ public:
     static void run_transaction_cost_sensitivity(const BacktestConfig& base_config, const std::vector<std::string>& tickers);
     static void run_regime_evaluation(const BacktestConfig& base_config, const std::vector<std::string>& tickers);
     static std::vector<BenchmarkTiming> run_performance_benchmarks(const BacktestConfig& base_config);
+    static void run_research_experiment(const ExperimentConfig& experiment);
+    static void run_portfolio_research(const ExperimentConfig& experiment, const std::string& policy);
+    static void run_bootstrap_research(const ExperimentConfig& experiment);
 
 private:
     static void write_benchmark_timings(const std::string& filepath, const std::vector<BenchmarkTiming>& timings);
 };
-

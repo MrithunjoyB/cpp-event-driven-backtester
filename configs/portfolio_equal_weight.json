@@ -1,0 +1,17 @@
+{
+  "experiment_name": "portfolio_equal_weight",
+  "ticker_universe": ["AAPL", "MSFT", "SPY", "TSLA", "BTC-USD"],
+  "strategy": "MA_Cross",
+  "starting_capital": 100000,
+  "commission_bps": 10,
+  "slippage_bps": 5,
+  "train_window_days": 756,
+  "test_window_days": 126,
+  "step_days": 126,
+  "benchmark": "SPY",
+  "parameter_selection_objective": "sharpe_min_trades",
+  "minimum_trade_requirement": 3,
+  "regime_classification_method": "trend_200_sma_60_return_vol_20_expanding_median",
+  "random_seed": 45,
+  "output_directory": "results/research/portfolio_equal_weight"
+}

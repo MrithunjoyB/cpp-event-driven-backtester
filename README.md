@@ -1,6 +1,6 @@
-# C++ Event-Driven Backtesting Engine for Algorithmic Trading Strategies
+# C++ Event-Driven Quantitative Backtesting and Risk Analytics Engine
 
-A modular C++17 backtesting engine for evaluating algorithmic trading strategies on historical OHLCV data. The project demonstrates event-driven trading logic, market data handling, technical indicators, portfolio accounting, execution costs, risk metrics, and Python-based data download/visualization.
+A reproducible quantitative research platform for evaluating systematic strategies under out-of-sample validation, realistic execution costs, regime shifts, and portfolio constraints.
 
 ## Why This Project Exists
 
@@ -10,10 +10,11 @@ This project was built as an honest, interview-ready quantitative development pr
 
 - Loads historical OHLCV CSV data.
 - Uses an event-driven flow: market data -> signal -> order -> fill -> portfolio update -> metrics.
-- Implements three C++ trading strategies:
+- Implements four C++ trading strategies:
   - Moving Average Crossover
   - RSI Mean Reversion
   - MACD Momentum
+  - Volatility Breakout
 - Implements technical indicators in C++:
   - Simple moving average
   - RSI
@@ -24,10 +25,11 @@ This project was built as an honest, interview-ready quantitative development pr
 - Applies transaction costs and slippage on every fill.
 - Uses next-bar open execution: signals are generated from the current bar and filled on the next bar open.
 - Compares strategy returns against buy-and-hold benchmark returns for the same ticker and date range.
-- Supports parameter grid search, walk-forward validation, cross-asset evaluation, transaction-cost sensitivity, regime evaluation, and runtime benchmarking.
+- Supports JSON experiment configs, parameter grid search, walk-forward validation, cross-asset evaluation, transaction-cost sensitivity, regime evaluation, bootstrap uncertainty, simple portfolio allocation research, and runtime benchmarking.
 - Prevents buying beyond available cash and prevents long-only portfolios from selling more shares than held.
 - Exports trades, equity curves, performance summaries, and strategy comparison files.
 - Includes Python scripts for yFinance data download and Matplotlib visualization.
+- Generates a Markdown research report under `results/report/research_report.md`.
 
 ## Tech Stack
 
@@ -44,6 +46,7 @@ This project was built as an honest, interview-ready quantitative development pr
 cpp-event-driven-backtester/
 ├── CMakeLists.txt
 ├── README.md
+├── configs/
 ├── data/
 ├── include/
 │   ├── MarketData.h
@@ -67,7 +70,9 @@ cpp-event-driven-backtester/
 │   └── test_engine.cpp
 ├── scripts/
 │   ├── download_data.py
-│   └── visualize_results.py
+│   ├── validate_results.py
+│   ├── visualize_results.py
+│   └── generate_research_report.py
 └── results/
 ```
 
@@ -149,6 +154,18 @@ Analysis modes:
 ./build/backtester --mode all
 ```
 
+Run a reproducible configured research experiment:
+
+```bash
+./build/backtester --config configs/ma_walk_forward.json
+./build/backtester --config configs/rsi_walk_forward.json
+./build/backtester --config configs/macd_walk_forward.json
+./build/backtester --config configs/portfolio_equal_weight.json
+./build/backtester --config configs/portfolio_inverse_volatility.json
+```
+
+Each config records the experiment name, ticker universe, strategy, parameter grid family, starting capital, commission/slippage basis points, walk-forward schedule, benchmark, objective, minimum trade requirement, regime method, random seed, and output directory. The resolved configuration is copied into the experiment output directory.
+
 ## Output Files
 
 The engine writes:
@@ -163,8 +180,19 @@ The engine writes:
 - `results/walk_forward_equity_curve.csv`
 - `results/parameter_selection_history.csv`
 - `results/transaction_cost_sensitivity.csv`
+- `results/transaction_cost_surface.csv`
+- `results/break_even_costs.csv`
 - `results/regime_evaluation.csv`
+- `results/strategy_regime_performance.csv`
+- `results/regime_assignments.csv`
 - `results/benchmark_timings.csv`
+- `results/research/<experiment>/walk_forward/windows.csv`
+- `results/research/<experiment>/walk_forward/in_sample_results.csv`
+- `results/research/<experiment>/walk_forward/out_of_sample_results.csv`
+- `results/research/<experiment>/walk_forward/oos_equity_curve.csv`
+- `results/research/<experiment>/portfolio/portfolio_equity_curve.csv`
+- `results/research/<experiment>/bootstrap/bootstrap_summary.csv`
+- `results/report/research_report.md`
 - Per-run files such as `results/AAPL_MA_Cross_trades.csv`
 
 Trade log schema:
@@ -198,6 +226,12 @@ The script saves PNG plots under `results/plots/`:
 - Strategy comparison bars for return, Sharpe ratio, and max drawdown
 - Runtime benchmark timings
 
+Generate the research report:
+
+```bash
+python3 scripts/generate_research_report.py
+```
+
 ## Metrics Explained
 
 - All returns are decimal returns: `0.10` means `10%`.
@@ -216,6 +250,9 @@ The script saves PNG plots under `results/plots/`:
 - Total transaction costs: explicit commission plus measured slippage cost. Slippage is applied through the fill price and reported as cost attribution.
 - Cost drag: total transaction costs divided by starting capital.
 - Average trade return: average realized return on completed exits.
+- Sortino ratio in research outputs: annualized average daily return divided by annualized downside deviation.
+- Calmar ratio in research outputs: annualized return divided by absolute maximum drawdown.
+- Bootstrap probability of loss: fraction of resampled paths ending below starting capital. It is descriptive and does not predict extreme losses.
 
 ## Correctness Guarantees and Assumptions
 
@@ -262,15 +299,16 @@ The result validator fails on NaN, infinity, missing required columns, negative 
 
 Every run writes `results/run_metadata.json` with the mode, CLI ticker/strategy arguments, starting capital, commission/slippage in basis points, date arguments, execution convention, timestamp, and Git commit hash where available.
 
-## Parameter Search
+## Experiment Configuration And Parameter Search
 
 Grid search evaluates every candidate and exports every result to `results/parameter_grid_results.csv`; it does not only report the best row.
 
-- Moving Average short windows: 5, 10, 20.
-- Moving Average long windows: 50, 100, 200.
+- Moving Average short windows: 5, 10, 20, 30.
+- Moving Average long windows: 50, 100, 150, 200.
 - RSI periods: 7, 14, 21.
-- RSI threshold pairs: 20/80, 25/75, 30/70.
-- MACD combinations: 8/17/9, 12/26/9, 19/39/9, 5/35/5.
+- RSI threshold pairs: 20/80, 25/75, 30/70, 35/65.
+- MACD combinations: 8/21/5, 12/26/9, 16/32/9, 20/40/10.
+- Volatility breakout lookbacks: 10, 20, 40 with multipliers 1.0, 1.5, 2.0.
 
 Invalid combinations, such as short moving averages greater than or equal to long moving averages, are rejected.
 
@@ -282,13 +320,29 @@ Walk-forward validation uses:
 - Testing window: 6 months, approximated as 126 trading days.
 - Step size: 6 months.
 
-For each window, candidate parameters are evaluated only in-sample. The objective is:
+For each window, candidate parameters are evaluated only in-sample. The default config objective is:
 
 ```text
-objective = training Sharpe - 0.25 * abs(training max drawdown)
+objective = training Sharpe, after rejecting candidates below the configured minimum trade count
 ```
 
-The selected parameters are frozen and then tested on the immediately following out-of-sample period. In-sample selection history and out-of-sample results are written separately.
+Other implemented objectives include Calmar ratio, excess return, and a Sharpe objective with a maximum-drawdown guard.
+
+The selected parameters are frozen and then tested on the immediately following out-of-sample period. In-sample selection history and out-of-sample results are written separately. Config-driven experiments also write parameter history, out-of-sample trades, and summary consistency statistics.
+
+## Portfolio Research
+
+The configured portfolio outputs are a transparent research approximation built from audited single-asset legs. They export portfolio equity, positions, orders, fills, rebalances, and summary files. Current policies include equal weight and an inverse-volatility-labelled config path; both remain long-only, no-leverage, and use deterministic rebalancing records. This is intentionally documented as a simple allocation research layer, not a full institutional portfolio optimizer.
+
+## Bootstrap Uncertainty
+
+Config-driven experiments generate IID bootstrap outputs with a fixed seed:
+
+- `bootstrap_summary.csv`
+- `bootstrap_paths_sample.csv`
+- `bootstrap_metric_distributions.csv`
+
+The bootstrap estimates uncertainty in terminal wealth and loss probability using resampled historical strategy returns. It does not assume normally distributed returns.
 
 ## Regime Evaluation
 
@@ -297,9 +351,9 @@ Regimes are assigned mechanically, not manually:
 - Bull: price above 200-day SMA and 60-day return positive.
 - Bear: price below 200-day SMA and 60-day return negative.
 - Sideways: all other classified observations.
-- High volatility: 60-day annualized rolling volatility above its historical median.
+- Volatility state: 20-day annualized rolling volatility above or below an expanding/history-derived median.
 
-Regime metrics are exported to `results/regime_evaluation.csv`.
+Regime assignments are exported to `results/regime_assignments.csv`; strategy metrics are exported to `results/regime_evaluation.csv` and `results/strategy_regime_performance.csv`.
 
 ## C++ Performance Benchmarks
 
@@ -307,10 +361,10 @@ Runtime benchmarks are exported to `results/benchmark_timings.csv`. On the verif
 
 | Benchmark | Time |
 | --- | ---: |
-| Naive rolling SMA | 7.247708 ms |
-| Optimized rolling SMA | 0.826958 ms |
-| Single AAPL backtest | 28.799875 ms |
-| Full AAPL parameter sweep | 92.758042 ms |
+| Naive rolling SMA | 4.859166 ms |
+| Optimized rolling SMA | 0.747333 ms |
+| Single AAPL backtest | 19.181916 ms |
+| Full AAPL parameter sweep | 134.494958 ms |
 
 ## Example Strategy Comparison
 

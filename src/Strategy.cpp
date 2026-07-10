@@ -124,6 +124,42 @@ std::unique_ptr<Strategy> MACDMomentumStrategy::clone() const {
     return std::make_unique<MACDMomentumStrategy>(*this);
 }
 
+VolatilityBreakoutStrategy::VolatilityBreakoutStrategy(int lookback, double volatility_multiplier)
+    : lookback_(lookback), volatility_multiplier_(volatility_multiplier) {}
+
+std::string VolatilityBreakoutStrategy::name() const {
+    return "Volatility_Breakout";
+}
+
+std::string VolatilityBreakoutStrategy::parameters() const {
+    std::ostringstream out;
+    out << "lookback=" << lookback_ << ";multiplier=" << volatility_multiplier_;
+    return out.str();
+}
+
+SignalEvent VolatilityBreakoutStrategy::on_market_event(const MarketEvent& event, const std::vector<Bar>& history) {
+    if (event.index < static_cast<std::size_t>(lookback_) || event.index < 2) {
+        return make_signal(event, name(), SignalType::Hold);
+    }
+    std::vector<double> closes = closes_until(history, event.index);
+    std::vector<double> returns = daily_returns(closes);
+    double vol = rolling_volatility(returns, returns.size() - 1, lookback_);
+    double reference = history[event.index - 1].close;
+    double upper = reference * (1.0 + volatility_multiplier_ * vol);
+    double lower = reference * (1.0 - volatility_multiplier_ * vol);
+    if (event.close > upper) {
+        return make_signal(event, name(), SignalType::Buy);
+    }
+    if (event.close < lower) {
+        return make_signal(event, name(), SignalType::Sell);
+    }
+    return make_signal(event, name(), SignalType::Hold);
+}
+
+std::unique_ptr<Strategy> VolatilityBreakoutStrategy::clone() const {
+    return std::make_unique<VolatilityBreakoutStrategy>(*this);
+}
+
 double simple_moving_average(const std::vector<Bar>& history, std::size_t end_index, int window) {
     if (window <= 0 || history.empty() || end_index + 1 < static_cast<std::size_t>(window)) {
         return 0.0;

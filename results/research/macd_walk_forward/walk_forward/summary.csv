@@ -1,0 +1,6 @@
+ticker,strategy,windows,positive_oos_excess_rate,benchmark_win_rate,parameter_changes,worst_oos_return
+AAPL,MACD_Momentum,5,0.400000,0.400000,2,-0.138851
+MSFT,MACD_Momentum,5,0.200000,0.200000,0,-0.027876
+SPY,MACD_Momentum,5,0.000000,0.000000,3,-0.022554
+TSLA,MACD_Momentum,5,0.400000,0.400000,1,-0.325612
+BTC-USD,MACD_Momentum,11,0.363636,0.363636,5,-0.026493

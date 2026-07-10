@@ -1,4 +1,5 @@
 #include "Backtester.h"
+#include "Analysis.h"
 #include "ExecutionHandler.h"
 #include "MarketData.h"
 #include "Metrics.h"
@@ -6,6 +7,7 @@
 #include "Strategy.h"
 
 #include <cmath>
+#include <cstdio>
 #include <functional>
 #include <fstream>
 #include <iostream>
@@ -249,6 +251,48 @@ int main() {
         MovingAverageCrossoverStrategy strategy(1, 2);
         auto result = Backtester(config).run_detailed(strategy, false);
         require(nearly_equal(result.summary.benchmark_gross_return, (107.0 / 103.0) - 1.0), "bad benchmark window");
+    });
+    run_case("MA grid rejects invalid short-long pairs", [&] {
+        auto specs = Analysis::grid_strategy_specs("MA_Cross");
+        require(specs.size() == 16, "unexpected MA grid size");
+        for (const auto& spec : specs) {
+            int s = 0, l = 0;
+            std::sscanf(spec.parameter_set.c_str(), "short=%d;long=%d", &s, &l);
+            require(s < l, "invalid MA parameter pair");
+        }
+    });
+    run_case("RSI grid size", [&] {
+        require(Analysis::grid_strategy_specs("RSI_Mean_Reversion").size() == 12, "unexpected RSI grid size");
+    });
+    run_case("MACD grid size", [&] {
+        require(Analysis::grid_strategy_specs("MACD_Momentum").size() == 4, "unexpected MACD grid size");
+    });
+    run_case("Volatility breakout grid size", [&] {
+        require(Analysis::grid_strategy_specs("Volatility_Breakout").size() == 9, "unexpected breakout grid size");
+    });
+    run_case("Volatility breakout warm-up hold", [&] {
+        VolatilityBreakoutStrategy strategy(10, 1.5);
+        MarketEvent event{EventType::Market, "2024-01-05", "TEST", 103, 106, 102, 105, 1000, 4};
+        require(strategy.on_market_event(event, bars).signal == SignalType::Hold, "breakout traded during warm-up");
+    });
+    run_case("Experiment config parsing", [&] {
+        ExperimentConfig config = Analysis::load_experiment_config("configs/ma_walk_forward.json");
+        require(config.experiment_name == "ma_walk_forward", "bad experiment name");
+        require(config.tickers.size() == 5, "bad ticker universe");
+        require(config.strategy == "MA_Cross", "bad strategy");
+        require(config.minimum_trades == 3, "bad minimum trades");
+    });
+    run_case("Default grid includes all supported strategies", [&] {
+        auto specs = Analysis::grid_strategy_specs();
+        require(specs.size() == 41, "unexpected full grid size");
+    });
+    run_case("Default tickers include BTC-USD", [&] {
+        auto tickers = Analysis::default_tickers();
+        bool found = false;
+        for (const auto& ticker : tickers) {
+            found = found || ticker == "BTC-USD";
+        }
+        require(found, "BTC-USD missing from default universe");
     });
 
     std::cout << cases_run << " deterministic test cases passed.\n";

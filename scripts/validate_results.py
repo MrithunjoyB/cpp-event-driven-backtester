@@ -23,7 +23,6 @@ def check_required_columns(path: Path, rows: list[dict[str, str]], issues: list[
     required_by_suffix = {
         "equity_curve.csv": {"date", "portfolio_value", "cash", "holdings", "total_return", "drawdown"},
         "trades.csv": {"date", "ticker", "strategy", "action", "price", "quantity", "cost", "slippage", "portfolio_value"},
-        "performance_summary.csv": {"ticker", "strategy", "total_return", "benchmark_gross_return", "benchmark_net_return", "excess_return", "max_drawdown", "win_rate", "num_trades"},
     }
     header = set(rows[0].keys()) if rows else set()
     for suffix, required in required_by_suffix.items():
@@ -31,6 +30,11 @@ def check_required_columns(path: Path, rows: list[dict[str, str]], issues: list[
             missing = required - header
             if missing:
                 issues.append(f"{path}: missing required columns {sorted(missing)}")
+    if path.name.endswith("performance_summary.csv") and path.name != "portfolio_performance_summary.csv":
+        required = {"ticker", "strategy", "total_return", "benchmark_gross_return", "benchmark_net_return", "excess_return", "max_drawdown", "win_rate", "num_trades"}
+        missing = required - header
+        if missing:
+            issues.append(f"{path}: missing required columns {sorted(missing)}")
 
 
 def validate_file(path: Path, issues: list[str]) -> None:
@@ -108,7 +112,7 @@ def main() -> int:
     if not RESULTS.exists():
         print(f"Missing results directory: {RESULTS}")
         return 1
-    for path in sorted(RESULTS.glob("*.csv")):
+    for path in sorted(RESULTS.rglob("*.csv")):
         validate_file(path, issues)
     if issues:
         print("Result validation failed:")
@@ -121,4 +125,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
-
