@@ -1,2 +1,2 @@
-ticker,strategy,parameter_set,total_return,benchmark_return,excess_return,annualized_return,volatility,sharpe,max_drawdown,win_rate,profit_factor,num_trades,turnover,total_transaction_costs,average_trade_return,transaction_cost_adjusted_return
-AAPL,MA_Cross,short=20;long=50,1.067838,2.636823,-1.568986,0.129173,0.192874,0.726600,-0.276251,0.375000,1.799976,33,51.303372,7695.485576,0.045014,0.990883
+ticker,strategy,parameter_set,total_return,benchmark_gross_return,benchmark_net_return,excess_return,annualized_return,volatility,sharpe,max_drawdown,win_rate,profit_factor,num_trades,turnover,total_transaction_costs,cost_drag,average_trade_return
+AAPL,MA_Cross,short=20;long=50,1.099404,2.636823,2.625929,-1.526525,0.132037,0.192758,0.740081,-0.272710,0.375000,1.769269,33,51.682391,7752.337879,0.077523,0.044493

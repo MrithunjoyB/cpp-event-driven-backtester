@@ -32,4 +32,5 @@ if(BUILD_TESTING)
     )
 
     add_test(NAME backtester_tests COMMAND backtester_tests)
+    set_tests_properties(backtester_tests PROPERTIES WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 endif()

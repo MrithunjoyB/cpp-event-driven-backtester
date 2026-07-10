@@ -34,13 +34,15 @@ PerformanceSummary Metrics::calculate(
     double starting_capital,
     const std::vector<EquityPoint>& equity_curve,
     const std::vector<Trade>& trades,
-    double benchmark_return) {
+    double benchmark_gross_return,
+    double benchmark_net_return) {
     PerformanceSummary summary;
     summary.ticker = ticker;
     summary.strategy = strategy;
     summary.parameter_set = parameter_set;
     summary.num_trades = static_cast<int>(trades.size());
-    summary.benchmark_return = benchmark_return;
+    summary.benchmark_gross_return = benchmark_gross_return;
+    summary.benchmark_net_return = benchmark_net_return;
 
     if (equity_curve.empty() || starting_capital <= 0.0) {
         return summary;
@@ -48,7 +50,7 @@ PerformanceSummary Metrics::calculate(
 
     double ending_value = equity_curve.back().portfolio_value;
     summary.total_return = (ending_value / starting_capital) - 1.0;
-    summary.excess_return = summary.total_return - summary.benchmark_return;
+    summary.excess_return = summary.total_return - summary.benchmark_net_return;
 
     std::vector<double> returns;
     for (std::size_t i = 1; i < equity_curve.size(); ++i) {
@@ -100,7 +102,7 @@ PerformanceSummary Metrics::calculate(
     summary.average_trade_return = closed_trades > 0 ? trade_return_sum / closed_trades : 0.0;
     summary.turnover = starting_capital > 0.0 ? gross_turnover / starting_capital : 0.0;
     summary.total_transaction_costs = total_costs;
-    summary.transaction_cost_adjusted_return = ((ending_value - total_costs) / starting_capital) - 1.0;
+    summary.cost_drag = starting_capital > 0.0 ? total_costs / starting_capital : 0.0;
 
     return summary;
 }

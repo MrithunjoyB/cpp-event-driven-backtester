@@ -25,7 +25,8 @@ void write_summary_row(std::ofstream& out, const PerformanceSummary& s) {
         << s.strategy << ','
         << s.parameter_set << ','
         << s.total_return << ','
-        << s.benchmark_return << ','
+        << s.benchmark_gross_return << ','
+        << s.benchmark_net_return << ','
         << s.excess_return << ','
         << s.annualized_return << ','
         << s.volatility << ','
@@ -36,8 +37,8 @@ void write_summary_row(std::ofstream& out, const PerformanceSummary& s) {
         << s.num_trades << ','
         << s.turnover << ','
         << s.total_transaction_costs << ','
-        << s.average_trade_return << ','
-        << s.transaction_cost_adjusted_return << '\n';
+        << s.cost_drag << ','
+        << s.average_trade_return << '\n';
 }
 
 bool in_window(const Bar& bar, const BacktestConfig& config) {
@@ -101,8 +102,8 @@ BacktestResult Backtester::run_detailed(const Strategy& strategy_template, bool 
         portfolio.mark_to_market(market_event.date, market_event.close);
     }
 
-    double bench = first_index == std::numeric_limits<std::size_t>::max()
-        ? 0.0
+    BenchmarkResult bench = first_index == std::numeric_limits<std::size_t>::max()
+        ? BenchmarkResult{}
         : benchmark_return(history, first_index, last_index);
 
     PerformanceSummary summary = Metrics::calculate(
@@ -112,7 +113,8 @@ BacktestResult Backtester::run_detailed(const Strategy& strategy_template, bool 
         portfolio.starting_capital(),
         portfolio.equity_curve(),
         portfolio.trades(),
-        bench);
+        bench.gross_return,
+        bench.net_return);
 
     if (write_outputs) {
         const std::string prefix = result_prefix(strategy->name());
@@ -132,7 +134,7 @@ BacktestResult Backtester::run_detailed(const Strategy& strategy_template, bool 
 void Backtester::write_combined_summary(const std::string& filepath, const std::vector<PerformanceSummary>& summaries) {
     std::ofstream out(filepath);
     out << std::fixed << std::setprecision(6);
-    out << "ticker,strategy,parameter_set,total_return,benchmark_return,excess_return,annualized_return,volatility,sharpe,max_drawdown,win_rate,profit_factor,num_trades,turnover,total_transaction_costs,average_trade_return,transaction_cost_adjusted_return\n";
+    out << "ticker,strategy,parameter_set,total_return,benchmark_gross_return,benchmark_net_return,excess_return,annualized_return,volatility,sharpe,max_drawdown,win_rate,profit_factor,num_trades,turnover,total_transaction_costs,cost_drag,average_trade_return\n";
     for (const auto& summary : summaries) {
         write_summary_row(out, summary);
     }
@@ -178,7 +180,7 @@ void Backtester::write_equity_curve(const std::string& filepath, const std::vect
 void Backtester::write_summary(const std::string& filepath, const PerformanceSummary& summary) const {
     std::ofstream out(filepath);
     out << std::fixed << std::setprecision(6);
-    out << "ticker,strategy,parameter_set,total_return,benchmark_return,excess_return,annualized_return,volatility,sharpe,max_drawdown,win_rate,profit_factor,num_trades,turnover,total_transaction_costs,average_trade_return,transaction_cost_adjusted_return\n";
+    out << "ticker,strategy,parameter_set,total_return,benchmark_gross_return,benchmark_net_return,excess_return,annualized_return,volatility,sharpe,max_drawdown,win_rate,profit_factor,num_trades,turnover,total_transaction_costs,cost_drag,average_trade_return\n";
     write_summary_row(out, summary);
 }
 
@@ -186,9 +188,21 @@ std::string Backtester::result_prefix(const std::string& strategy_name) const {
     return sanitize(config_.ticker) + "_" + sanitize(strategy_name);
 }
 
-double Backtester::benchmark_return(const std::vector<Bar>& history, std::size_t start, std::size_t end) const {
+BenchmarkResult Backtester::benchmark_return(const std::vector<Bar>& history, std::size_t start, std::size_t end) const {
     if (history.empty() || start >= history.size() || end >= history.size() || start >= end || history[start].close <= 0.0) {
-        return 0.0;
+        return {};
     }
-    return (history[end].close / history[start].close) - 1.0;
+    double gross_return = (history[end].close / history[start].close) - 1.0;
+    double buy_price = history[start].close * (1.0 + config_.slippage_rate);
+    double buy_cost_per_share = buy_price * (1.0 + config_.transaction_cost_rate);
+    if (buy_cost_per_share <= 0.0) {
+        return {gross_return, gross_return};
+    }
+    double shares = config_.starting_capital / buy_cost_per_share;
+    double sell_price = history[end].close * (1.0 - config_.slippage_rate);
+    double gross_proceeds = shares * sell_price;
+    double sell_commission = gross_proceeds * config_.transaction_cost_rate;
+    double ending_value = gross_proceeds - sell_commission;
+    double net_return = config_.starting_capital > 0.0 ? (ending_value / config_.starting_capital) - 1.0 : 0.0;
+    return {gross_return, net_return};
 }

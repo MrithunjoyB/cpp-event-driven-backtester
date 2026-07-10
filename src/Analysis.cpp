@@ -195,6 +195,7 @@ std::vector<PerformanceSummary> Analysis::run_cross_asset(const BacktestConfig& 
         }
     }
     write_summary_csv(base_config.results_dir + "/cross_asset_comparison.csv", summaries);
+    write_summary_csv(base_config.results_dir + "/strategy_comparison.csv", summaries);
     return summaries;
 }
 
@@ -396,23 +397,33 @@ std::vector<BenchmarkTiming> Analysis::run_performance_benchmarks(const Backtest
 
     measure("naive_rolling_sma", [&]() {
         double sink = 0.0;
-        for (std::size_t i = 0; i < bars.size(); ++i) {
-            sink += simple_moving_average(bars, i, 50);
+        for (int repeat = 0; repeat < 250; ++repeat) {
+            for (std::size_t i = 0; i < bars.size(); ++i) {
+                sink += simple_moving_average(bars, i, 50);
+            }
         }
-        return static_cast<std::size_t>(sink > 0.0 ? bars.size() : 0);
+        return static_cast<std::size_t>(sink > 0.0 ? bars.size() * 250 : 0);
     });
 
     measure("optimized_rolling_sma", [&]() {
-        auto values = optimized_rolling_sma(closes, 50);
-        return values.size();
+        std::size_t observations = 0;
+        volatile double checksum = 0.0;
+        for (int repeat = 0; repeat < 250; ++repeat) {
+            auto values = optimized_rolling_sma(closes, 50);
+            checksum += values.empty() ? 0.0 : values.back();
+            observations += values.size();
+        }
+        return checksum > 0.0 ? observations : 0;
     });
 
     measure("single_backtest", [&]() {
         BacktestConfig config = base_config;
         config.ticker = "AAPL";
         auto strategy = MovingAverageCrossoverStrategy(20, 50);
-        Backtester(config).run_detailed(strategy, false);
-        return bars.size();
+        for (int repeat = 0; repeat < 10; ++repeat) {
+            Backtester(config).run_detailed(strategy, false);
+        }
+        return bars.size() * 10;
     });
 
     measure("full_parameter_sweep_AAPL", [&]() {

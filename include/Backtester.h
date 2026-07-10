@@ -21,6 +21,11 @@ struct BacktestConfig {
     std::string end_date;
 };
 
+struct BenchmarkResult {
+    double gross_return{0.0};
+    double net_return{0.0};
+};
+
 struct BacktestResult {
     PerformanceSummary summary;
     std::vector<Trade> trades;
@@ -43,5 +48,5 @@ private:
     void write_equity_curve(const std::string& filepath, const std::vector<EquityPoint>& equity_curve) const;
     void write_summary(const std::string& filepath, const PerformanceSummary& summary) const;
     std::string result_prefix(const std::string& strategy_name) const;
-    double benchmark_return(const std::vector<Bar>& history, std::size_t start, std::size_t end) const;
+    BenchmarkResult benchmark_return(const std::vector<Bar>& history, std::size_t start, std::size_t end) const;
 };

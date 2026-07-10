@@ -1,2 +1,2 @@
-ticker,strategy,parameter_set,total_return,benchmark_return,excess_return,annualized_return,volatility,sharpe,max_drawdown,win_rate,profit_factor,num_trades,turnover,total_transaction_costs,average_trade_return,transaction_cost_adjusted_return
-AAPL,RSI_Mean_Reversion,period=14;oversold=30;overbought=70,0.210036,2.636823,-2.426788,0.032394,0.233781,0.252746,-0.303888,0.647059,1.600103,35,34.964675,5244.679570,0.014792,0.157589
+ticker,strategy,parameter_set,total_return,benchmark_gross_return,benchmark_net_return,excess_return,annualized_return,volatility,sharpe,max_drawdown,win_rate,profit_factor,num_trades,turnover,total_transaction_costs,cost_drag,average_trade_return
+AAPL,RSI_Mean_Reversion,period=14;oversold=30;overbought=70,0.230576,2.636823,2.625929,-2.395354,0.035304,0.233560,0.264821,-0.302939,0.647059,1.576583,35,35.265848,5289.855040,0.052899,0.014286

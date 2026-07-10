@@ -31,8 +31,8 @@ bool Portfolio::process_fill(const FillEvent& fill, double market_price) {
         return false;
     }
 
-    double total_cost = fill.gross_value + fill.transaction_cost + fill.slippage_cost;
-    double proceeds = fill.gross_value - fill.transaction_cost - fill.slippage_cost;
+    double total_cost = fill.gross_value + fill.transaction_cost;
+    double proceeds = fill.gross_value - fill.transaction_cost;
     double realized_pnl = 0.0;
     double trade_return = 0.0;
 
@@ -42,7 +42,7 @@ bool Portfolio::process_fill(const FillEvent& fill, double market_price) {
         }
         int new_position = position_ + fill.quantity;
         average_entry_price_ = new_position > 0
-            ? ((average_entry_price_ * position_) + fill.gross_value) / new_position
+            ? ((average_entry_price_ * position_) + total_cost) / new_position
             : 0.0;
         cash_ -= total_cost;
         position_ = new_position;
@@ -50,7 +50,7 @@ bool Portfolio::process_fill(const FillEvent& fill, double market_price) {
         if (fill.quantity > position_) {
             return false;
         }
-        realized_pnl = (fill.fill_price - average_entry_price_) * fill.quantity - fill.transaction_cost - fill.slippage_cost;
+        realized_pnl = proceeds - average_entry_price_ * fill.quantity;
         double basis = average_entry_price_ * fill.quantity;
         trade_return = basis > 0.0 ? realized_pnl / basis : 0.0;
         cash_ += proceeds;
@@ -112,4 +112,3 @@ const std::vector<Trade>& Portfolio::trades() const {
 const std::vector<EquityPoint>& Portfolio::equity_curve() const {
     return equity_curve_;
 }
-

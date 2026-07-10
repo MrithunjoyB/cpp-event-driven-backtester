@@ -1,2 +1,2 @@
-ticker,strategy,parameter_set,total_return,benchmark_return,excess_return,annualized_return,volatility,sharpe,max_drawdown,win_rate,profit_factor,num_trades,turnover,total_transaction_costs,average_trade_return,transaction_cost_adjusted_return
-TSLA,RSI_Mean_Reversion,period=14;oversold=30;overbought=70,1.367520,14.842630,-13.475110,0.155019,0.432971,0.547386,-0.606332,0.789474,1.870144,38,54.815380,8222.343992,0.069886,1.285297
+ticker,strategy,parameter_set,total_return,benchmark_gross_return,benchmark_net_return,excess_return,annualized_return,volatility,sharpe,max_drawdown,win_rate,profit_factor,num_trades,turnover,total_transaction_costs,cost_drag,average_trade_return
+TSLA,RSI_Mean_Reversion,period=14;oversold=30;overbought=70,1.410503,14.842630,14.795173,-13.384670,0.158500,0.432716,0.554420,-0.605464,0.789474,1.862147,38,55.348399,8302.297124,0.083023,0.069353

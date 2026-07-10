@@ -1,2 +1,2 @@
-ticker,strategy,parameter_set,total_return,benchmark_return,excess_return,annualized_return,volatility,sharpe,max_drawdown,win_rate,profit_factor,num_trades,turnover,total_transaction_costs,average_trade_return,transaction_cost_adjusted_return
-TSLA,MACD_Momentum,fast=12;slow=26;signal=9,7.180158,14.842630,-7.662471,0.421123,0.408294,1.064007,-0.453930,0.388889,2.563229,108,325.915610,48887.537361,0.055517,6.691283
+ticker,strategy,parameter_set,total_return,benchmark_gross_return,benchmark_net_return,excess_return,annualized_return,volatility,sharpe,max_drawdown,win_rate,profit_factor,num_trades,turnover,total_transaction_costs,cost_drag,average_trade_return
+TSLA,MACD_Momentum,fast=12;slow=26;signal=9,7.610463,14.842630,14.795173,-7.184710,0.433358,0.408100,1.085365,-0.447596,0.388889,2.539486,108,336.869408,50530.614072,0.505306,0.054991

@@ -3,6 +3,11 @@
 #include "Strategy.h"
 
 #include <iomanip>
+#include <array>
+#include <chrono>
+#include <cstdio>
+#include <ctime>
+#include <fstream>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -54,6 +59,49 @@ std::vector<std::string> selected_tickers(const std::string& ticker) {
         return {ticker};
     }
     return Analysis::default_tickers();
+}
+
+std::string git_hash() {
+    std::array<char, 128> buffer{};
+    std::string result;
+    FILE* pipe = popen("git rev-parse HEAD 2>/dev/null", "r");
+    if (!pipe) {
+        return "unknown";
+    }
+    while (fgets(buffer.data(), static_cast<int>(buffer.size()), pipe) != nullptr) {
+        result += buffer.data();
+    }
+    pclose(pipe);
+    while (!result.empty() && (result.back() == '\n' || result.back() == '\r')) {
+        result.pop_back();
+    }
+    return result.empty() ? "unknown" : result;
+}
+
+std::string timestamp_utc() {
+    std::time_t now = std::time(nullptr);
+    std::tm* utc = std::gmtime(&now);
+    char buffer[32];
+    std::strftime(buffer, sizeof(buffer), "%Y-%m-%dT%H:%M:%SZ", utc);
+    return buffer;
+}
+
+void write_run_metadata(const BacktestConfig& config, const std::string& mode, const std::string& ticker, const std::string& strategy) {
+    std::ofstream out(config.results_dir + "/run_metadata.json");
+    out << "{\n"
+        << "  \"mode\": \"" << mode << "\",\n"
+        << "  \"ticker_argument\": \"" << ticker << "\",\n"
+        << "  \"strategy_argument\": \"" << strategy << "\",\n"
+        << "  \"starting_capital\": " << config.starting_capital << ",\n"
+        << "  \"commission_bps\": " << config.transaction_cost_rate * 10000.0 << ",\n"
+        << "  \"slippage_bps\": " << config.slippage_rate * 10000.0 << ",\n"
+        << "  \"data_start_date_argument\": \"" << config.start_date << "\",\n"
+        << "  \"data_end_date_argument\": \"" << config.end_date << "\",\n"
+        << "  \"execution_convention\": \"signals_after_bar_t_close_execute_at_bar_t_plus_1_open\",\n"
+        << "  \"benchmark_excess_return_basis\": \"strategy_net_total_return_minus_benchmark_net_return\",\n"
+        << "  \"run_timestamp_utc\": \"" << timestamp_utc() << "\",\n"
+        << "  \"git_commit_hash\": \"" << git_hash() << "\"\n"
+        << "}\n";
 }
 }
 
@@ -137,6 +185,7 @@ int main(int argc, char** argv) {
             throw std::runtime_error("Unknown mode: " + mode);
         }
 
+        write_run_metadata(base_config, mode, ticker, strategy_name);
         for (const auto& summary : summaries) {
             print_summary(summary);
         }

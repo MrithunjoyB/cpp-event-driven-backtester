@@ -10,7 +10,8 @@ struct PerformanceSummary {
     std::string strategy;
     std::string parameter_set;
     double total_return{0.0};
-    double benchmark_return{0.0};
+    double benchmark_gross_return{0.0};
+    double benchmark_net_return{0.0};
     double excess_return{0.0};
     double annualized_return{0.0};
     double volatility{0.0};
@@ -21,8 +22,8 @@ struct PerformanceSummary {
     int num_trades{0};
     double turnover{0.0};
     double total_transaction_costs{0.0};
+    double cost_drag{0.0};
     double average_trade_return{0.0};
-    double transaction_cost_adjusted_return{0.0};
 };
 
 class Metrics {
@@ -34,5 +35,6 @@ public:
         double starting_capital,
         const std::vector<EquityPoint>& equity_curve,
         const std::vector<Trade>& trades,
-        double benchmark_return);
+        double benchmark_gross_return,
+        double benchmark_net_return);
 };

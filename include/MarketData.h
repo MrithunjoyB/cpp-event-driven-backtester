@@ -4,6 +4,7 @@
 
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 struct Bar {
@@ -25,6 +26,7 @@ public:
 
 private:
     std::unordered_map<std::string, std::vector<Bar>> data_;
-    static bool parse_row(const std::string& line, Bar& bar);
+    static bool parse_row(const std::string& line, Bar& bar, std::string& error);
+    static bool validate_header(const std::string& line);
+    static bool validate_bar(const Bar& bar, std::string& error);
 };
-

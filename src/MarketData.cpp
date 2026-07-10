@@ -1,8 +1,11 @@
 #include "MarketData.h"
 
 #include <fstream>
+#include <cmath>
 #include <sstream>
 #include <stdexcept>
+#include <unordered_set>
+#include <vector>
 
 bool MarketData::load_csv(const std::string& ticker, const std::string& filepath) {
     std::ifstream file(filepath);
@@ -11,23 +14,37 @@ bool MarketData::load_csv(const std::string& ticker, const std::string& filepath
     }
 
     std::vector<Bar> rows;
+    std::unordered_set<std::string> seen_dates;
     std::string line;
-    bool first_line = true;
+    std::size_t line_number = 0;
     while (std::getline(file, line)) {
+        ++line_number;
         if (line.empty()) {
             continue;
         }
-        if (first_line) {
-            first_line = false;
-            if (line.find("Date") != std::string::npos) {
-                continue;
+        if (line_number == 1) {
+            if (!validate_header(line)) {
+                return false;
             }
+            continue;
         }
 
         Bar bar;
-        if (parse_row(line, bar)) {
-            rows.push_back(bar);
+        std::string error;
+        if (!parse_row(line, bar, error)) {
+            return false;
         }
+        if (!validate_bar(bar, error)) {
+            return false;
+        }
+        if (!rows.empty() && bar.date <= rows.back().date) {
+            return false;
+        }
+        if (seen_dates.count(bar.date) > 0) {
+            return false;
+        }
+        seen_dates.insert(bar.date);
+        rows.push_back(bar);
     }
 
     data_[ticker] = rows;
@@ -61,15 +78,22 @@ MarketEvent MarketData::market_event(const std::string& ticker, std::size_t inde
     return MarketEvent{EventType::Market, bar.date, ticker, bar.open, bar.high, bar.low, bar.close, bar.volume, index};
 }
 
-bool MarketData::parse_row(const std::string& line, Bar& bar) {
+bool MarketData::parse_row(const std::string& line, Bar& bar, std::string& error) {
     std::stringstream ss(line);
     std::string item;
     std::vector<std::string> cols;
     while (std::getline(ss, item, ',')) {
         cols.push_back(item);
     }
-    if (cols.size() < 6) {
+    if (cols.size() != 6) {
+        error = "Expected exactly 6 columns";
         return false;
+    }
+    for (const auto& col : cols) {
+        if (col.empty()) {
+            error = "Missing value";
+            return false;
+        }
     }
 
     try {
@@ -80,9 +104,41 @@ bool MarketData::parse_row(const std::string& line, Bar& bar) {
         bar.close = std::stod(cols[4]);
         bar.volume = static_cast<long long>(std::stod(cols[5]));
     } catch (...) {
+        error = "Could not parse numeric value";
         return false;
     }
 
-    return !bar.date.empty() && bar.open > 0.0 && bar.high > 0.0 && bar.low > 0.0 && bar.close > 0.0 && bar.volume >= 0;
+    return true;
 }
 
+bool MarketData::validate_header(const std::string& line) {
+    return line == "Date,Open,High,Low,Close,Volume";
+}
+
+bool MarketData::validate_bar(const Bar& bar, std::string& error) {
+    if (bar.date.empty()) {
+        error = "Missing date";
+        return false;
+    }
+    if (!std::isfinite(bar.open) || !std::isfinite(bar.high) || !std::isfinite(bar.low) || !std::isfinite(bar.close)) {
+        error = "Non-finite price";
+        return false;
+    }
+    if (bar.open <= 0.0 || bar.high <= 0.0 || bar.low <= 0.0 || bar.close <= 0.0) {
+        error = "Prices must be positive";
+        return false;
+    }
+    if (bar.volume < 0) {
+        error = "Volume cannot be negative";
+        return false;
+    }
+    if (bar.high < bar.low) {
+        error = "High below low";
+        return false;
+    }
+    if (bar.open < bar.low || bar.open > bar.high || bar.close < bar.low || bar.close > bar.high) {
+        error = "Open/close outside high-low range";
+        return false;
+    }
+    return true;
+}

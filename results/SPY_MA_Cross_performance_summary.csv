@@ -1,2 +1,2 @@
-ticker,strategy,parameter_set,total_return,benchmark_return,excess_return,annualized_return,volatility,sharpe,max_drawdown,win_rate,profit_factor,num_trades,turnover,total_transaction_costs,average_trade_return,transaction_cost_adjusted_return
-SPY,MA_Cross,short=20;long=50,0.483777,1.114723,-0.630946,0.068209,0.116415,0.625640,-0.299082,0.500000,1.692394,25,29.482303,4422.323606,0.028331,0.439554
+ticker,strategy,parameter_set,total_return,benchmark_gross_return,benchmark_net_return,excess_return,annualized_return,volatility,sharpe,max_drawdown,win_rate,profit_factor,num_trades,turnover,total_transaction_costs,cost_drag,average_trade_return
+SPY,MA_Cross,short=20;long=50,0.501238,1.114723,1.108388,-0.607150,0.070301,0.116354,0.642734,-0.294990,0.500000,1.669114,25,29.649216,4447.360330,0.044474,0.027819
