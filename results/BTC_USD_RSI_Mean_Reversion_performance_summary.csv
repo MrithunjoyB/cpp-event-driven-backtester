@@ -1,0 +1,2 @@
+ticker,strategy,parameter_set,total_return,benchmark_return,excess_return,annualized_return,volatility,sharpe,max_drawdown,win_rate,profit_factor,num_trades,turnover,total_transaction_costs,average_trade_return,transaction_cost_adjusted_return
+BTC-USD,RSI_Mean_Reversion,period=14;oversold=30;overbought=70,-0.057090,11.281666,-11.338756,-0.006738,0.239075,0.097604,-0.519636,0.611111,0.994716,37,20.763544,3114.509126,0.005217,-0.088235

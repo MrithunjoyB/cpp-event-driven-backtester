@@ -30,13 +30,17 @@ double sample_stddev(const std::vector<double>& values) {
 PerformanceSummary Metrics::calculate(
     const std::string& ticker,
     const std::string& strategy,
+    const std::string& parameter_set,
     double starting_capital,
     const std::vector<EquityPoint>& equity_curve,
-    const std::vector<Trade>& trades) {
+    const std::vector<Trade>& trades,
+    double benchmark_return) {
     PerformanceSummary summary;
     summary.ticker = ticker;
     summary.strategy = strategy;
+    summary.parameter_set = parameter_set;
     summary.num_trades = static_cast<int>(trades.size());
+    summary.benchmark_return = benchmark_return;
 
     if (equity_curve.empty() || starting_capital <= 0.0) {
         return summary;
@@ -44,6 +48,7 @@ PerformanceSummary Metrics::calculate(
 
     double ending_value = equity_curve.back().portfolio_value;
     summary.total_return = (ending_value / starting_capital) - 1.0;
+    summary.excess_return = summary.total_return - summary.benchmark_return;
 
     std::vector<double> returns;
     for (std::size_t i = 1; i < equity_curve.size(); ++i) {
@@ -73,9 +78,11 @@ PerformanceSummary Metrics::calculate(
     double gross_loss = 0.0;
     double trade_return_sum = 0.0;
     double total_costs = 0.0;
+    double gross_turnover = 0.0;
 
     for (const auto& trade : trades) {
         total_costs += trade.cost + trade.slippage;
+        gross_turnover += trade.price * trade.quantity;
         if (trade.action == "SELL") {
             ++closed_trades;
             trade_return_sum += trade.trade_return;
@@ -89,10 +96,11 @@ PerformanceSummary Metrics::calculate(
     }
 
     summary.win_rate = closed_trades > 0 ? static_cast<double>(wins) / closed_trades : 0.0;
-    summary.profit_factor = gross_loss > 0.0 ? gross_profit / gross_loss : (gross_profit > 0.0 ? std::numeric_limits<double>::infinity() : 0.0);
+    summary.profit_factor = gross_loss > 0.0 ? gross_profit / gross_loss : (gross_profit > 0.0 ? 999999.0 : 0.0);
     summary.average_trade_return = closed_trades > 0 ? trade_return_sum / closed_trades : 0.0;
+    summary.turnover = starting_capital > 0.0 ? gross_turnover / starting_capital : 0.0;
+    summary.total_transaction_costs = total_costs;
     summary.transaction_cost_adjusted_return = ((ending_value - total_costs) / starting_capital) - 1.0;
 
     return summary;
 }
-

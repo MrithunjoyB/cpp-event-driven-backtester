@@ -17,6 +17,14 @@ struct BacktestConfig {
     double slippage_rate{0.0005};
     std::string data_dir{"data"};
     std::string results_dir{"results"};
+    std::string start_date;
+    std::string end_date;
+};
+
+struct BacktestResult {
+    PerformanceSummary summary;
+    std::vector<Trade> trades;
+    std::vector<EquityPoint> equity_curve;
 };
 
 class Backtester {
@@ -24,6 +32,7 @@ public:
     explicit Backtester(BacktestConfig config);
 
     PerformanceSummary run(const Strategy& strategy);
+    BacktestResult run_detailed(const Strategy& strategy, bool write_outputs);
     static void write_combined_summary(const std::string& filepath, const std::vector<PerformanceSummary>& summaries);
 
 private:
@@ -34,5 +43,5 @@ private:
     void write_equity_curve(const std::string& filepath, const std::vector<EquityPoint>& equity_curve) const;
     void write_summary(const std::string& filepath, const PerformanceSummary& summary) const;
     std::string result_prefix(const std::string& strategy_name) const;
+    double benchmark_return(const std::vector<Bar>& history, std::size_t start, std::size_t end) const;
 };
-

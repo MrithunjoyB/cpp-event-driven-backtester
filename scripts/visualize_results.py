@@ -1,11 +1,18 @@
 from pathlib import Path
+import os
 
+ROOT = Path(__file__).resolve().parents[1]
+os.environ.setdefault("MPLCONFIGDIR", str(ROOT / ".matplotlib-cache"))
+
+import matplotlib
+
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import pandas as pd
 
 
-ROOT = Path(__file__).resolve().parents[1]
 RESULTS = ROOT / "results"
+PLOTS = RESULTS / "plots"
 
 
 def plot_latest_equity() -> None:
@@ -27,14 +34,18 @@ def plot_latest_equity() -> None:
     axes[1].set_ylabel("Drawdown")
     axes[1].grid(True, alpha=0.3)
 
+    PLOTS.mkdir(parents=True, exist_ok=True)
     fig.tight_layout()
-    plt.show()
+    fig.savefig(PLOTS / "equity_drawdown.png", dpi=150)
+    plt.close(fig)
 
 
 def plot_strategy_comparison() -> None:
-    comparison_path = RESULTS / "strategy_comparison.csv"
+    comparison_path = RESULTS / "cross_asset_comparison.csv"
     if not comparison_path.exists():
-        print("No strategy_comparison.csv found. Run the default C++ comparison first.")
+        comparison_path = RESULTS / "strategy_comparison.csv"
+    if not comparison_path.exists():
+        print("No comparison CSV found. Run the C++ backtester first.")
         return
 
     summary = pd.read_csv(comparison_path)
@@ -56,15 +67,35 @@ def plot_strategy_comparison() -> None:
     axes[2].tick_params(axis="x", rotation=45)
     axes[2].grid(True, axis="y", alpha=0.3)
 
+    PLOTS.mkdir(parents=True, exist_ok=True)
     fig.tight_layout()
-    plt.show()
+    fig.savefig(PLOTS / "strategy_comparison.png", dpi=150)
+    plt.close(fig)
+
+
+def plot_benchmark_timings() -> None:
+    timings_path = RESULTS / "benchmark_timings.csv"
+    if not timings_path.exists():
+        return
+    timings = pd.read_csv(timings_path)
+    fig, ax = plt.subplots(figsize=(9, 5))
+    ax.bar(timings["benchmark"], timings["milliseconds"], color="#17becf")
+    ax.set_title("C++ Runtime Benchmarks")
+    ax.set_ylabel("Milliseconds")
+    ax.tick_params(axis="x", rotation=25)
+    ax.grid(True, axis="y", alpha=0.3)
+    PLOTS.mkdir(parents=True, exist_ok=True)
+    fig.tight_layout()
+    fig.savefig(PLOTS / "benchmark_timings.png", dpi=150)
+    plt.close(fig)
 
 
 def main() -> None:
     plot_latest_equity()
     plot_strategy_comparison()
+    plot_benchmark_timings()
+    print(f"Saved plots to {PLOTS}")
 
 
 if __name__ == "__main__":
     main()
-

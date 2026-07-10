@@ -8,3 +8,7 @@ __pycache__/
 .DS_Store
 .venv/
 venv/
+test_next_bar.csv
+NEXT.csv
+test_results/
+.matplotlib-cache/

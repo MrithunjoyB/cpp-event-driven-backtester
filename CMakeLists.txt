@@ -13,6 +13,7 @@ add_executable(backtester
     src/Portfolio.cpp
     src/ExecutionHandler.cpp
     src/Backtester.cpp
+    src/Analysis.cpp
     src/Metrics.cpp
 )
 
@@ -25,6 +26,8 @@ if(BUILD_TESTING)
         src/Strategy.cpp
         src/Portfolio.cpp
         src/ExecutionHandler.cpp
+        src/Backtester.cpp
+        src/Analysis.cpp
         src/Metrics.cpp
     )
 

@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <numeric>
+#include <sstream>
 
 namespace {
 SignalEvent make_signal(const MarketEvent& event, const std::string& strategy_name, SignalType signal) {
@@ -24,6 +25,10 @@ MovingAverageCrossoverStrategy::MovingAverageCrossoverStrategy(int short_window,
 
 std::string MovingAverageCrossoverStrategy::name() const {
     return "MA_Cross";
+}
+
+std::string MovingAverageCrossoverStrategy::parameters() const {
+    return "short=" + std::to_string(short_window_) + ";long=" + std::to_string(long_window_);
 }
 
 SignalEvent MovingAverageCrossoverStrategy::on_market_event(const MarketEvent& event, const std::vector<Bar>& history) {
@@ -54,6 +59,12 @@ std::string RSIMeanReversionStrategy::name() const {
     return "RSI_Mean_Reversion";
 }
 
+std::string RSIMeanReversionStrategy::parameters() const {
+    std::ostringstream out;
+    out << "period=" << period_ << ";oversold=" << oversold_ << ";overbought=" << overbought_;
+    return out.str();
+}
+
 SignalEvent RSIMeanReversionStrategy::on_market_event(const MarketEvent& event, const std::vector<Bar>& history) {
     if (event.index + 1 < static_cast<std::size_t>(period_ + 1)) {
         return make_signal(event, name(), SignalType::Hold);
@@ -78,6 +89,10 @@ MACDMomentumStrategy::MACDMomentumStrategy(int fast, int slow, int signal)
 
 std::string MACDMomentumStrategy::name() const {
     return "MACD_Momentum";
+}
+
+std::string MACDMomentumStrategy::parameters() const {
+    return "fast=" + std::to_string(fast_) + ";slow=" + std::to_string(slow_) + ";signal=" + std::to_string(signal_);
 }
 
 SignalEvent MACDMomentumStrategy::on_market_event(const MarketEvent& event, const std::vector<Bar>& history) {
@@ -189,4 +204,3 @@ std::vector<double> exponential_moving_average(const std::vector<double>& values
     }
     return ema;
 }
-
