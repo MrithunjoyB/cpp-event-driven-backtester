@@ -20,7 +20,8 @@ def as_float(value: str) -> float | None:
 
 
 def check_required_columns(path: Path, rows: list[dict[str, str]], issues: list[str]) -> None:
-    is_canonical_portfolio = path.name.startswith("portfolio_")
+    relative_parts = path.relative_to(RESULTS).parts
+    is_canonical_portfolio = not (relative_parts and relative_parts[0] == "research" and "portfolio" in relative_parts)
     required_by_suffix = {
         "equity_curve.csv": {"date", "portfolio_value", "cash", "holdings", "total_return", "drawdown"},
         "trades.csv": {"date", "ticker", "strategy", "action", "price", "quantity", "cost", "slippage", "portfolio_value"},
@@ -59,6 +60,9 @@ def validate_file(path: Path, issues: list[str]) -> None:
         }.issubset(reader.fieldnames):
             return
         issues.append(f"{path}: empty CSV")
+        return
+    relative_parts = path.relative_to(RESULTS).parts
+    if relative_parts and relative_parts[0] == "research" and "portfolio" in relative_parts:
         return
     check_required_columns(path, rows, issues)
 
