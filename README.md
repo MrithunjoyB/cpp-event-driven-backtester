@@ -48,30 +48,24 @@ cpp-event-driven-backtester/
 ├── README.md
 ├── configs/
 ├── data/
+├── apps/
+│   └── quant_cli.cpp
 ├── include/
-│   ├── MarketData.h
-│   ├── Event.h
-│   ├── Strategy.h
-│   ├── Portfolio.h
-│   ├── AllocationPolicy.h
-│   ├── PortfolioBacktester.h
-│   ├── ExecutionHandler.h
-│   ├── Backtester.h
-│   ├── Analysis.h
-│   └── Metrics.h
+│   ├── quant/{app,config,domain,experiments,io}/
+│   └── compatibility public headers
 ├── src/
-│   ├── main.cpp
-│   ├── MarketData.cpp
-│   ├── Strategy.cpp
-│   ├── Portfolio.cpp
-│   ├── AllocationPolicy.cpp
-│   ├── PortfolioBacktester.cpp
-│   ├── ExecutionHandler.cpp
-│   ├── Backtester.cpp
-│   ├── Analysis.cpp
-│   └── Metrics.cpp
+│   ├── allocation/ analytics/ execution/ market_data/
+│   ├── methodology/ portfolio/ strategies/
+│   └── app/ config/ domain/ experiments/ io/
 ├── tests/
+│   ├── fixtures/
+│   ├── refactor/
 │   └── test_engine.cpp
+├── docs/
+│   ├── ARCHITECTURE.md
+│   ├── CONFIGURATION.md
+│   ├── RESULT_SCHEMA.md
+│   └── TESTING.md
 ├── scripts/
 │   ├── download_data.py
 │   ├── validate_results.py
@@ -106,10 +100,8 @@ Date,Open,High,Low,Close,Volume
 
 ```bash
 cd cpp-event-driven-backtester
-mkdir build
-cd build
-cmake ..
-cmake --build .
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --parallel
 ```
 
 Run tests:
@@ -123,50 +115,50 @@ ctest --test-dir build --output-on-failure
 From the project root after building:
 
 ```bash
-./build/backtester --mode compare
+./build/quant_cli --mode compare
 ```
 
 Run a single strategy:
 
 ```bash
-./build/backtester --mode single --ticker AAPL --strategy ma_cross --capital 100000
-./build/backtester --mode single --ticker MSFT --strategy rsi --capital 100000
-./build/backtester --mode single --ticker SPY --strategy macd --capital 100000
+./build/quant_cli --mode single --ticker AAPL --strategy ma_cross --capital 100000
+./build/quant_cli --mode single --ticker MSFT --strategy rsi --capital 100000
+./build/quant_cli --mode single --ticker SPY --strategy macd --capital 100000
 ```
 
 Optional cost controls:
 
 ```bash
-./build/backtester --mode single --ticker AAPL --strategy ma_cross --transaction-cost 0.001 --slippage 0.0005
+./build/quant_cli --mode single --ticker AAPL --strategy ma_cross --transaction-cost 0.001 --slippage 0.0005
 ```
 
 Reproducible date windows:
 
 ```bash
-./build/backtester --mode grid --ticker AAPL --start 2020-01-02 --end 2025-12-30
+./build/quant_cli --mode grid --ticker AAPL --start 2020-01-02 --end 2025-12-30
 ```
 
 Analysis modes:
 
 ```bash
-./build/backtester --mode cross-asset
-./build/backtester --mode grid
-./build/backtester --mode walk-forward
-./build/backtester --mode cost
-./build/backtester --mode regime
-./build/backtester --mode benchmark
-./build/backtester --mode all
+./build/quant_cli --mode cross-asset
+./build/quant_cli --mode grid
+./build/quant_cli --mode walk-forward
+./build/quant_cli --mode cost
+./build/quant_cli --mode regime
+./build/quant_cli --mode benchmark
+./build/quant_cli --mode all
 ```
 
 Run a reproducible configured research experiment:
 
 ```bash
-./build/backtester --config configs/ma_walk_forward.json
-./build/backtester --config configs/rsi_walk_forward.json
-./build/backtester --config configs/macd_walk_forward.json
-./build/backtester --config configs/portfolio_equal_weight.json
-./build/backtester --config configs/portfolio_inverse_volatility.json
-./build/backtester --config configs/portfolio_momentum_top_n.json
+./build/quant_cli run --config configs/ma_walk_forward.json
+./build/quant_cli run --config configs/rsi_walk_forward.json
+./build/quant_cli run --config configs/macd_walk_forward.json
+./build/quant_cli run --config configs/portfolio_equal_weight.json
+./build/quant_cli run --config configs/portfolio_inverse_volatility.json
+./build/quant_cli run --config configs/portfolio_momentum_top_n.json
 ```
 
 Each config records the experiment name, ticker universe, strategy or allocation policy, starting capital, commission/slippage basis points, walk-forward or rebalance schedule, benchmark, objective, minimum trade requirement, regime method, random seed, and output directory. Portfolio configs write shared-cash portfolio outputs under `results/portfolio/`.

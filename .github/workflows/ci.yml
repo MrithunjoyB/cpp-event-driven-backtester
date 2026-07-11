@@ -1,21 +1,30 @@
 name: CMake CI
 
-on:
-  push:
-  pull_request:
+on: [push, pull_request]
 
 jobs:
-  build-test:
-    runs-on: macos-latest
+  release:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-      - name: Configure
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-      - name: Build
-        run: cmake --build build --config Release
-      - name: Test
-        run: ctest --test-dir build --output-on-failure
-      - name: Deterministic integration run
-        run: ./build/backtester --mode cross-asset
-      - name: Validate generated results
-        run: python3 scripts/validate_results.py
+      - run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DQUANT_ENABLE_STRICT_WARNINGS=ON
+      - run: cmake --build build --parallel 2
+      - run: ctest --test-dir build --output-on-failure
+      - run: ./build/quant_cli validate-config --config configs/ma_walk_forward.json
+      - run: ./build/quant_cli run --config configs/ma_walk_forward.json --dry-run
+      - run: ./build/quant_cli --mode single --ticker AAPL --strategy ma_cross
+      - run: python3 scripts/validate_results.py results
+
+  sanitizers:
+    strategy:
+      matrix:
+        sanitizer: [address, undefined]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: cmake -S . -B build-${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=Debug -DQUANT_SANITIZER=${{ matrix.sanitizer }}
+      - run: cmake --build build-${{ matrix.sanitizer }} --parallel 2
+      - run: ctest --test-dir build-${{ matrix.sanitizer }} --output-on-failure
