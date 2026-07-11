@@ -12,4 +12,5 @@ venv/
 test_next_bar.csv
 NEXT.csv
 test_results/
+results/research_v3/
 .matplotlib-cache/

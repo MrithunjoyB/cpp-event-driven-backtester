@@ -26,6 +26,7 @@ This project was built as an honest, interview-ready quantitative development pr
 - Uses next-bar open execution: signals are generated from the current bar and filled on the next bar open.
 - Compares strategy returns against a configured same-asset or external buy-and-hold benchmark using comparable execution assumptions.
 - Supports JSON experiment configs, parameter grid search, walk-forward validation, cross-asset evaluation, transaction-cost sensitivity, regime evaluation, bootstrap uncertainty, true shared-cash multi-asset portfolio backtesting, and runtime benchmarking.
+- Supports schema-v3 union-calendar valuation for mixed equity/crypto portfolios, stale closed-market marks, civil-calendar rebalancing, and explicit split/dividend accounting.
 - Prevents buying beyond available cash and prevents long-only portfolios from selling more shares than held.
 - Exports trades, equity curves, performance summaries, and strategy comparison files.
 - Includes Python scripts for yFinance data download and Matplotlib visualization.
@@ -196,6 +197,9 @@ The engine writes:
 - `results/portfolio/portfolio_performance_summary.csv`
 - `results/portfolio/portfolio_allocation_weights.csv`
 - `results/portfolio/portfolio_costs.csv`
+- `results/research_v3/<portfolio>/portfolio_valuations.csv`
+- `results/research_v3/<portfolio>/portfolio_corporate_actions.csv`
+- `results/research_v3/<portfolio>/portfolio_rebalances.csv`
 - `results/portfolio/inverse_volatility/*.csv`
 - `results/portfolio/momentum_top_n/*.csv`
 - `results/report/research_report.md`
@@ -457,7 +461,8 @@ The implementation is intentionally long-only. Signals become orders only when t
 - Long-only by default.
 - No order book, intraday queue model, or partial fills.
 - No taxes, borrow costs, financing rates, or corporate-action adjustment beyond the downloaded price data.
-- Mixed-calendar shared portfolios still use a common-date valuation intersection; complete weekend BTC portfolio risk is not claimed.
+- Schema-v3 shared portfolios use union-calendar valuation, stale closed-market marks with a configured expiry, civil weekly/monthly schedules, and aligned mixed-calendar annualization. Schema-v2 intersection results remain available explicitly for regression comparison.
+- Exchange closures are inferred from bar absence; complete exchange-holiday accuracy is not claimed. Corporate actions support splits and ex-date cash dividends, but not tax, payable-date settlement, delistings, or symbol changes.
 - Price series are not a documented dividend-adjusted total-return dataset.
 - Bootstrap output remains IID, and no block bootstrap or multiple-testing correction is claimed.
 - Statistical outputs are descriptive and are not claimed as research-grade inference.

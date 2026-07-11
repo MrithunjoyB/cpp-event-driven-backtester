@@ -20,16 +20,17 @@ def as_float(value: str) -> float | None:
 
 
 def check_required_columns(path: Path, rows: list[dict[str, str]], issues: list[str]) -> None:
-    is_canonical_portfolio = "portfolio" in path.relative_to(RESULTS).parts[:1]
+    is_canonical_portfolio = path.name.startswith("portfolio_")
     required_by_suffix = {
         "equity_curve.csv": {"date", "portfolio_value", "cash", "holdings", "total_return", "drawdown"},
         "trades.csv": {"date", "ticker", "strategy", "action", "price", "quantity", "cost", "slippage", "portfolio_value"},
         "portfolio_equity_curve.csv": {"date", "portfolio_value", "cash", "total_holdings_value", "total_return", "drawdown", "gross_exposure"},
         "portfolio_positions.csv": {"date", "ticker", "quantity", "price", "market_value", "target_weight", "actual_weight", "rebalance_id"},
         "portfolio_fills.csv": {"rebalance_id", "date", "ticker", "side", "quantity", "price", "transaction_cost", "slippage_cost", "cash_after"},
-        "portfolio_rebalances.csv": {"rebalance_id", "date", "policy_name", "frequency", "turnover"},
         "portfolio_allocation_weights.csv": {"rebalance_id", "policy_name", "ticker", "target_weight"},
         "portfolio_costs.csv": {"rebalance_id", "date", "ticker", "transaction_cost", "slippage_cost", "total_cost"},
+        "portfolio_valuations.csv": {"date", "ticker", "tradable", "has_bar", "mark_price", "mark_source", "stale_age_days", "position_quantity", "marked_value", "actual_weight"},
+        "portfolio_corporate_actions.csv": {"action_date", "ticker", "action_type", "value", "quantity_before", "quantity_after", "cash_effect", "portfolio_value_before", "portfolio_value_after", "adjustment_policy", "source"},
     }
     header = set(rows[0].keys()) if rows else set()
     for suffix, required in required_by_suffix.items():
@@ -53,9 +54,76 @@ def validate_file(path: Path, issues: list[str]) -> None:
         reader = csv.DictReader(f)
         rows = list(reader)
     if not rows:
+        if path.name == "portfolio_corporate_actions.csv" and reader.fieldnames and {
+            "action_date", "ticker", "action_type", "value", "adjustment_policy", "source"
+        }.issubset(reader.fieldnames):
+            return
         issues.append(f"{path}: empty CSV")
         return
     check_required_columns(path, rows, issues)
+
+    if path.name == "portfolio_performance_summary.csv" and rows[0].get("schema_version") == "3":
+        required = {"calendar_mode", "valuation_frequency", "observations_per_year", "annualization_method",
+                    "total_valuation_observations", "weekend_observations", "stale_mark_observations",
+                    "stale_mark_policy", "max_stale_calendar_days"}
+        missing = required - set(rows[0])
+        if missing:
+            issues.append(f"{path}: missing schema-v3 summary columns {sorted(missing)}")
+        if rows[0].get("calendar_mode") != "union":
+            issues.append(f"{path}: schema-v3 portfolio must identify union calendar mode")
+        observations = as_float(rows[0].get("observations_per_year", ""))
+        if observations is None or observations <= 0:
+            issues.append(f"{path}: invalid observations_per_year")
+
+    if path.name == "portfolio_rebalances.csv":
+        if "scheduled_rebalance_date" in rows[0]:
+            required = {"rebalance_id", "scheduled_rebalance_date", "decision_date", "execution_date",
+                        "deferred_asset_count", "skipped_asset_count", "partial_rebalance", "closed_asset_policy", "turnover"}
+        else:
+            required = {"rebalance_id", "date", "policy_name", "frequency", "turnover"}
+        missing = required - set(rows[0])
+        if missing:
+            issues.append(f"{path}: missing required rebalance columns {sorted(missing)}")
+
+    if path.name == "portfolio_valuations.csv":
+        seen: set[tuple[str, str]] = set()
+        for line_number, row in enumerate(rows, start=2):
+            key = (row.get("date", ""), row.get("ticker", ""))
+            if key in seen:
+                issues.append(f"{path}:{line_number}: duplicate union-calendar valuation {key}")
+            seen.add(key)
+            stale_age = as_float(row.get("stale_age_days", ""))
+            if stale_age is None or stale_age < 0:
+                issues.append(f"{path}:{line_number}: impossible stale age")
+            source = row.get("mark_source", "")
+            if not source:
+                issues.append(f"{path}:{line_number}: missing mark source")
+            tradable = row.get("tradable") == "1"
+            has_bar = row.get("has_bar") == "1"
+            if tradable and not has_bar:
+                issues.append(f"{path}:{line_number}: tradable asset has no bar")
+
+    if path.name == "portfolio_fills.csv" and "execution_date" in rows[0]:
+        valuation_path = path.with_name("portfolio_valuations.csv")
+        if valuation_path.exists():
+            with valuation_path.open(newline="") as stream:
+                tradable = {(row["date"], row["ticker"]): row["tradable"] == "1" for row in csv.DictReader(stream)}
+            for line_number, row in enumerate(rows, start=2):
+                key = (row.get("execution_date", ""), row.get("ticker", ""))
+                if not tradable.get(key, False):
+                    issues.append(f"{path}:{line_number}: fill occurred on non-tradable date {key}")
+
+    if path.name == "portfolio_corporate_actions.csv":
+        dividend_keys: set[tuple[str, str]] = set()
+        for line_number, row in enumerate(rows, start=2):
+            value = as_float(row.get("value", ""))
+            if value is None or value <= 0:
+                issues.append(f"{path}:{line_number}: invalid corporate-action value")
+            if row.get("action_type") == "cash_dividend" and as_float(row.get("cash_effect", "")) not in (None, 0.0):
+                key = (row.get("action_date", ""), row.get("ticker", ""))
+                if key in dividend_keys:
+                    issues.append(f"{path}:{line_number}: duplicate dividend credit {key}")
+                dividend_keys.add(key)
 
     if path.name in {"windows.csv", "walk_forward_windows.csv"} and "schema_version" in rows[0]:
         required = {
@@ -135,7 +203,7 @@ def validate_file(path: Path, issues: list[str]) -> None:
             issues.append(f"{path}:{line_number}: negative quantity {quantity}")
 
         price = as_float(row.get("price", ""))
-        if price is not None and price <= 0:
+        if price is not None and price <= 0 and (quantity is None or quantity > 0):
             issues.append(f"{path}:{line_number}: missing or invalid price {price}")
 
         for cost_col in ("transaction_cost", "slippage_cost", "total_cost", "cost", "slippage"):

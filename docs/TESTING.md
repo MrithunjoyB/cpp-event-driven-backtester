@@ -10,6 +10,8 @@ ctest --test-dir build --output-on-failure
 
 Targets cover the preserved regression suite, typed date/config behavior, causal methodology, exporters, deterministic bootstrap analysis, and CLI smoke checks. Fixtures in `tests/fixtures` are local and deterministic; tests never download live data.
 
+`calendar_tests`, `union_portfolio_tests`, and `corporate_action_tests` cover union/intersection timelines, stale marks, weekend risk, closed-market execution prevention, civil schedules, causal deferral, splits, reverse splits, dividends, adjusted-mode double-count prevention, and invalid actions. Run `python3 scripts/test_download_data.py` for deterministic downloader normalization.
+
 Methodology coverage includes next-bar execution, causal regime attribution, calendar walk-forward boundaries, continuous OOS capital, benchmark execution parity, and configured benchmark propagation. `tests/fixtures/regression/stage0_architecture_baseline.csv` records eight numerical snapshots from commit `dc040a9...`; compare generated artifacts with:
 
 ```bash
