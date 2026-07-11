@@ -4,6 +4,7 @@
 #include "ResearchMethodology.h"
 #include "quant/io/ResultExporter.h"
 #include "quant/config/ConfigLoader.h"
+#include "quant/experiments/BootstrapAnalyzer.h"
 
 #include <algorithm>
 #include <chrono>
@@ -14,7 +15,6 @@
 #include <limits>
 #include <map>
 #include <numeric>
-#include <random>
 #include <sstream>
 #include <stdexcept>
 
@@ -178,25 +178,6 @@ std::vector<double> optimized_rolling_sma(const std::vector<double>& values, int
     return out;
 }
 
-std::vector<double> returns_from_equity(const std::vector<EquityPoint>& equity) {
-    std::vector<double> returns;
-    for (std::size_t i = 1; i < equity.size(); ++i) {
-        double prev = equity[i - 1].portfolio_value;
-        if (prev > 0.0) {
-            returns.push_back((equity[i].portfolio_value / prev) - 1.0);
-        }
-    }
-    return returns;
-}
-
-double percentile(std::vector<double> values, double p) {
-    if (values.empty()) {
-        return 0.0;
-    }
-    std::sort(values.begin(), values.end());
-    std::size_t index = static_cast<std::size_t>(std::min<double>(values.size() - 1, std::floor(p * (values.size() - 1))));
-    return values[index];
-}
 }
 
 std::vector<std::string> Analysis::default_tickers() {
@@ -779,74 +760,7 @@ void Analysis::run_research_experiment(const ExperimentConfig& experiment) {
     run_regime_evaluation(base, experiment.tickers);
 }
 
-void Analysis::run_portfolio_research(const ExperimentConfig& experiment, const std::string& policy) {
-    std::filesystem::create_directories(experiment.output.results_dir + "/portfolio");
-    BacktestConfig base;
-    base.starting_capital = experiment.execution.starting_capital;
-    base.transaction_cost_rate = experiment.execution.commission_bps / 10000.0;
-    base.slippage_rate = experiment.execution.slippage_bps / 10000.0;
-    base.results_dir = experiment.output.results_dir + "/portfolio";
-
-    std::vector<BacktestResult> legs;
-    for (const auto& ticker : experiment.tickers) {
-        BacktestConfig cfg = base;
-        cfg.ticker = ticker;
-        auto specs = default_strategy_specs();
-        legs.push_back(Backtester(cfg).run_detailed(*specs.front().instance));
-    }
-    std::ofstream eq(base.results_dir + "/portfolio_equity_curve.csv");
-    std::ofstream pos(base.results_dir + "/portfolio_positions.csv");
-    std::ofstream orders(base.results_dir + "/portfolio_orders.csv");
-    std::ofstream fills(base.results_dir + "/portfolio_fills.csv");
-    std::ofstream reb(base.results_dir + "/portfolio_rebalances.csv");
-    std::ofstream sum(base.results_dir + "/portfolio_performance_summary.csv");
-    eq << std::fixed << std::setprecision(6);
-    pos << std::fixed << std::setprecision(6);
-    orders << std::fixed << std::setprecision(6);
-    fills << std::fixed << std::setprecision(6);
-    reb << std::fixed << std::setprecision(6);
-    sum << std::fixed << std::setprecision(6);
-    eq << "date,portfolio_value,cash,holdings,total_return,drawdown\n";
-    pos << "date,ticker,target_weight,market_value\n";
-    orders << "date,ticker,action,target_weight\n";
-    fills << "date,ticker,filled_notional,estimated_cost\n";
-    reb << "date,policy,asset_count,max_weight\n";
-    sum << "policy,total_return,max_drawdown,asset_count,notes\n";
-    if (legs.empty()) {
-        return;
-    }
-    std::size_t n = legs.front().equity_curve.size();
-    double peak = experiment.execution.starting_capital;
-    double max_drawdown = 0.0;
-    double final_portfolio_value = experiment.execution.starting_capital;
-    for (std::size_t i = 0; i < n; ++i) {
-        double value = 0.0;
-        for (const auto& leg : legs) {
-            if (i < leg.equity_curve.size()) {
-                value += leg.equity_curve[i].portfolio_value / legs.size();
-            }
-        }
-        peak = std::max(peak, value);
-        double dd = peak > 0.0 ? value / peak - 1.0 : 0.0;
-        max_drawdown = std::min(max_drawdown, dd);
-        double total_return = experiment.execution.starting_capital > 0.0 ? value / experiment.execution.starting_capital - 1.0 : 0.0;
-        final_portfolio_value = value;
-        eq << legs.front().equity_curve[i].date << ',' << value << ",0," << value << ',' << total_return << ',' << dd << '\n';
-        if (i % 21 == 0) {
-            reb << legs.front().equity_curve[i].date << ',' << policy << ',' << legs.size() << ",0.40\n";
-            for (const auto& ticker : experiment.tickers) {
-                pos << legs.front().equity_curve[i].date << ',' << ticker << ',' << 1.0 / experiment.tickers.size() << ',' << value / experiment.tickers.size() << '\n';
-                orders << legs.front().equity_curve[i].date << ',' << ticker << ",REBALANCE," << 1.0 / experiment.tickers.size() << '\n';
-                fills << legs.front().equity_curve[i].date << ',' << ticker << ',' << value / experiment.tickers.size() << ",0\n";
-            }
-        }
-    }
-    sum << policy << ',' << final_portfolio_value / experiment.execution.starting_capital - 1.0 << ',' << max_drawdown << ',' << experiment.tickers.size()
-        << ",transparent composite of independently audited legs; no leverage or shorting\n";
-}
-
 void Analysis::run_bootstrap_research(const ExperimentConfig& experiment) {
-    std::filesystem::create_directories(experiment.output.results_dir + "/bootstrap");
     BacktestConfig base;
     base.starting_capital = experiment.execution.starting_capital;
     base.transaction_cost_rate = experiment.execution.commission_bps / 10000.0;
@@ -854,44 +768,7 @@ void Analysis::run_bootstrap_research(const ExperimentConfig& experiment) {
     base.ticker = experiment.tickers.empty() ? "AAPL" : experiment.tickers.front();
     auto specs = grid_strategy_specs(experiment.strategy);
     BacktestResult result = Backtester(base).run_detailed(*specs.front().instance);
-    std::vector<double> returns = returns_from_equity(result.equity_curve);
-    std::mt19937 rng(experiment.bootstrap.random_seed);
-    std::uniform_int_distribution<std::size_t> pick(0, returns.empty() ? 0 : returns.size() - 1);
-    std::vector<double> terminal;
-    std::ofstream paths(experiment.output.results_dir + "/bootstrap/bootstrap_paths_sample.csv");
-    std::ofstream dist(experiment.output.results_dir + "/bootstrap/bootstrap_metric_distributions.csv");
-    paths << "path,step,equity\n";
-    dist << "path,total_return,terminal_wealth,max_drawdown,sharpe\n";
-    int paths_count = 1000;
-    for (int path = 0; path < paths_count; ++path) {
-        double equity = experiment.execution.starting_capital;
-        double peak = equity;
-        double maxdd = 0.0;
-        std::vector<double> sampled;
-        for (std::size_t i = 0; i < returns.size(); ++i) {
-            double r = returns.empty() ? 0.0 : returns[pick(rng)];
-            sampled.push_back(r);
-            equity *= 1.0 + r;
-            peak = std::max(peak, equity);
-            maxdd = std::min(maxdd, equity / peak - 1.0);
-            if (path < 20) {
-                paths << path << ',' << i << ',' << equity << '\n';
-            }
-        }
-        terminal.push_back(equity);
-        double sharpe = stdev(sampled) > 0.0 ? mean(sampled) * 252.0 / (stdev(sampled) * std::sqrt(252.0)) : 0.0;
-        dist << path << ',' << equity / experiment.execution.starting_capital - 1.0 << ',' << equity << ',' << maxdd << ',' << sharpe << '\n';
-    }
-    std::ofstream summary(experiment.output.results_dir + "/bootstrap/bootstrap_summary.csv");
-    int losses = 0;
-    for (double wealth : terminal) {
-        losses += wealth < experiment.execution.starting_capital ? 1 : 0;
-    }
-    summary << "metric,value\n";
-    summary << "paths," << paths_count << '\n';
-    summary << "seed," << experiment.bootstrap.random_seed << '\n';
-    summary << "terminal_wealth_p05," << percentile(terminal, 0.05) << '\n';
-    summary << "terminal_wealth_p50," << percentile(terminal, 0.50) << '\n';
-    summary << "terminal_wealth_p95," << percentile(terminal, 0.95) << '\n';
-    summary << "probability_of_loss," << static_cast<double>(losses) / paths_count << '\n';
+    const auto bootstrap = quant::experiments::BootstrapAnalyzer::run(
+        result, experiment.bootstrap, experiment.execution.starting_capital);
+    quant::io::CsvResultExporter::write_bootstrap(bootstrap, experiment.output.results_dir + "/bootstrap");
 }

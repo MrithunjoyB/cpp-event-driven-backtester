@@ -37,7 +37,6 @@ public:
     static void run_regime_evaluation(const BacktestConfig& base_config, const std::vector<std::string>& tickers);
     static std::vector<BenchmarkTiming> run_performance_benchmarks(const BacktestConfig& base_config);
     static void run_research_experiment(const ExperimentConfig& experiment);
-    static void run_portfolio_research(const ExperimentConfig& experiment, const std::string& policy);
     static void run_bootstrap_research(const ExperimentConfig& experiment);
 
 private:

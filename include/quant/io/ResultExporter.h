@@ -3,6 +3,7 @@
 #include "Backtester.h"
 #include "PortfolioBacktester.h"
 #include "quant/config/ExperimentConfig.h"
+#include "quant/experiments/BootstrapAnalyzer.h"
 
 #include <string>
 #include <vector>
@@ -20,6 +21,9 @@ public:
     static void write_portfolio(
         const PortfolioBacktestResult& result,
         const PortfolioBacktestConfig& config);
+    static void write_bootstrap(
+        const quant::experiments::BootstrapResult& result,
+        const std::string& directory);
 };
 
 class JsonManifestExporter {

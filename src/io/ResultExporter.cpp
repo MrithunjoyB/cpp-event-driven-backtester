@@ -176,6 +176,37 @@ void CsvResultExporter::write_portfolio(
     verify_output(summary, config.results_dir + "/portfolio_performance_summary.csv");
 }
 
+void CsvResultExporter::write_bootstrap(
+    const quant::experiments::BootstrapResult& result,
+    const std::string& directory) {
+    std::error_code error;
+    std::filesystem::create_directories(directory, error);
+    if (error) throw std::runtime_error("Could not create bootstrap result directory " + directory + ": " + error.message());
+    const std::string paths_path = directory + "/bootstrap_paths_sample.csv";
+    const std::string metrics_path = directory + "/bootstrap_metric_distributions.csv";
+    const std::string summary_path = directory + "/bootstrap_summary.csv";
+    auto paths = open_output(paths_path);
+    auto metrics = open_output(metrics_path);
+    auto summary = open_output(summary_path);
+    paths << "path,step,equity\n";
+    for (const auto& point : result.sampled_paths) paths << point.path << ',' << point.step << ',' << point.equity << '\n';
+    metrics << "path,total_return,terminal_wealth,max_drawdown,sharpe\n";
+    for (const auto& metric : result.metrics) {
+        metrics << metric.path << ',' << metric.total_return << ',' << metric.terminal_wealth << ','
+                << metric.max_drawdown << ',' << metric.sharpe << '\n';
+    }
+    summary << "metric,value\n"
+            << "paths," << result.path_count << '\n'
+            << "seed," << result.seed << '\n'
+            << "terminal_wealth_p05," << result.terminal_wealth_p05 << '\n'
+            << "terminal_wealth_p50," << result.terminal_wealth_p50 << '\n'
+            << "terminal_wealth_p95," << result.terminal_wealth_p95 << '\n'
+            << "probability_of_loss," << result.probability_of_loss << '\n';
+    verify_output(paths, paths_path);
+    verify_output(metrics, metrics_path);
+    verify_output(summary, summary_path);
+}
+
 void JsonManifestExporter::write_text(const std::string& filepath, const std::string& json) {
     const std::filesystem::path path(filepath);
     std::error_code error;

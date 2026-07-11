@@ -7,16 +7,17 @@ option(QUANT_ENABLE_STRICT_WARNINGS "Enable strict compiler warnings" ON)
 option(QUANT_ENABLE_BENCHMARKS "Enable benchmark CLI functionality" ON)
 
 set(QUANT_CORE_SOURCES
-    src/MarketData.cpp
-    src/Strategy.cpp
-    src/Portfolio.cpp
-    src/AllocationPolicy.cpp
-    src/PortfolioBacktester.cpp
-    src/ResearchMethodology.cpp
-    src/ExecutionHandler.cpp
-    src/Backtester.cpp
-    src/Analysis.cpp
-    src/Metrics.cpp
+    src/market_data/MarketData.cpp
+    src/strategies/Strategy.cpp
+    src/portfolio/Portfolio.cpp
+    src/allocation/AllocationPolicy.cpp
+    src/portfolio/PortfolioBacktester.cpp
+    src/methodology/ResearchMethodology.cpp
+    src/execution/ExecutionHandler.cpp
+    src/experiments/Backtester.cpp
+    src/experiments/Analysis.cpp
+    src/experiments/BootstrapAnalyzer.cpp
+    src/analytics/Metrics.cpp
     src/io/ResultExporter.cpp
     src/domain/Date.cpp
     src/config/ConfigLoader.cpp
@@ -74,6 +75,7 @@ if(BUILD_TESTING AND QUANT_ENABLE_TESTS)
     quant_add_test(domain_config_tests tests/refactor/test_domain_config.cpp)
     quant_add_test(methodology_tests tests/refactor/test_methodology.cpp)
     quant_add_test(export_tests tests/refactor/test_export.cpp)
+    quant_add_test(bootstrap_tests tests/refactor/test_bootstrap.cpp)
 
     add_test(NAME cli_help COMMAND quant_cli help)
     add_test(NAME cli_version COMMAND quant_cli version)
