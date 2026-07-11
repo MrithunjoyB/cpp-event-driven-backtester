@@ -13,6 +13,7 @@ add_executable(backtester
     src/Portfolio.cpp
     src/AllocationPolicy.cpp
     src/PortfolioBacktester.cpp
+    src/ResearchMethodology.cpp
     src/ExecutionHandler.cpp
     src/Backtester.cpp
     src/Analysis.cpp
@@ -29,6 +30,7 @@ if(BUILD_TESTING)
         src/Portfolio.cpp
         src/AllocationPolicy.cpp
         src/PortfolioBacktester.cpp
+        src/ResearchMethodology.cpp
         src/ExecutionHandler.cpp
         src/Backtester.cpp
         src/Analysis.cpp

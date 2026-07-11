@@ -35,11 +35,17 @@ PerformanceSummary Metrics::calculate(
     const std::vector<EquityPoint>& equity_curve,
     const std::vector<Trade>& trades,
     double benchmark_gross_return,
-    double benchmark_net_return) {
+    double benchmark_net_return,
+    const std::string& benchmark_ticker,
+    const std::string& benchmark_execution_policy,
+    const std::string& benchmark_cost_policy) {
     PerformanceSummary summary;
     summary.ticker = ticker;
     summary.strategy = strategy;
     summary.parameter_set = parameter_set;
+    summary.benchmark_ticker = benchmark_ticker;
+    summary.benchmark_execution_policy = benchmark_execution_policy;
+    summary.benchmark_cost_policy = benchmark_cost_policy;
     summary.num_trades = static_cast<int>(trades.size());
     summary.benchmark_gross_return = benchmark_gross_return;
     summary.benchmark_net_return = benchmark_net_return;

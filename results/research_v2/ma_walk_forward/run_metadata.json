@@ -1,0 +1,20 @@
+{
+  "mode": "compare",
+  "ticker_argument": "",
+  "strategy_argument": "",
+  "starting_capital": 100000,
+  "commission_bps": 10,
+  "slippage_bps": 5,
+  "data_start_date_argument": "",
+  "data_end_date_argument": "",
+  "execution_convention": "signals_after_bar_t_close_execute_at_bar_t_plus_1_open",
+  "benchmark_ticker": "SPY",
+  "benchmark_execution_policy": "first_close_decision_next_open_integer_shares_5pct_cash_reserve",
+  "benchmark_cost_policy": "strategy_costs_for_net_zero_costs_for_gross",
+  "benchmark_excess_return_basis": "strategy_net_total_return_minus_benchmark_net_return",
+  "regime_information_cutoff": "close_t_minus_1_for_open_t_and_start_of_return_interval",
+  "volatility_threshold_method": "expanding_median_strictly_prior_volatility",
+  "result_schema_version": 2,
+  "run_timestamp_utc": "2026-07-11T08:03:21Z",
+  "git_commit_hash": "efa31c07ecc58ca98b30b1eb5ce99e2fa5ba20d4"
+}

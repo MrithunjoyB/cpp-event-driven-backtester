@@ -42,7 +42,7 @@ def check_required_columns(path: Path, rows: list[dict[str, str]], issues: list[
             if missing:
                 issues.append(f"{path}: missing required columns {sorted(missing)}")
     if path.name.endswith("performance_summary.csv") and path.name != "portfolio_performance_summary.csv":
-        required = {"ticker", "strategy", "total_return", "benchmark_gross_return", "benchmark_net_return", "excess_return", "max_drawdown", "win_rate", "num_trades"}
+        required = {"schema_version", "ticker", "strategy", "total_return", "benchmark_ticker", "benchmark_execution_policy", "benchmark_cost_policy", "excess_return_basis", "benchmark_gross_return", "benchmark_net_return", "excess_return", "max_drawdown", "win_rate", "num_trades"}
         missing = required - header
         if missing:
             issues.append(f"{path}: missing required columns {sorted(missing)}")
@@ -56,6 +56,55 @@ def validate_file(path: Path, issues: list[str]) -> None:
         issues.append(f"{path}: empty CSV")
         return
     check_required_columns(path, rows, issues)
+
+    if path.name in {"windows.csv", "walk_forward_windows.csv"} and "schema_version" in rows[0]:
+        required = {
+            "window_mode", "ticker", "strategy", "window_id", "train_start", "train_end",
+            "test_start", "test_end", "train_observations", "test_observations",
+            "starting_capital", "ending_capital", "continuity_policy",
+            "boundary_position_policy", "boundary_liquidation_costs", "linked_return",
+            "cumulative_oos_return", "benchmark_ticker", "benchmark_execution_policy",
+            "benchmark_cost_policy", "excess_return_basis",
+        }
+        missing = required - set(rows[0].keys())
+        if missing:
+            issues.append(f"{path}: missing schema-v2 walk-forward columns {sorted(missing)}")
+        previous: dict[tuple[str, str], tuple[str, float]] = {}
+        initial: dict[tuple[str, str], float] = {}
+        for line_number, row in enumerate(rows, start=2):
+            key = (row.get("ticker", ""), row.get("strategy", ""))
+            start = as_float(row.get("starting_capital", ""))
+            end = as_float(row.get("ending_capital", ""))
+            if start is None or end is None:
+                issues.append(f"{path}:{line_number}: invalid window capital")
+                continue
+            if row.get("train_end", "") >= row.get("test_start", ""):
+                issues.append(f"{path}:{line_number}: training and testing periods overlap")
+            if key in previous:
+                prior_test_end, prior_ending = previous[key]
+                if prior_test_end >= row.get("test_start", ""):
+                    issues.append(f"{path}:{line_number}: test windows overlap")
+                if row.get("continuity_policy") == "continuous_capital" and abs(prior_ending - start) > 1e-3:
+                    issues.append(f"{path}:{line_number}: previous ending capital does not equal next starting capital")
+            initial.setdefault(key, start)
+            cumulative = as_float(row.get("cumulative_oos_return", ""))
+            expected = end / initial[key] - 1.0 if initial[key] > 0 else 0.0
+            if row.get("continuity_policy") == "continuous_capital" and cumulative is not None and abs(cumulative - expected) > 1e-4:
+                issues.append(f"{path}:{line_number}: cumulative OOS return does not reconcile")
+            if not row.get("benchmark_ticker") or not row.get("benchmark_execution_policy"):
+                issues.append(f"{path}:{line_number}: missing benchmark metadata")
+            previous[key] = (row.get("test_end", ""), end)
+
+    if path.name == "regime_assignments.csv" and "schema_version" in rows[0]:
+        required = {"trend_regime", "volatility_regime", "volatility_value", "volatility_threshold", "information_cutoff", "volatility_threshold_method"}
+        missing = required - set(rows[0].keys())
+        if missing:
+            issues.append(f"{path}: missing causal regime columns {sorted(missing)}")
+        for line_number, row in enumerate(rows, start=2):
+            if row.get("information_cutoff", "") > row.get("date", ""):
+                issues.append(f"{path}:{line_number}: regime cutoff is in the future")
+            if row.get("volatility_threshold_method") != "expanding_median_strictly_prior_volatility":
+                issues.append(f"{path}:{line_number}: unexpected volatility threshold method")
 
     seen_date_keys: set[tuple[str, ...]] = set()
     seen_rebalance_ids: set[int] = set()

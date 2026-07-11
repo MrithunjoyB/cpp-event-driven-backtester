@@ -8,6 +8,12 @@
   "train_window_days": 756,
   "test_window_days": 126,
   "step_days": 126,
+  "window_mode": "calendar_duration",
+  "train_years": 3,
+  "test_months": 6,
+  "step_months": 6,
+  "oos_continuity_policy": "continuous_capital",
+  "boundary_position_policy": "liquidate_at_test_end_close",
   "benchmark": "SPY",
   "parameter_selection_objective": "sharpe_min_trades",
   "minimum_trade_requirement": 3,
@@ -22,5 +28,6 @@
   "momentum_lookback": 126,
   "top_n": 3,
   "output_directory": "results/research/portfolio_momentum_top_n",
-  "portfolio_output_directory": "results/portfolio/momentum_top_n"
+  "portfolio_output_directory": "results/portfolio/momentum_top_n",
+  "result_schema_version": 2
 }

@@ -21,9 +21,14 @@ std::string sanitize(const std::string& value) {
 }
 
 void write_summary_row(std::ofstream& out, const PerformanceSummary& s) {
-    out << s.ticker << ','
+    out << s.schema_version << ','
+        << s.ticker << ','
         << s.strategy << ','
         << s.parameter_set << ','
+        << s.benchmark_ticker << ','
+        << s.benchmark_execution_policy << ','
+        << s.benchmark_cost_policy << ','
+        << s.excess_return_basis << ','
         << s.total_return << ','
         << s.benchmark_gross_return << ','
         << s.benchmark_net_return << ','
@@ -75,15 +80,19 @@ BacktestResult Backtester::run_detailed(const Strategy& strategy_template, bool 
     std::optional<OrderEvent> pending_order;
     std::size_t first_index = std::numeric_limits<std::size_t>::max();
     std::size_t last_index = 0;
+    for (std::size_t i = 0; i < history.size(); ++i) {
+        if (in_window(history[i], config_)) {
+            if (first_index == std::numeric_limits<std::size_t>::max()) {
+                first_index = i;
+            }
+            last_index = i;
+        }
+    }
 
     for (std::size_t i = 0; i < history.size(); ++i) {
         if (!in_window(history[i], config_)) {
             continue;
         }
-        if (first_index == std::numeric_limits<std::size_t>::max()) {
-            first_index = i;
-        }
-        last_index = i;
         MarketEvent market_event = market_data.market_event(config_.ticker, i);
 
         if (pending_order && pending_order->quantity > 0) {
@@ -96,15 +105,21 @@ BacktestResult Backtester::run_detailed(const Strategy& strategy_template, bool 
         SignalEvent signal = strategy->on_market_event(market_event, history);
         OrderEvent order = portfolio.generate_order(signal, market_event.close);
 
-        if (order.quantity > 0 && i + 1 < history.size()) {
+        if (order.quantity > 0 && i < last_index) {
             pending_order = order;
+        }
+        if (config_.liquidate_at_end && i == last_index && portfolio.position() > 0) {
+            SignalEvent liquidation_signal{EventType::Signal, market_event.date, config_.ticker, strategy->name(), SignalType::Sell};
+            OrderEvent liquidation_order = portfolio.generate_order(liquidation_signal, market_event.close);
+            FillEvent liquidation_fill = execution.execute_order(liquidation_order, market_event.close);
+            portfolio.process_fill(liquidation_fill, market_event.close);
         }
         portfolio.mark_to_market(market_event.date, market_event.close);
     }
 
     BenchmarkResult bench = first_index == std::numeric_limits<std::size_t>::max()
         ? BenchmarkResult{}
-        : benchmark_return(history, first_index, last_index);
+        : benchmark_return(history[first_index].date, history[last_index].date);
 
     PerformanceSummary summary = Metrics::calculate(
         config_.ticker,
@@ -114,7 +129,10 @@ BacktestResult Backtester::run_detailed(const Strategy& strategy_template, bool 
         portfolio.equity_curve(),
         portfolio.trades(),
         bench.gross_return,
-        bench.net_return);
+        bench.net_return,
+        bench.ticker,
+        bench.execution_policy,
+        bench.cost_policy);
 
     if (write_outputs) {
         const std::string prefix = result_prefix(strategy->name());
@@ -134,7 +152,7 @@ BacktestResult Backtester::run_detailed(const Strategy& strategy_template, bool 
 void Backtester::write_combined_summary(const std::string& filepath, const std::vector<PerformanceSummary>& summaries) {
     std::ofstream out(filepath);
     out << std::fixed << std::setprecision(6);
-    out << "ticker,strategy,parameter_set,total_return,benchmark_gross_return,benchmark_net_return,excess_return,annualized_return,volatility,sharpe,max_drawdown,win_rate,profit_factor,num_trades,turnover,total_transaction_costs,cost_drag,average_trade_return\n";
+    out << "schema_version,ticker,strategy,parameter_set,benchmark_ticker,benchmark_execution_policy,benchmark_cost_policy,excess_return_basis,total_return,benchmark_gross_return,benchmark_net_return,excess_return,annualized_return,volatility,sharpe,max_drawdown,win_rate,profit_factor,num_trades,turnover,total_transaction_costs,cost_drag,average_trade_return\n";
     for (const auto& summary : summaries) {
         write_summary_row(out, summary);
     }
@@ -180,7 +198,7 @@ void Backtester::write_equity_curve(const std::string& filepath, const std::vect
 void Backtester::write_summary(const std::string& filepath, const PerformanceSummary& summary) const {
     std::ofstream out(filepath);
     out << std::fixed << std::setprecision(6);
-    out << "ticker,strategy,parameter_set,total_return,benchmark_gross_return,benchmark_net_return,excess_return,annualized_return,volatility,sharpe,max_drawdown,win_rate,profit_factor,num_trades,turnover,total_transaction_costs,cost_drag,average_trade_return\n";
+    out << "schema_version,ticker,strategy,parameter_set,benchmark_ticker,benchmark_execution_policy,benchmark_cost_policy,excess_return_basis,total_return,benchmark_gross_return,benchmark_net_return,excess_return,annualized_return,volatility,sharpe,max_drawdown,win_rate,profit_factor,num_trades,turnover,total_transaction_costs,cost_drag,average_trade_return\n";
     write_summary_row(out, summary);
 }
 
@@ -188,21 +206,49 @@ std::string Backtester::result_prefix(const std::string& strategy_name) const {
     return sanitize(config_.ticker) + "_" + sanitize(strategy_name);
 }
 
-BenchmarkResult Backtester::benchmark_return(const std::vector<Bar>& history, std::size_t start, std::size_t end) const {
-    if (history.empty() || start >= history.size() || end >= history.size() || start >= end || history[start].close <= 0.0) {
-        return {};
+BenchmarkResult Backtester::benchmark_return(const std::string& start_date, const std::string& end_date) const {
+    const std::string ticker = config_.benchmark_ticker == "same_asset" ? config_.ticker : config_.benchmark_ticker;
+    if (ticker.empty()) {
+        throw std::runtime_error("Benchmark must be 'same_asset' or a ticker symbol");
     }
-    double gross_return = (history[end].close / history[start].close) - 1.0;
-    double buy_price = history[start].close * (1.0 + config_.slippage_rate);
-    double buy_cost_per_share = buy_price * (1.0 + config_.transaction_cost_rate);
-    if (buy_cost_per_share <= 0.0) {
-        return {gross_return, gross_return};
+    MarketData benchmark_data;
+    const std::string path = config_.data_dir + "/" + ticker + ".csv";
+    if (!benchmark_data.load_csv(ticker, path)) {
+        throw std::runtime_error("Could not load configured benchmark " + ticker + " from " + path);
     }
-    double shares = config_.starting_capital / buy_cost_per_share;
-    double sell_price = history[end].close * (1.0 - config_.slippage_rate);
-    double gross_proceeds = shares * sell_price;
-    double sell_commission = gross_proceeds * config_.transaction_cost_rate;
-    double ending_value = gross_proceeds - sell_commission;
-    double net_return = config_.starting_capital > 0.0 ? (ending_value / config_.starting_capital) - 1.0 : 0.0;
-    return {gross_return, net_return};
+    std::vector<Bar> bars;
+    for (const auto& bar : benchmark_data.bars(ticker)) {
+        if (bar.date >= start_date && bar.date <= end_date) {
+            bars.push_back(bar);
+        }
+    }
+    if (bars.size() < 2) {
+        throw std::runtime_error("Configured benchmark " + ticker + " has fewer than two observations in " + start_date + " to " + end_date);
+    }
+    auto simulate = [&](double commission, double slippage) {
+        Portfolio portfolio(config_.starting_capital);
+        ExecutionHandler execution(commission, slippage);
+        portfolio.mark_to_market(bars.front().date, bars.front().close);
+        SignalEvent signal{EventType::Signal, bars.front().date, ticker, "Buy_And_Hold_Benchmark", SignalType::Buy};
+        OrderEvent order = portfolio.generate_order(signal, bars.front().close);
+        order.date = bars[1].date;
+        FillEvent fill = execution.execute_order(order, bars[1].open);
+        portfolio.process_fill(fill, bars[1].open);
+        for (std::size_t i = 1; i < bars.size(); ++i) {
+            if (config_.liquidate_at_end && i + 1 == bars.size() && portfolio.position() > 0) {
+                SignalEvent sell_signal{EventType::Signal, bars[i].date, ticker, "Buy_And_Hold_Benchmark", SignalType::Sell};
+                OrderEvent sell_order = portfolio.generate_order(sell_signal, bars[i].close);
+                FillEvent sell_fill = execution.execute_order(sell_order, bars[i].close);
+                portfolio.process_fill(sell_fill, bars[i].close);
+            }
+            portfolio.mark_to_market(bars[i].date, bars[i].close);
+        }
+        return portfolio.current_value() / config_.starting_capital - 1.0;
+    };
+    return BenchmarkResult{
+        simulate(0.0, 0.0),
+        simulate(config_.transaction_cost_rate, config_.slippage_rate),
+        ticker,
+        "first_close_decision_next_open_integer_shares_5pct_cash_reserve",
+        "strategy_costs_for_net_zero_costs_for_gross"};
 }

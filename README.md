@@ -24,7 +24,7 @@ This project was built as an honest, interview-ready quantitative development pr
 - Tracks starting capital, cash, position, holdings, trade history, realized P&L, unrealized holdings, and portfolio value.
 - Applies transaction costs and slippage on every fill.
 - Uses next-bar open execution: signals are generated from the current bar and filled on the next bar open.
-- Compares strategy returns against buy-and-hold benchmark returns for the same ticker and date range.
+- Compares strategy returns against a configured same-asset or external buy-and-hold benchmark using comparable execution assumptions.
 - Supports JSON experiment configs, parameter grid search, walk-forward validation, cross-asset evaluation, transaction-cost sensitivity, regime evaluation, bootstrap uncertainty, true shared-cash multi-asset portfolio backtesting, and runtime benchmarking.
 - Prevents buying beyond available cash and prevents long-only portfolios from selling more shares than held.
 - Exports trades, equity curves, performance summaries, and strategy comparison files.
@@ -191,12 +191,11 @@ The engine writes:
 - `results/strategy_regime_performance.csv`
 - `results/regime_assignments.csv`
 - `results/benchmark_timings.csv`
-- `results/research/<experiment>/walk_forward/windows.csv`
-- `results/research/<experiment>/walk_forward/in_sample_results.csv`
-- `results/research/<experiment>/walk_forward/out_of_sample_results.csv`
-- `results/research/<experiment>/walk_forward/oos_equity_curve.csv`
-- `results/research/<experiment>/portfolio/portfolio_equity_curve.csv`
-- `results/research/<experiment>/bootstrap/bootstrap_summary.csv`
+- `results/research_v2/<experiment>/walk_forward/windows.csv`
+- `results/research_v2/<experiment>/walk_forward/in_sample_results.csv`
+- `results/research_v2/<experiment>/walk_forward/out_of_sample_results.csv`
+- `results/research_v2/<experiment>/walk_forward/oos_equity_curve.csv`
+- `results/research_v2/<experiment>/bootstrap/bootstrap_summary.csv`
 - `results/portfolio/portfolio_equity_curve.csv`
 - `results/portfolio/portfolio_positions.csv`
 - `results/portfolio/portfolio_orders.csv`
@@ -225,7 +224,7 @@ date,portfolio_value,cash,holdings,total_return,drawdown
 Performance summary schema:
 
 ```csv
-ticker,strategy,parameter_set,total_return,benchmark_gross_return,benchmark_net_return,excess_return,annualized_return,volatility,sharpe,max_drawdown,win_rate,profit_factor,num_trades,turnover,total_transaction_costs,cost_drag,average_trade_return
+schema_version,ticker,strategy,parameter_set,benchmark_ticker,benchmark_execution_policy,benchmark_cost_policy,excess_return_basis,total_return,benchmark_gross_return,benchmark_net_return,excess_return,annualized_return,volatility,sharpe,max_drawdown,win_rate,profit_factor,num_trades,turnover,total_transaction_costs,cost_drag,average_trade_return
 ```
 
 Portfolio equity schema:
@@ -273,8 +272,8 @@ python3 scripts/generate_research_report.py
 
 - All returns are decimal returns: `0.10` means `10%`.
 - Total return: final net portfolio value divided by starting capital minus one. Trading costs are already reflected in the portfolio value.
-- Benchmark gross return: buy-and-hold close-to-close return over the same date window, before commission and slippage.
-- Benchmark net return: buy-and-hold over the same date window after applying the same commission and slippage assumptions at entry and exit.
+- Benchmark gross return: the comparable buy-and-hold policy using the same decision timing, next-open execution, integer sizing, and 5% cash reserve, with zero costs.
+- Benchmark net return: the same comparable policy after applying the strategy's commission and slippage assumptions.
 - Excess return: strategy total return minus benchmark net return.
 - Annualized return: total return converted to a 252-trading-day annual rate.
 - Volatility: sample standard deviation of daily portfolio returns annualized by `sqrt(252)`.
@@ -300,6 +299,10 @@ The default transaction cost is 10 basis points and default slippage is 5 basis 
 Trade accounting uses slippage-adjusted fill prices. Buy cash outflow is fill notional plus commission. Sell cash inflow is fill notional minus commission. Slippage is not double-counted in cash flows; it is reported separately as measured cost attribution. Realized P&L is recorded only on sells and uses commission-inclusive average entry cost basis.
 
 Open positions at the final bar remain open and are marked to market in the final equity value. They are not force-liquidated unless a strategy generates a sell signal before the dataset ends.
+
+Continuous walk-forward tests are the exception: each test window uses a scheduled liquidation at its final close. Commission and slippage are charged, the resulting cash becomes the next test window's starting capital, and newly selected parameters begin without inheriting an incompatible position.
+
+Single-asset benchmarks use the same first-close decision, next-open execution, integer-share sizing, cash reserve, valuation interval, and cost model as an equivalent buy-and-hold strategy. `benchmark="same_asset"` resolves to the traded ticker. A configured external ticker such as `SPY` is loaded independently and fails clearly when its data is unavailable.
 
 The project does not claim production-grade execution realism, high-frequency behavior, complete bias elimination, or order-book simulation.
 
@@ -343,7 +346,7 @@ SMA and rolling volatility return zero until enough observations are available. 
 
 ## Testing Methodology
 
-The CTest target contains deterministic unit-style checks using small fixed inputs and CSV fixtures under `tests/fixtures/`. It covers indicators, transaction cost and slippage, single-asset portfolio accounting, invalid orders, next-bar execution, benchmark windows, metric formulas, data-quality rejection cases, shared-cash portfolio accounting, allocation constraints, weekly/monthly rebalance schedules, portfolio drawdown, VaR, Expected Shortfall, and portfolio integrity fixtures.
+The CTest target contains deterministic unit-style checks using small fixed inputs and CSV fixtures under `tests/fixtures/`. It covers indicators, costs, accounting, next-bar execution, benchmark parity and propagation, causal regime prefix invariance, execution and return timestamps, equity and BTC calendar windows, leap years, missing dates, OOS non-overlap and capital reconciliation, shared-cash constraints, portfolio risk metrics, and result-integrity fixtures.
 
 Run:
 
@@ -358,7 +361,7 @@ The result validator fails on NaN, infinity, missing required columns, negative 
 
 ## Reproducibility
 
-Every run writes `results/run_metadata.json` with the mode, CLI ticker/strategy arguments, starting capital, commission/slippage in basis points, date arguments, execution convention, timestamp, and Git commit hash where available.
+Every run writes `run_metadata.json` with schema version 2, the mode, CLI ticker/strategy arguments, starting capital, commission/slippage in basis points, date arguments, execution convention, benchmark ticker and methodology, timestamp, and Git commit hash where available. Config-driven experiments also write their resolved calendar, continuity, boundary, benchmark, and schema settings.
 
 ## Experiment Configuration And Parameter Search
 
@@ -375,11 +378,13 @@ Invalid combinations, such as short moving averages greater than or equal to lon
 
 ## Walk-Forward Validation
 
-Walk-forward validation uses:
+Walk-forward validation defaults to true civil-calendar durations:
 
-- Training window: 3 years, approximated as 756 trading days.
-- Testing window: 6 months, approximated as 126 trading days.
-- Step size: 6 months.
+- Training interval: `[anchor, anchor + 3 calendar years)`.
+- Testing interval: `[anchor + 3 years, anchor + 3 years + 6 calendar months)`.
+- Step: advance the anchor by 6 calendar months.
+
+Equities and seven-day assets therefore share elapsed boundaries but can have different observation counts. Missing dates do not shift boundaries, leap days and month ends are clamped deterministically, training and testing never overlap, and test dates are counted once. Observation-count windows remain available only through the explicit legacy `window_mode="observation_count"` setting.
 
 For each window, candidate parameters are evaluated only in-sample. The default config objective is:
 
@@ -389,7 +394,7 @@ objective = training Sharpe, after rejecting candidates below the configured min
 
 Other implemented objectives include Calmar ratio, excess return, and a Sharpe objective with a maximum-drawdown guard.
 
-The selected parameters are frozen and then tested on the immediately following out-of-sample period. In-sample selection history and out-of-sample results are written separately. Config-driven experiments also write parameter history, out-of-sample trades, and summary consistency statistics.
+The selected parameters are frozen and tested on the immediately following out-of-sample period. The default `continuous_capital` policy links ending cash into the next window after the cost-bearing boundary liquidation. `normalized_window` is a separate diagnostic mode and must not be presented as deployable stitched performance. Schema-v2 outputs record observation counts, starting and ending capital, liquidation costs, linked and cumulative returns, continuity policy, benchmark methodology, and test boundaries.
 
 ## Bootstrap Uncertainty
 
@@ -408,9 +413,11 @@ Regimes are assigned mechanically, not manually:
 - Bull: price above 200-day SMA and 60-day return positive.
 - Bear: price below 200-day SMA and 60-day return negative.
 - Sideways: all other classified observations.
-- Volatility state: 20-day annualized rolling volatility above or below an expanding/history-derived median.
+- Volatility state: 20-day annualized rolling volatility above or below the expanding median of volatility observations strictly before the classification date, after a 60-observation threshold warm-up.
 
-Regime assignments are exported to `results/regime_assignments.csv`; strategy metrics are exported to `results/regime_evaluation.csv` and `results/strategy_regime_performance.csv`.
+Each regime point represents information known at that date's close. An open fill on date `t` uses a regime cutoff no later than close `t-1`. A close-to-close return from `t-1` to `t` is attributed to the start-of-period regime known at close `t-1`. Warm-up dates are labelled `unavailable`, and exports include trend state, volatility state, volatility value, causal threshold, information cutoff, and threshold method.
+
+Regime assignments are exported to `results/regime_assignments.csv`; strategy metrics are exported to `results/regime_evaluation.csv` and `results/strategy_regime_performance.csv`. Historical schema-v1 research outputs under `results/research/` are retained only as labelled regression artifacts; current config-driven outputs are written under `results/research_v2/`.
 
 ## C++ Performance Benchmarks
 
@@ -418,10 +425,10 @@ Runtime benchmarks are exported to `results/benchmark_timings.csv`. On the verif
 
 | Benchmark | Time |
 | --- | ---: |
-| Naive rolling SMA | 4.814334 ms |
-| Optimized rolling SMA | 0.743542 ms |
-| Single AAPL backtest | 19.308541 ms |
-| Full AAPL parameter sweep | 137.767167 ms |
+| Naive rolling SMA | 4.877557 ms |
+| Optimized rolling SMA | 0.771395 ms |
+| Single AAPL backtest | 38.884989 ms |
+| Full AAPL parameter sweep | 220.501466 ms |
 
 ## Example Strategy Comparison
 
@@ -450,7 +457,6 @@ The implementation is intentionally long-only. Signals become orders only when t
 - Options strategy backtesting.
 - Machine learning signal generation.
 - Live paper-trading integration.
-- Benchmark comparison against buy-and-hold.
 - More robust corporate-action handling.
 
 ## Current Limitations
@@ -459,5 +465,9 @@ The implementation is intentionally long-only. Signals become orders only when t
 - Long-only by default.
 - No order book, intraday queue model, or partial fills.
 - No taxes, borrow costs, financing rates, or corporate-action adjustment beyond the downloaded price data.
+- Mixed-calendar shared portfolios still use a common-date valuation intersection; complete weekend BTC portfolio risk is not claimed.
+- Price series are not a documented dividend-adjusted total-return dataset.
+- Bootstrap output remains IID, and no block bootstrap or multiple-testing correction is claimed.
+- Statistical outputs are descriptive and are not claimed as research-grade inference.
 - Not a live trading system.
 - Intended for education, research, and interview discussion, not guaranteed profitability.

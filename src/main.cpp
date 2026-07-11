@@ -99,7 +99,13 @@ void write_run_metadata(const BacktestConfig& config, const std::string& mode, c
         << "  \"data_start_date_argument\": \"" << config.start_date << "\",\n"
         << "  \"data_end_date_argument\": \"" << config.end_date << "\",\n"
         << "  \"execution_convention\": \"signals_after_bar_t_close_execute_at_bar_t_plus_1_open\",\n"
+        << "  \"benchmark_ticker\": \"" << config.benchmark_ticker << "\",\n"
+        << "  \"benchmark_execution_policy\": \"first_close_decision_next_open_integer_shares_5pct_cash_reserve\",\n"
+        << "  \"benchmark_cost_policy\": \"strategy_costs_for_net_zero_costs_for_gross\",\n"
         << "  \"benchmark_excess_return_basis\": \"strategy_net_total_return_minus_benchmark_net_return\",\n"
+        << "  \"regime_information_cutoff\": \"close_t_minus_1_for_open_t_and_start_of_return_interval\",\n"
+        << "  \"volatility_threshold_method\": \"expanding_median_strictly_prior_volatility\",\n"
+        << "  \"result_schema_version\": 2,\n"
         << "  \"run_timestamp_utc\": \"" << timestamp_utc() << "\",\n"
         << "  \"git_commit_hash\": \"" << git_hash() << "\"\n"
         << "}\n";
@@ -117,6 +123,7 @@ int main(int argc, char** argv) {
         double capital = get_double_arg(argc, argv, "--capital", 100000.0);
         double transaction_cost = get_double_arg(argc, argv, "--transaction-cost", 0.001);
         double slippage = get_double_arg(argc, argv, "--slippage", 0.0005);
+        std::string benchmark = get_arg(argc, argv, "--benchmark", "same_asset");
 
         BacktestConfig base_config;
         base_config.starting_capital = capital;
@@ -124,6 +131,7 @@ int main(int argc, char** argv) {
         base_config.slippage_rate = slippage;
         base_config.start_date = start_date;
         base_config.end_date = end_date;
+        base_config.benchmark_ticker = benchmark;
 
         std::vector<PerformanceSummary> summaries;
         std::cout << std::fixed << std::setprecision(4);
@@ -137,6 +145,12 @@ int main(int argc, char** argv) {
 
         if (!config_path.empty()) {
             ExperimentConfig experiment = Analysis::load_experiment_config(config_path);
+            base_config.starting_capital = experiment.starting_capital;
+            base_config.transaction_cost_rate = experiment.commission_bps / 10000.0;
+            base_config.slippage_rate = experiment.slippage_bps / 10000.0;
+            base_config.benchmark_ticker = experiment.benchmark;
+            base_config.results_dir = experiment.allocation_policy.empty()
+                ? experiment.output_dir : experiment.portfolio_output_dir;
             if (!experiment.allocation_policy.empty()) {
                 PortfolioBacktestConfig portfolio_config;
                 portfolio_config.tickers = experiment.tickers;

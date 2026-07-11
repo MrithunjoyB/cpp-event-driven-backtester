@@ -23,8 +23,9 @@ double trailing_volatility(const std::vector<Bar>& bars, std::size_t decision_in
     if (lookback <= 1 || decision_index < static_cast<std::size_t>(lookback)) {
         return 0.0;
     }
+    const std::size_t window = static_cast<std::size_t>(lookback);
     std::vector<double> returns;
-    for (std::size_t i = decision_index - lookback + 1; i <= decision_index; ++i) {
+    for (std::size_t i = decision_index - window + 1; i <= decision_index; ++i) {
         if (i == 0 || bars[i - 1].close <= 0.0) {
             continue;
         }
@@ -37,7 +38,8 @@ double trailing_return(const std::vector<Bar>& bars, std::size_t decision_index,
     if (lookback <= 0 || decision_index < static_cast<std::size_t>(lookback)) {
         return -1e9;
     }
-    double start = bars[decision_index - lookback].close;
+    const std::size_t window = static_cast<std::size_t>(lookback);
+    double start = bars[decision_index - window].close;
     return start > 0.0 ? (bars[decision_index].close / start) - 1.0 : -1e9;
 }
 }
@@ -192,8 +194,9 @@ std::map<std::string, double> AllocationPolicy::momentum_top_n(
     for (const auto& ticker : tickers) {
         raw[ticker] = 0.0;
     }
-    int selected = std::min<int>(config_.top_n, ranked.size());
-    for (int i = 0; i < selected; ++i) {
+    const std::size_t requested = config_.top_n > 0 ? static_cast<std::size_t>(config_.top_n) : 0;
+    const std::size_t selected = std::min(requested, ranked.size());
+    for (std::size_t i = 0; i < selected; ++i) {
         if (ranked[i].second > -1e8) {
             raw[ranked[i].first] = 1.0;
         }

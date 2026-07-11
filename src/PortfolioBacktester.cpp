@@ -37,8 +37,9 @@ double covariance(const std::vector<double>& x, const std::vector<double>& y) {
     if (n < 2) {
         return 0.0;
     }
-    double mx = mean(std::vector<double>(x.begin(), x.begin() + n));
-    double my = mean(std::vector<double>(y.begin(), y.begin() + n));
+    const auto count = static_cast<std::vector<double>::difference_type>(n);
+    double mx = mean(std::vector<double>(x.begin(), x.begin() + count));
+    double my = mean(std::vector<double>(y.begin(), y.begin() + count));
     double sum = 0.0;
     for (std::size_t i = 0; i < n; ++i) {
         sum += (x[i] - mx) * (y[i] - my);
@@ -122,7 +123,8 @@ double PortfolioBacktester::expected_shortfall_95(std::vector<double> returns) {
     }
     std::sort(returns.begin(), returns.end());
     std::size_t index = static_cast<std::size_t>(std::floor(0.05 * (returns.size() - 1)));
-    std::vector<double> tail(returns.begin(), returns.begin() + index + 1);
+    const auto tail_end = static_cast<std::vector<double>::difference_type>(index + 1);
+    std::vector<double> tail(returns.begin(), returns.begin() + tail_end);
     return mean(tail);
 }
 

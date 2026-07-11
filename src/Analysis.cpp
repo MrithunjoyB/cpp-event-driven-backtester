@@ -1,6 +1,7 @@
 #include "Analysis.h"
 
 #include "MarketData.h"
+#include "ResearchMethodology.h"
 
 #include <algorithm>
 #include <chrono>
@@ -65,14 +66,6 @@ MarketData load_market_data(const BacktestConfig& config, const std::string& tic
     return data;
 }
 
-std::vector<std::string> half_year_windows(const std::vector<Bar>& bars) {
-    std::vector<std::string> dates;
-    for (std::size_t i = 0; i < bars.size(); i += 126) {
-        dates.push_back(bars[i].date);
-    }
-    return dates;
-}
-
 double sortino_from_equity(const std::vector<EquityPoint>& equity) {
     std::vector<double> downside;
     std::vector<double> returns;
@@ -116,23 +109,6 @@ double objective(const PerformanceSummary& summary) {
     return objective(summary, "sharpe_min_trades", 3);
 }
 
-std::string regime_for(const std::vector<Bar>& bars, const std::vector<double>& returns, std::size_t index, double vol_median) {
-    if (index < 200 || index < 60) {
-        return "unclassified";
-    }
-    double sma200 = simple_moving_average(bars, index, 200);
-    double ret60 = (bars[index].close / bars[index - 60].close) - 1.0;
-    double vol20 = rolling_volatility(returns, index - 1, 20) * std::sqrt(252.0);
-    std::string vol_state = vol20 > vol_median ? "high_volatility" : "low_volatility";
-    if (bars[index].close > sma200 && ret60 > 0.0) {
-        return "bull/" + vol_state;
-    }
-    if (bars[index].close < sma200 && ret60 < 0.0) {
-        return "bear/" + vol_state;
-    }
-    return "sideways/" + vol_state;
-}
-
 double mean(const std::vector<double>& values) {
     if (values.empty()) {
         return 0.0;
@@ -155,11 +131,23 @@ double stdev(const std::vector<double>& values) {
 
 void write_regime_row(std::ofstream& out, const std::string& regime, const std::string& ticker, const std::string& strategy,
                       double total_return, double sharpe, double max_drawdown, int trade_count, double win_rate,
-                      double profit_factor, double benchmark_relative_performance, double average_exposure) {
-    out << regime << ',' << ticker << ',' << strategy << ','
+                      double profit_factor, double benchmark_relative_performance, double average_exposure,
+                      const std::string& benchmark_ticker) {
+    out << regime << ',' << ticker << ',' << strategy << ',' << benchmark_ticker << ','
         << total_return << ',' << sharpe << ',' << max_drawdown << ','
         << trade_count << ',' << win_rate << ',' << profit_factor << ','
-        << benchmark_relative_performance << ',' << average_exposure << '\n';
+        << benchmark_relative_performance << ',' << average_exposure
+        << ",start_of_period_close,expanding_median_strictly_prior_volatility,start_of_period_regime\n";
+}
+
+double close_on_or_before(const std::vector<Bar>& bars, const std::string& date) {
+    auto it = std::upper_bound(
+        bars.begin(), bars.end(), date,
+        [](const std::string& value, const Bar& bar) { return value < bar.date; });
+    if (it == bars.begin()) {
+        throw std::runtime_error("Benchmark has no observation on or before " + date);
+    }
+    return std::prev(it)->close;
 }
 
 std::vector<double> closes_from(const std::vector<Bar>& bars) {
@@ -180,7 +168,7 @@ std::vector<double> optimized_rolling_sma(const std::vector<double>& values, int
     for (std::size_t i = 0; i < values.size(); ++i) {
         rolling += values[i];
         if (i >= static_cast<std::size_t>(window)) {
-            rolling -= values[i - window];
+            rolling -= values[i - static_cast<std::size_t>(window)];
         }
         if (i + 1 >= static_cast<std::size_t>(window)) {
             out[i] = rolling / window;
@@ -354,28 +342,24 @@ void Analysis::run_walk_forward(const BacktestConfig& base_config, const std::ve
     windows << std::fixed << std::setprecision(6);
     equity_out << std::fixed << std::setprecision(6);
     history_out << std::fixed << std::setprecision(6);
-    windows << "ticker,strategy,train_start,train_end,test_start,test_end,parameter_set,in_sample_sharpe,in_sample_total_return,out_of_sample_total_return,out_of_sample_sharpe,out_of_sample_max_drawdown,out_of_sample_trades\n";
-    equity_out << "ticker,strategy,parameter_set,window_id,date,portfolio_value,cash,holdings,total_return,drawdown\n";
-    history_out << "ticker,strategy,window_id,train_start,train_end,selected_parameter_set,objective,train_sharpe,train_max_drawdown\n";
+    windows << "schema_version,window_mode,ticker,strategy,window_id,train_start,train_end,test_start,test_end,train_observations,test_observations,parameter_set,in_sample_sharpe,in_sample_total_return,out_of_sample_total_return,out_of_sample_sharpe,out_of_sample_max_drawdown,out_of_sample_trades,starting_capital,ending_capital,continuity_policy,boundary_position_policy,boundary_liquidation_costs,linked_return,cumulative_oos_return,benchmark_ticker,benchmark_execution_policy,benchmark_cost_policy,excess_return_basis\n";
+    equity_out << "schema_version,window_mode,continuity_policy,ticker,strategy,parameter_set,window_id,date,portfolio_value,cash,holdings,total_return,cumulative_oos_return,drawdown\n";
+    history_out << "schema_version,window_mode,ticker,strategy,window_id,train_start,train_end,train_observations,selected_parameter_set,objective,train_sharpe,train_max_drawdown\n";
 
     int window_id = 0;
     for (const auto& ticker : tickers) {
         MarketData data = load_market_data(base_config, ticker);
         const auto& bars = data.bars(ticker);
-        if (bars.size() < 756 + 126) {
-            continue;
-        }
-        for (std::size_t train_start = 0; train_start + 756 + 126 <= bars.size(); train_start += 126) {
-            std::size_t train_end = train_start + 755;
-            std::size_t test_start = train_end + 1;
-            std::size_t test_end = std::min(test_start + 125, bars.size() - 1);
+        const auto calendar_windows = build_calendar_windows(bars, 3, 6, 6);
+        std::map<std::string, double> capital_by_strategy;
+        for (const auto& window : calendar_windows) {
 
             std::map<std::string, PerformanceSummary> best_by_strategy;
             for (const auto& spec : grid_strategy_specs()) {
                 BacktestConfig train_config = base_config;
                 train_config.ticker = ticker;
-                train_config.start_date = bars[train_start].date;
-                train_config.end_date = bars[train_end].date;
+                train_config.start_date = window.train_start;
+                train_config.end_date = window.train_end;
                 Backtester train_tester(train_config);
                 PerformanceSummary train_summary = train_tester.run_detailed(*spec.instance, false).summary;
                 if (!best_by_strategy.count(spec.strategy) || objective(train_summary) > objective(best_by_strategy[spec.strategy])) {
@@ -387,28 +371,49 @@ void Analysis::run_walk_forward(const BacktestConfig& base_config, const std::ve
                 auto frozen = make_strategy(selected.second.strategy, selected.second.parameter_set);
                 BacktestConfig test_config = base_config;
                 test_config.ticker = ticker;
-                test_config.start_date = bars[test_start].date;
-                test_config.end_date = bars[test_end].date;
+                double starting_capital = capital_by_strategy.count(selected.first)
+                    ? capital_by_strategy[selected.first] : base_config.starting_capital;
+                test_config.starting_capital = starting_capital;
+                test_config.start_date = window.test_start;
+                test_config.end_date = window.test_end;
+                test_config.liquidate_at_end = true;
                 Backtester test_tester(test_config);
                 BacktestResult out_sample = test_tester.run_detailed(*frozen, false);
+                const double ending_capital = out_sample.equity_curve.empty()
+                    ? starting_capital : out_sample.equity_curve.back().portfolio_value;
+                capital_by_strategy[selected.first] = ending_capital;
+                double boundary_costs = 0.0;
+                for (const auto& trade : out_sample.trades) {
+                    if (trade.date == window.test_end && trade.action == "SELL") {
+                        boundary_costs += trade.cost + trade.slippage;
+                    }
+                }
+                const double cumulative_return = ending_capital / base_config.starting_capital - 1.0;
 
-                windows << ticker << ',' << selected.second.strategy << ','
-                    << bars[train_start].date << ',' << bars[train_end].date << ','
-                    << bars[test_start].date << ',' << bars[test_end].date << ','
+                windows << "2,calendar_duration," << ticker << ',' << selected.second.strategy << ',' << window_id << ','
+                    << window.train_start << ',' << window.train_end << ','
+                    << window.test_start << ',' << window.test_end << ','
+                    << window.train_observations << ',' << window.test_observations << ','
                     << selected.second.parameter_set << ','
                     << selected.second.sharpe << ',' << selected.second.total_return << ','
                     << out_sample.summary.total_return << ',' << out_sample.summary.sharpe << ','
-                    << out_sample.summary.max_drawdown << ',' << out_sample.summary.num_trades << '\n';
+                    << out_sample.summary.max_drawdown << ',' << out_sample.summary.num_trades << ','
+                    << starting_capital << ',' << ending_capital
+                    << ",continuous_capital,liquidate_at_test_end_close," << boundary_costs << ','
+                    << out_sample.summary.total_return << ',' << cumulative_return << ','
+                    << out_sample.summary.benchmark_ticker << ',' << out_sample.summary.benchmark_execution_policy << ','
+                    << out_sample.summary.benchmark_cost_policy << ',' << out_sample.summary.excess_return_basis << '\n';
 
-                history_out << ticker << ',' << selected.second.strategy << ',' << window_id << ','
-                    << bars[train_start].date << ',' << bars[train_end].date << ','
+                history_out << "2,calendar_duration," << ticker << ',' << selected.second.strategy << ',' << window_id << ','
+                    << window.train_start << ',' << window.train_end << ',' << window.train_observations << ','
                     << selected.second.parameter_set << ',' << objective(selected.second) << ','
                     << selected.second.sharpe << ',' << selected.second.max_drawdown << '\n';
 
                 for (const auto& point : out_sample.equity_curve) {
-                    equity_out << ticker << ',' << selected.second.strategy << ',' << selected.second.parameter_set << ','
+                    equity_out << "2,calendar_duration,continuous_capital," << ticker << ',' << selected.second.strategy << ',' << selected.second.parameter_set << ','
                         << window_id << ',' << point.date << ',' << point.portfolio_value << ','
-                        << point.cash << ',' << point.holdings << ',' << point.total_return << ',' << point.drawdown << '\n';
+                        << point.cash << ',' << point.holdings << ',' << point.total_return << ','
+                        << point.portfolio_value / base_config.starting_capital - 1.0 << ',' << point.drawdown << '\n';
                 }
                 ++window_id;
             }
@@ -423,7 +428,7 @@ void Analysis::run_transaction_cost_sensitivity(const BacktestConfig& base_confi
     out << std::fixed << std::setprecision(6);
     surface << std::fixed << std::setprecision(6);
     break_even_out << std::fixed << std::setprecision(6);
-    const std::string header = "ticker,strategy,parameter_set,commission_bps,slippage_bps,net_return,sharpe,turnover,total_costs,degradation_vs_zero_cost,estimated_break_even_cost_bps\n";
+    const std::string header = "schema_version,ticker,strategy,parameter_set,benchmark_ticker,benchmark_execution_policy,benchmark_cost_policy,excess_return_basis,commission_bps,slippage_bps,net_return,sharpe,turnover,total_costs,degradation_vs_zero_cost,estimated_break_even_cost_bps\n";
     out << header;
     surface << header;
     break_even_out << "ticker,strategy,parameter_set,estimated_break_even_all_in_bps,method\n";
@@ -451,7 +456,9 @@ void Analysis::run_transaction_cost_sensitivity(const BacktestConfig& base_confi
                     }
                     std::ostringstream row;
                     row << std::fixed << std::setprecision(6);
-                    row << ticker << ',' << summary.strategy << ',' << summary.parameter_set << ','
+                    row << summary.schema_version << ',' << ticker << ',' << summary.strategy << ',' << summary.parameter_set << ','
+                        << summary.benchmark_ticker << ',' << summary.benchmark_execution_policy << ','
+                        << summary.benchmark_cost_policy << ',' << summary.excess_return_basis << ','
                         << commission_bps << ',' << slippage_bps << ','
                         << summary.total_return << ',' << summary.sharpe << ',' << summary.turnover << ','
                         << summary.total_transaction_costs << ',' << degradation << ',' << break_even << '\n';
@@ -476,10 +483,10 @@ void Analysis::run_regime_evaluation(const BacktestConfig& base_config, const st
     out << std::fixed << std::setprecision(6);
     performance << std::fixed << std::setprecision(6);
     assignments << std::fixed << std::setprecision(6);
-    const std::string header = "regime,ticker,strategy,return,sharpe,drawdown,trade_count,win_rate,profit_factor,benchmark_relative_performance,average_exposure\n";
+    const std::string header = "schema_version,regime,ticker,strategy,benchmark_ticker,return,sharpe,drawdown,trade_count,win_rate,profit_factor,benchmark_relative_performance,average_exposure,regime_information_cutoff,volatility_threshold_method,return_attribution_policy\n";
     out << header;
     performance << header;
-    assignments << "date,ticker,regime\n";
+    assignments << "schema_version,date,ticker,trend_regime,volatility_regime,regime,volatility_value,volatility_threshold,information_cutoff,volatility_threshold_method\n";
     const std::vector<std::string> regimes = {
         "bull/low_volatility", "bull/high_volatility",
         "bear/low_volatility", "bear/high_volatility",
@@ -489,19 +496,16 @@ void Analysis::run_regime_evaluation(const BacktestConfig& base_config, const st
     for (const auto& ticker : tickers) {
         MarketData data = load_market_data(base_config, ticker);
         const auto& bars = data.bars(ticker);
-        const auto closes = closes_from(bars);
-        const auto returns = daily_returns(closes);
-        std::vector<double> vol_samples;
-        for (std::size_t i = 60; i < returns.size(); ++i) {
-            vol_samples.push_back(rolling_volatility(returns, i, 60) * std::sqrt(252.0));
-        }
-        std::sort(vol_samples.begin(), vol_samples.end());
-        double median_vol = vol_samples.empty() ? 0.0 : vol_samples[vol_samples.size() / 2];
-
-        std::map<std::string, std::string> date_regime;
-        for (std::size_t i = 0; i < bars.size(); ++i) {
-            date_regime[bars[i].date] = regime_for(bars, returns, i, median_vol);
-            assignments << bars[i].date << ',' << ticker << ',' << date_regime[bars[i].date] << '\n';
+        const std::string resolved_benchmark = base_config.benchmark_ticker == "same_asset"
+            ? ticker : base_config.benchmark_ticker;
+        MarketData benchmark_data = load_market_data(base_config, resolved_benchmark);
+        const auto& benchmark_bars = benchmark_data.bars(resolved_benchmark);
+        const auto causal_regimes = classify_causal_regimes(bars, 20, 60);
+        for (const auto& point : causal_regimes) {
+            assignments << "2," << point.date << ',' << ticker << ',' << point.trend_regime << ','
+                        << point.volatility_regime << ',' << point.regime << ',' << point.volatility_value << ','
+                        << point.volatility_threshold << ',' << point.information_cutoff
+                        << ",expanding_median_strictly_prior_volatility\n";
         }
 
         for (const auto& spec : default_strategy_specs()) {
@@ -520,20 +524,20 @@ void Analysis::run_regime_evaluation(const BacktestConfig& base_config, const st
                 int eligible_days = 0;
                 for (std::size_t i = 1; i < result.equity_curve.size(); ++i) {
                     const auto& point = result.equity_curve[i];
-                    if (date_regime[point.date] != regime) {
+                    const auto& previous_point = result.equity_curve[i - 1];
+                    const RegimePoint* assigned = regime_for_return_interval(causal_regimes, previous_point.date, point.date);
+                    if (assigned == nullptr || assigned->regime != regime) {
                         continue;
                     }
                     double prev_value = result.equity_curve[i - 1].portfolio_value;
                     double ret = prev_value > 0.0 ? (point.portfolio_value / prev_value) - 1.0 : 0.0;
                     regime_returns.push_back(ret);
                     equity *= 1.0 + ret;
-                    auto bar_it = std::find_if(bars.begin(), bars.end(), [&](const Bar& bar) { return bar.date == point.date; });
-                    if (bar_it != bars.end() && bar_it != bars.begin()) {
-                        const auto& prev_bar = *(bar_it - 1);
-                        double benchmark_ret = prev_bar.close > 0.0 ? (bar_it->close / prev_bar.close) - 1.0 : 0.0;
-                        benchmark_returns.push_back(benchmark_ret);
-                        benchmark_equity *= 1.0 + benchmark_ret;
-                    }
+                    const double benchmark_start = close_on_or_before(benchmark_bars, previous_point.date);
+                    const double benchmark_end = close_on_or_before(benchmark_bars, point.date);
+                    const double benchmark_ret = benchmark_start > 0.0 ? benchmark_end / benchmark_start - 1.0 : 0.0;
+                    benchmark_returns.push_back(benchmark_ret);
+                    benchmark_equity *= 1.0 + benchmark_ret;
                     peak = std::max(peak, equity);
                     max_drawdown = std::min(max_drawdown, (equity / peak) - 1.0);
                     ++eligible_days;
@@ -547,7 +551,8 @@ void Analysis::run_regime_evaluation(const BacktestConfig& base_config, const st
                 double gross_profit = 0.0;
                 double gross_loss = 0.0;
                 for (const auto& trade : result.trades) {
-                    if (date_regime[trade.date] != regime) {
+                    const RegimePoint* assigned = regime_for_execution(causal_regimes, trade.date);
+                    if (assigned == nullptr || assigned->regime != regime) {
                         continue;
                     }
                     ++trade_count;
@@ -566,10 +571,12 @@ void Analysis::run_regime_evaluation(const BacktestConfig& base_config, const st
                 double profit_factor = gross_loss > 0.0 ? gross_profit / gross_loss : (gross_profit > 0.0 ? gross_profit : 0.0);
                 double benchmark_relative = (equity - 1.0) - (benchmark_equity - 1.0);
                 double average_exposure = eligible_days > 0 ? static_cast<double>(exposure_days) / eligible_days : 0.0;
+                out << "2,";
                 write_regime_row(out, regime, ticker, spec.strategy, equity - 1.0, sharpe, max_drawdown, trade_count, win_rate,
-                                 profit_factor, benchmark_relative, average_exposure);
+                                 profit_factor, benchmark_relative, average_exposure, resolved_benchmark);
+                performance << "2,";
                 write_regime_row(performance, regime, ticker, spec.strategy, equity - 1.0, sharpe, max_drawdown, trade_count, win_rate,
-                                 profit_factor, benchmark_relative, average_exposure);
+                                 profit_factor, benchmark_relative, average_exposure, resolved_benchmark);
             }
         }
     }
@@ -656,6 +663,12 @@ ExperimentConfig Analysis::load_experiment_config(const std::string& filepath) {
     config.train_days = static_cast<int>(json_number(text, "train_window_days", config.train_days));
     config.test_days = static_cast<int>(json_number(text, "test_window_days", config.test_days));
     config.step_days = static_cast<int>(json_number(text, "step_days", config.step_days));
+    config.window_mode = json_string(text, "window_mode", config.window_mode);
+    config.train_years = static_cast<int>(json_number(text, "train_years", config.train_years));
+    config.test_months = static_cast<int>(json_number(text, "test_months", config.test_months));
+    config.step_months = static_cast<int>(json_number(text, "step_months", config.step_months));
+    config.continuity_policy = json_string(text, "oos_continuity_policy", config.continuity_policy);
+    config.boundary_position_policy = json_string(text, "boundary_position_policy", config.boundary_position_policy);
     config.benchmark = json_string(text, "benchmark", config.benchmark);
     config.objective = json_string(text, "parameter_selection_objective", config.objective);
     config.minimum_trades = static_cast<int>(json_number(text, "minimum_trade_requirement", config.minimum_trades));
@@ -671,6 +684,19 @@ ExperimentConfig Analysis::load_experiment_config(const std::string& filepath) {
     config.momentum_lookback = static_cast<int>(json_number(text, "momentum_lookback", config.momentum_lookback));
     config.top_n = static_cast<int>(json_number(text, "top_n", config.top_n));
     config.portfolio_output_dir = json_string(text, "portfolio_output_directory", config.portfolio_output_dir);
+    config.result_schema_version = static_cast<int>(json_number(text, "result_schema_version", config.result_schema_version));
+    if (config.window_mode != "calendar_duration" && config.window_mode != "observation_count") {
+        throw std::runtime_error("window_mode must be calendar_duration or observation_count");
+    }
+    if (config.continuity_policy != "continuous_capital" && config.continuity_policy != "normalized_window") {
+        throw std::runtime_error("oos_continuity_policy must be continuous_capital or normalized_window");
+    }
+    if (config.boundary_position_policy != "liquidate_at_test_end_close") {
+        throw std::runtime_error("Unsupported boundary_position_policy: " + config.boundary_position_policy);
+    }
+    if (config.benchmark.empty() || config.benchmark == "same_ticker") {
+        throw std::runtime_error("benchmark must be same_asset or an available ticker symbol");
+    }
     return config;
 }
 
@@ -686,10 +712,22 @@ void Analysis::run_research_experiment(const ExperimentConfig& experiment) {
              << "  \"train_window_days\": " << experiment.train_days << ",\n"
              << "  \"test_window_days\": " << experiment.test_days << ",\n"
              << "  \"step_days\": " << experiment.step_days << ",\n"
+             << "  \"window_mode\": \"" << experiment.window_mode << "\",\n"
+             << "  \"train_years\": " << experiment.train_years << ",\n"
+             << "  \"test_months\": " << experiment.test_months << ",\n"
+             << "  \"step_months\": " << experiment.step_months << ",\n"
+             << "  \"oos_continuity_policy\": \"" << experiment.continuity_policy << "\",\n"
+             << "  \"boundary_position_policy\": \"" << experiment.boundary_position_policy << "\",\n"
              << "  \"benchmark\": \"" << experiment.benchmark << "\",\n"
+             << "  \"benchmark_execution_policy\": \"first_close_decision_next_open_integer_shares_5pct_cash_reserve\",\n"
+             << "  \"benchmark_cost_policy\": \"strategy_costs_for_net_zero_costs_for_gross\",\n"
+             << "  \"excess_return_basis\": \"net_strategy_minus_net_benchmark\",\n"
+             << "  \"regime_information_cutoff\": \"close_t_minus_1_for_open_t_and_start_of_return_interval\",\n"
+             << "  \"volatility_threshold_method\": \"expanding_median_strictly_prior_volatility\",\n"
              << "  \"parameter_selection_objective\": \"" << experiment.objective << "\",\n"
              << "  \"minimum_trade_requirement\": " << experiment.minimum_trades << ",\n"
-             << "  \"random_seed\": " << experiment.random_seed << "\n"
+             << "  \"random_seed\": " << experiment.random_seed << ",\n"
+             << "  \"result_schema_version\": " << experiment.result_schema_version << "\n"
              << "}\n";
 
     BacktestConfig base;
@@ -697,16 +735,19 @@ void Analysis::run_research_experiment(const ExperimentConfig& experiment) {
     base.transaction_cost_rate = experiment.commission_bps / 10000.0;
     base.slippage_rate = experiment.slippage_bps / 10000.0;
     base.results_dir = experiment.output_dir;
+    base.benchmark_ticker = experiment.benchmark;
 
     std::ofstream grid_out(experiment.output_dir + "/in_sample_full_grid.csv");
     grid_out << std::fixed << std::setprecision(6);
-    grid_out << "ticker,strategy,parameter_set,start_date,end_date,total_return,benchmark_net_return,excess_return,sharpe,sortino,max_drawdown,calmar,turnover,total_costs,trade_count,win_rate,profit_factor\n";
+    grid_out << "schema_version,ticker,strategy,parameter_set,start_date,end_date,benchmark_ticker,benchmark_execution_policy,benchmark_cost_policy,excess_return_basis,total_return,benchmark_net_return,excess_return,sharpe,sortino,max_drawdown,calmar,turnover,total_costs,trade_count,win_rate,profit_factor\n";
     for (const auto& ticker : experiment.tickers) {
         for (const auto& spec : grid_strategy_specs(experiment.strategy)) {
             BacktestConfig cfg = base;
             cfg.ticker = ticker;
             BacktestResult result = Backtester(cfg).run_detailed(*spec.instance, false);
-            grid_out << ticker << ',' << result.summary.strategy << ',' << result.summary.parameter_set << ",full,full,"
+            grid_out << result.summary.schema_version << ',' << ticker << ',' << result.summary.strategy << ',' << result.summary.parameter_set << ",full,full,"
+                     << result.summary.benchmark_ticker << ',' << result.summary.benchmark_execution_policy << ','
+                     << result.summary.benchmark_cost_policy << ',' << result.summary.excess_return_basis << ','
                      << result.summary.total_return << ',' << result.summary.benchmark_net_return << ',' << result.summary.excess_return << ','
                      << result.summary.sharpe << ',' << sortino_from_equity(result.equity_curve) << ','
                      << result.summary.max_drawdown << ',' << calmar_from_summary(result.summary) << ','
@@ -730,40 +771,50 @@ void Analysis::run_research_experiment(const ExperimentConfig& experiment) {
     oos_equity << std::fixed << std::setprecision(6);
     oos_trades << std::fixed << std::setprecision(6);
     summary << std::fixed << std::setprecision(6);
-    windows << "ticker,strategy,window_id,train_start,train_end,test_start,test_end,selected_parameters,objective_value,parameter_changed\n";
-    history << "ticker,strategy,window_id,selected_parameters,objective_value,in_sample_sharpe,in_sample_return\n";
-    insample << "ticker,strategy,window_id,parameter_set,total_return,sharpe,max_drawdown,trade_count\n";
-    oos << "ticker,strategy,window_id,parameter_set,total_return,benchmark_net_return,excess_return,sharpe,max_drawdown,trade_count,total_costs\n";
-    oos_equity << "ticker,strategy,window_id,date,portfolio_value,cash,holdings,total_return,drawdown\n";
-    oos_trades << "ticker,strategy,window_id,date,action,price,quantity,cost,slippage,portfolio_value,realized_pnl\n";
-    summary << "ticker,strategy,windows,positive_oos_excess_rate,benchmark_win_rate,parameter_changes,worst_oos_return\n";
+    windows << "schema_version,window_mode,ticker,strategy,window_id,train_start,train_end,test_start,test_end,train_observations,test_observations,selected_parameters,objective_value,parameter_changed,starting_capital,ending_capital,continuity_policy,boundary_position_policy,boundary_liquidation_costs,linked_return,cumulative_oos_return,benchmark_ticker,benchmark_execution_policy,benchmark_cost_policy,excess_return_basis\n";
+    history << "schema_version,window_mode,ticker,strategy,window_id,selected_parameters,objective_value,in_sample_sharpe,in_sample_return\n";
+    insample << "schema_version,window_mode,ticker,strategy,window_id,parameter_set,total_return,sharpe,max_drawdown,trade_count\n";
+    oos << "schema_version,window_mode,continuity_policy,ticker,strategy,window_id,parameter_set,starting_capital,ending_capital,total_return,cumulative_oos_return,benchmark_ticker,benchmark_net_return,excess_return,excess_return_basis,sharpe,max_drawdown,trade_count,total_costs,boundary_liquidation_costs\n";
+    oos_equity << "schema_version,window_mode,continuity_policy,ticker,strategy,window_id,date,portfolio_value,cash,holdings,total_return,cumulative_oos_return,drawdown\n";
+    oos_trades << "schema_version,window_mode,continuity_policy,ticker,strategy,window_id,date,action,price,quantity,cost,slippage,portfolio_value,realized_pnl\n";
+    summary << "schema_version,window_mode,continuity_policy,boundary_position_policy,ticker,strategy,windows,positive_oos_excess_rate,benchmark_win_rate,parameter_changes,worst_oos_return,initial_capital,final_capital,cumulative_oos_return,benchmark_ticker\n";
 
     for (const auto& ticker : experiment.tickers) {
         MarketData data = load_market_data(base, ticker);
         const auto& bars = data.bars(ticker);
-        if (bars.size() < static_cast<std::size_t>(experiment.train_days + experiment.test_days)) {
-            continue;
+        std::vector<CalendarWindow> experiment_windows;
+        if (experiment.window_mode == "calendar_duration") {
+            experiment_windows = build_calendar_windows(bars, experiment.train_years, experiment.test_months, experiment.step_months);
+        } else {
+            for (std::size_t begin = 0;
+                 begin + static_cast<std::size_t>(experiment.train_days + experiment.test_days) <= bars.size();
+                 begin += static_cast<std::size_t>(experiment.step_days)) {
+                const std::size_t train_end = begin + static_cast<std::size_t>(experiment.train_days) - 1;
+                const std::size_t test_begin = train_end + 1;
+                const std::size_t test_end = test_begin + static_cast<std::size_t>(experiment.test_days) - 1;
+                experiment_windows.push_back(CalendarWindow{begin, train_end, test_begin, test_end,
+                    bars[begin].date, bars[train_end].date, bars[test_begin].date, bars[test_end].date,
+                    static_cast<std::size_t>(experiment.train_days), static_cast<std::size_t>(experiment.test_days)});
+            }
         }
         int window_id = 0;
         int positive_excess = 0;
         int beats_benchmark = 0;
         int parameter_changes = 0;
         double worst_return = 1e9;
+        double continuous_capital = experiment.starting_capital;
         std::string previous_params;
-        for (std::size_t train_start = 0; train_start + experiment.train_days + experiment.test_days <= bars.size(); train_start += experiment.step_days) {
-            std::size_t train_end = train_start + experiment.train_days - 1;
-            std::size_t test_start = train_end + 1;
-            std::size_t test_end = std::min(test_start + experiment.test_days - 1, bars.size() - 1);
+        for (const auto& window : experiment_windows) {
             PerformanceSummary best;
             double best_score = -1e18;
             for (const auto& spec : grid_strategy_specs(experiment.strategy)) {
                 BacktestConfig train = base;
                 train.ticker = ticker;
-                train.start_date = bars[train_start].date;
-                train.end_date = bars[train_end].date;
+                train.start_date = window.train_start;
+                train.end_date = window.train_end;
                 BacktestResult r = Backtester(train).run_detailed(*spec.instance, false);
                 double score = objective(r.summary, experiment.objective, experiment.minimum_trades);
-                insample << ticker << ',' << r.summary.strategy << ',' << window_id << ',' << r.summary.parameter_set << ','
+                insample << experiment.result_schema_version << ',' << experiment.window_mode << ',' << ticker << ',' << r.summary.strategy << ',' << window_id << ',' << r.summary.parameter_set << ','
                          << r.summary.total_return << ',' << r.summary.sharpe << ',' << r.summary.max_drawdown << ',' << r.summary.num_trades << '\n';
                 if (score > best_score) {
                     best_score = score;
@@ -776,33 +827,55 @@ void Analysis::run_research_experiment(const ExperimentConfig& experiment) {
             auto frozen = make_strategy(best.strategy, best.parameter_set);
             BacktestConfig test = base;
             test.ticker = ticker;
-            test.start_date = bars[test_start].date;
-            test.end_date = bars[test_end].date;
+            const double starting_capital = experiment.continuity_policy == "continuous_capital"
+                ? continuous_capital : experiment.starting_capital;
+            test.starting_capital = starting_capital;
+            test.start_date = window.test_start;
+            test.end_date = window.test_end;
+            test.liquidate_at_end = true;
             BacktestResult out = Backtester(test).run_detailed(*frozen, false);
+            const double ending_capital = out.equity_curve.empty() ? starting_capital : out.equity_curve.back().portfolio_value;
+            if (experiment.continuity_policy == "continuous_capital") {
+                continuous_capital = ending_capital;
+            }
+            double boundary_costs = 0.0;
+            for (const auto& trade : out.trades) {
+                if (trade.date == window.test_end && trade.action == "SELL") {
+                    boundary_costs += trade.cost + trade.slippage;
+                }
+            }
+            const double cumulative_return = (experiment.continuity_policy == "continuous_capital" ? continuous_capital : ending_capital)
+                / experiment.starting_capital - 1.0;
             positive_excess += out.summary.excess_return > 0.0 ? 1 : 0;
             beats_benchmark += out.summary.total_return > out.summary.benchmark_net_return ? 1 : 0;
             worst_return = std::min(worst_return, out.summary.total_return);
-            windows << ticker << ',' << best.strategy << ',' << window_id << ',' << bars[train_start].date << ',' << bars[train_end].date << ','
-                    << bars[test_start].date << ',' << bars[test_end].date << ',' << best.parameter_set << ',' << best_score << ',' << (changed ? 1 : 0) << '\n';
-            history << ticker << ',' << best.strategy << ',' << window_id << ',' << best.parameter_set << ',' << best_score << ',' << best.sharpe << ',' << best.total_return << '\n';
-            oos << ticker << ',' << out.summary.strategy << ',' << window_id << ',' << out.summary.parameter_set << ','
-                << out.summary.total_return << ',' << out.summary.benchmark_net_return << ',' << out.summary.excess_return << ','
-                << out.summary.sharpe << ',' << out.summary.max_drawdown << ',' << out.summary.num_trades << ',' << out.summary.total_transaction_costs << '\n';
+            windows << experiment.result_schema_version << ',' << experiment.window_mode << ',' << ticker << ',' << best.strategy << ',' << window_id << ','
+                    << window.train_start << ',' << window.train_end << ',' << window.test_start << ',' << window.test_end << ','
+                    << window.train_observations << ',' << window.test_observations << ',' << best.parameter_set << ',' << best_score << ',' << (changed ? 1 : 0) << ','
+                    << starting_capital << ',' << ending_capital << ',' << experiment.continuity_policy << ',' << experiment.boundary_position_policy << ','
+                    << boundary_costs << ',' << out.summary.total_return << ',' << cumulative_return << ',' << out.summary.benchmark_ticker << ','
+                    << out.summary.benchmark_execution_policy << ',' << out.summary.benchmark_cost_policy << ',' << out.summary.excess_return_basis << '\n';
+            history << experiment.result_schema_version << ',' << experiment.window_mode << ',' << ticker << ',' << best.strategy << ',' << window_id << ',' << best.parameter_set << ',' << best_score << ',' << best.sharpe << ',' << best.total_return << '\n';
+            oos << experiment.result_schema_version << ',' << experiment.window_mode << ',' << experiment.continuity_policy << ',' << ticker << ',' << out.summary.strategy << ',' << window_id << ',' << out.summary.parameter_set << ','
+                << starting_capital << ',' << ending_capital << ',' << out.summary.total_return << ',' << cumulative_return << ',' << out.summary.benchmark_ticker << ','
+                << out.summary.benchmark_net_return << ',' << out.summary.excess_return << ',' << out.summary.excess_return_basis << ','
+                << out.summary.sharpe << ',' << out.summary.max_drawdown << ',' << out.summary.num_trades << ',' << out.summary.total_transaction_costs << ',' << boundary_costs << '\n';
             for (const auto& p : out.equity_curve) {
-                oos_equity << ticker << ',' << out.summary.strategy << ',' << window_id << ',' << p.date << ',' << p.portfolio_value << ','
-                           << p.cash << ',' << p.holdings << ',' << p.total_return << ',' << p.drawdown << '\n';
+                oos_equity << experiment.result_schema_version << ',' << experiment.window_mode << ',' << experiment.continuity_policy << ',' << ticker << ',' << out.summary.strategy << ',' << window_id << ',' << p.date << ',' << p.portfolio_value << ','
+                           << p.cash << ',' << p.holdings << ',' << p.total_return << ',' << p.portfolio_value / experiment.starting_capital - 1.0 << ',' << p.drawdown << '\n';
             }
             for (const auto& t : out.trades) {
-                oos_trades << ticker << ',' << t.strategy << ',' << window_id << ',' << t.date << ',' << t.action << ',' << t.price << ','
+                oos_trades << experiment.result_schema_version << ',' << experiment.window_mode << ',' << experiment.continuity_policy << ',' << ticker << ',' << t.strategy << ',' << window_id << ',' << t.date << ',' << t.action << ',' << t.price << ','
                            << t.quantity << ',' << t.cost << ',' << t.slippage << ',' << t.portfolio_value << ',' << t.realized_pnl << '\n';
             }
             ++window_id;
         }
         if (window_id > 0) {
-            summary << ticker << ',' << experiment.strategy << ',' << window_id << ','
+            summary << experiment.result_schema_version << ',' << experiment.window_mode << ',' << experiment.continuity_policy << ',' << experiment.boundary_position_policy << ',' << ticker << ',' << experiment.strategy << ',' << window_id << ','
                     << static_cast<double>(positive_excess) / window_id << ','
                     << static_cast<double>(beats_benchmark) / window_id << ','
-                    << parameter_changes << ',' << worst_return << '\n';
+                    << parameter_changes << ',' << worst_return << ',' << experiment.starting_capital << ',' << continuous_capital << ','
+                    << continuous_capital / experiment.starting_capital - 1.0 << ',' << (experiment.benchmark == "same_asset" ? ticker : experiment.benchmark) << '\n';
         }
     }
 

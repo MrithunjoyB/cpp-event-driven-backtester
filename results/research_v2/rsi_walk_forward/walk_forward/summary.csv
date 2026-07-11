@@ -1,0 +1,6 @@
+schema_version,window_mode,continuity_policy,boundary_position_policy,ticker,strategy,windows,positive_oos_excess_rate,benchmark_win_rate,parameter_changes,worst_oos_return,initial_capital,final_capital,cumulative_oos_return,benchmark_ticker
+2,calendar_duration,continuous_capital,liquidate_at_test_end_close,AAPL,RSI_Mean_Reversion,5,0.400000,0.400000,1,0.050415,100000.000000,170277.693293,0.702777,SPY
+2,calendar_duration,continuous_capital,liquidate_at_test_end_close,MSFT,RSI_Mean_Reversion,5,0.400000,0.400000,3,-0.035206,100000.000000,139530.008866,0.395300,SPY
+2,calendar_duration,continuous_capital,liquidate_at_test_end_close,SPY,RSI_Mean_Reversion,5,0.000000,0.000000,2,-0.059571,100000.000000,107743.015669,0.077430,SPY
+2,calendar_duration,continuous_capital,liquidate_at_test_end_close,TSLA,RSI_Mean_Reversion,5,0.400000,0.400000,3,-0.200245,100000.000000,190994.943106,0.909949,SPY
+2,calendar_duration,continuous_capital,liquidate_at_test_end_close,BTC-USD,RSI_Mean_Reversion,5,0.600000,0.600000,0,-0.016801,100000.000000,187935.459992,0.879355,SPY

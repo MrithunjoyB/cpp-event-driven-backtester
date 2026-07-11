@@ -19,11 +19,16 @@ struct BacktestConfig {
     std::string results_dir{"results"};
     std::string start_date;
     std::string end_date;
+    std::string benchmark_ticker{"same_asset"};
+    bool liquidate_at_end{false};
 };
 
 struct BenchmarkResult {
     double gross_return{0.0};
     double net_return{0.0};
+    std::string ticker;
+    std::string execution_policy{"first_close_decision_next_open_integer_shares"};
+    std::string cost_policy{"strategy_costs_for_net_zero_costs_for_gross"};
 };
 
 struct BacktestResult {
@@ -48,5 +53,5 @@ private:
     void write_equity_curve(const std::string& filepath, const std::vector<EquityPoint>& equity_curve) const;
     void write_summary(const std::string& filepath, const PerformanceSummary& summary) const;
     std::string result_prefix(const std::string& strategy_name) const;
-    BenchmarkResult benchmark_return(const std::vector<Bar>& history, std::size_t start, std::size_t end) const;
+    BenchmarkResult benchmark_return(const std::string& start_date, const std::string& end_date) const;
 };

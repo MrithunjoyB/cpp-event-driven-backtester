@@ -1,0 +1,6 @@
+scenario,key,expected
+single_asset_aapl_ma,total_return,1.099404
+single_asset_aapl_ma,num_trades,33
+shared_cash_equal_weight,total_return,5.858289
+shared_cash_equal_weight,number_of_rebalances,72
+walk_forward_aapl_ma_first_window,selected_parameters,short=5;long=50

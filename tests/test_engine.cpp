@@ -5,6 +5,7 @@
 #include "Metrics.h"
 #include "Portfolio.h"
 #include "PortfolioBacktester.h"
+#include "ResearchMethodology.h"
 #include "Strategy.h"
 
 #include <cmath>
@@ -14,6 +15,7 @@
 #include <fstream>
 #include <iostream>
 #include <map>
+#include <set>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -97,6 +99,30 @@ FillEvent fill(OrderSide side, int quantity, double price, double commission_rat
     ExecutionHandler execution(commission_rate, slippage_rate);
     return execution.execute_order(OrderEvent{EventType::Order, "2024-01-05", "TEST", "Unit", side, quantity}, price);
 }
+
+std::vector<Bar> synthetic_bars(std::size_t count, bool seven_day, const std::string& start = "2020-01-06") {
+    std::vector<Bar> bars;
+    bars.reserve(count);
+    std::string date = start;
+    double close = 100.0;
+    for (std::size_t i = 0; i < count; ++i) {
+        close *= 1.0 + (static_cast<int>(i % 11) - 4) * 0.0007;
+        bars.push_back({date, close, close * 1.01, close * 0.99, close, 1000});
+        const int advance = !seven_day && i % 5 == 4 ? 3 : 1;
+        date = add_calendar_days(date, advance);
+    }
+    return bars;
+}
+
+class BuyOnFirstBar : public Strategy {
+public:
+    std::string name() const override { return "BuyOnFirstBar"; }
+    std::string parameters() const override { return "unit"; }
+    SignalEvent on_market_event(const MarketEvent& event, const std::vector<Bar>&) override {
+        return SignalEvent{EventType::Signal, event.date, event.ticker, name(), event.index == 0 ? SignalType::Buy : SignalType::Hold};
+    }
+    std::unique_ptr<Strategy> clone() const override { return std::make_unique<BuyOnFirstBar>(*this); }
+};
 }
 
 int main() {
@@ -272,16 +298,15 @@ int main() {
         require(result.trades.front().date == "2024-01-03", "trade happened before next bar");
         require(nearly_equal(result.trades.front().price, 103.0), "did not execute at next open");
     });
-    run_case("Benchmark calculation uses same window", [&] {
+    run_case("Benchmark calculation uses comparable execution window", [&] {
         BacktestConfig config;
         config.ticker = "VALID";
         config.data_dir = "tests/fixtures";
         config.results_dir = "test_results";
         config.transaction_cost_rate = 0.0;
         config.slippage_rate = 0.0;
-        MovingAverageCrossoverStrategy strategy(1, 2);
-        auto result = Backtester(config).run_detailed(strategy, false);
-        require(nearly_equal(result.summary.benchmark_gross_return, (107.0 / 103.0) - 1.0), "bad benchmark window");
+        auto result = Backtester(config).run_detailed(BuyOnFirstBar(), false);
+        require(nearly_equal(result.summary.total_return, result.summary.benchmark_net_return), "benchmark execution differs from equivalent strategy");
     });
     run_case("MA grid rejects invalid short-long pairs", [&] {
         auto specs = Analysis::grid_strategy_specs("MA_Cross");
@@ -528,6 +553,203 @@ int main() {
         bad.close();
         int code = std::system("python3 scripts/validate_results.py test_results/invalid_validator >/dev/null 2>&1");
         require(code != 0, "portfolio validator accepted invalid output");
+    });
+    run_case("regime_prefix_invariance", [&] {
+        auto prefix = synthetic_bars(340, true);
+        auto extended = prefix;
+        std::string date = add_calendar_days(extended.back().date, 1);
+        double close = extended.back().close;
+        for (int i = 0; i < 80; ++i) {
+            close *= i % 2 == 0 ? 1.35 : 0.72;
+            extended.push_back({date, close, close * 1.01, close * 0.99, close, 1000});
+            date = add_calendar_days(date, 1);
+        }
+        auto before = classify_causal_regimes(prefix, 20, 40);
+        auto after = classify_causal_regimes(extended, 20, 40);
+        require(before.size() == prefix.size(), "prefix classification size mismatch");
+        for (std::size_t i = 0; i < before.size(); ++i) {
+            require(before[i].regime == after[i].regime, "future bars changed historical regime");
+            require(nearly_equal(before[i].volatility_threshold, after[i].volatility_threshold), "future bars changed historical threshold");
+        }
+    });
+    run_case("regime_execution_timestamp", [&] {
+        auto bars_for_regime = synthetic_bars(340, true);
+        auto regimes = classify_causal_regimes(bars_for_regime, 20, 40);
+        const RegimePoint* assigned = regime_for_execution(regimes, bars_for_regime[300].date);
+        require(assigned != nullptr, "execution regime unavailable after warm-up");
+        require(assigned->information_cutoff < bars_for_regime[300].date, "open execution used same-day close");
+        require(assigned->date == bars_for_regime[299].date, "execution did not use latest prior close");
+    });
+    run_case("regime_return_interval_attribution", [&] {
+        auto bars_for_regime = synthetic_bars(340, true);
+        auto regimes = classify_causal_regimes(bars_for_regime, 20, 40);
+        const RegimePoint* assigned = regime_for_return_interval(regimes, bars_for_regime[299].date, bars_for_regime[300].date);
+        require(assigned != nullptr, "return regime unavailable after warm-up");
+        require(assigned->information_cutoff == bars_for_regime[299].date, "return did not use start-of-period regime");
+    });
+    run_case("equity_calendar_window_duration", [&] {
+        auto equity_bars = synthetic_bars(1200, false);
+        auto windows = build_calendar_windows(equity_bars, 3, 6, 6);
+        require(!windows.empty(), "no equity calendar windows");
+        require(windows.front().test_start >= add_calendar_years(windows.front().train_start, 3), "equity training duration too short");
+        require(windows.front().test_end < add_calendar_months(add_calendar_years(windows.front().train_start, 3), 6), "equity test exceeded boundary");
+    });
+    run_case("btc_calendar_window_duration", [&] {
+        auto btc_bars = synthetic_bars(1600, true);
+        auto windows = build_calendar_windows(btc_bars, 3, 6, 6);
+        require(!windows.empty(), "no BTC calendar windows");
+        require(windows.front().test_start >= add_calendar_years(windows.front().train_start, 3), "BTC training duration too short");
+        require(windows.front().train_observations > 1000, "BTC window still uses equity observation count");
+    });
+    run_case("calendar_leap_year_and_month_end", [&] {
+        require(add_calendar_years("2020-02-29", 3) == "2023-02-28", "leap-year clamp failed");
+        require(add_calendar_months("2020-01-31", 1) == "2020-02-29", "month-end clamp failed");
+        require(add_calendar_months("2021-01-31", 1) == "2021-02-28", "non-leap month-end clamp failed");
+    });
+    run_case("calendar_windows_allow_missing_dates", [&] {
+        auto complete = synthetic_bars(1600, true);
+        std::vector<Bar> missing;
+        for (std::size_t i = 0; i < complete.size(); ++i) {
+            if (i % 17 != 0) {
+                missing.push_back(complete[i]);
+            }
+        }
+        auto windows = build_calendar_windows(missing, 3, 6, 6);
+        require(!windows.empty(), "missing dates prevented calendar windows");
+        require(windows.front().train_end < windows.front().test_start, "missing dates caused overlap");
+    });
+    run_case("walk_forward_non_overlap", [&] {
+        auto windows = build_calendar_windows(synthetic_bars(1900, true), 3, 6, 6);
+        require(windows.size() >= 2, "insufficient calendar windows");
+        for (std::size_t i = 0; i < windows.size(); ++i) {
+            require(windows[i].train_end < windows[i].test_start, "train and test overlap");
+            if (i > 0) {
+                require(windows[i - 1].test_end < windows[i].test_start, "test windows double-count dates");
+            }
+        }
+    });
+    run_case("continuous_oos_capital_reconciliation", [&] {
+        MarketData data;
+        require(data.load_csv("AAPL", "data/AAPL.csv"), "could not load AAPL continuity fixture");
+        auto windows = build_calendar_windows(data.bars("AAPL"), 3, 6, 6);
+        require(windows.size() >= 2, "insufficient AAPL continuity windows");
+        double capital_value = 100000.0;
+        for (std::size_t i = 0; i < 2; ++i) {
+            const double starting = capital_value;
+            BacktestConfig config;
+            config.ticker = "AAPL";
+            config.start_date = windows[i].test_start;
+            config.end_date = windows[i].test_end;
+            config.starting_capital = starting;
+            config.liquidate_at_end = true;
+            auto result = Backtester(config).run_detailed(MovingAverageCrossoverStrategy(5, 50), false);
+            capital_value = result.equity_curve.back().portfolio_value;
+            require(nearly_equal(result.equity_curve.front().portfolio_value, starting, 1e-4), "window did not start from prior capital");
+        }
+        require(nearly_equal(capital_value / 100000.0 - 1.0, (capital_value - 100000.0) / 100000.0), "linked return does not reconcile");
+    });
+    run_case("continuous_oos_no_duplicate_dates", [&] {
+        MarketData data;
+        require(data.load_csv("AAPL", "data/AAPL.csv"), "could not load AAPL date fixture");
+        auto windows = build_calendar_windows(data.bars("AAPL"), 3, 6, 6);
+        std::set<std::string> dates;
+        for (const auto& window : windows) {
+            for (const auto& bar : data.bars("AAPL")) {
+                if (bar.date >= window.test_start && bar.date <= window.test_end) {
+                    require(dates.insert(bar.date).second, "duplicate OOS date");
+                }
+            }
+        }
+    });
+    run_case("benchmark_execution_parity", [&] {
+        double zero_cost_return = 0.0;
+        double cost_adjusted_return = 0.0;
+        for (double cost : {0.0, 0.001}) {
+            BacktestConfig config;
+            config.ticker = "VALID";
+            config.data_dir = "tests/fixtures";
+            config.results_dir = "test_results/benchmark_parity";
+            config.transaction_cost_rate = cost;
+            config.slippage_rate = cost / 2.0;
+            auto result = Backtester(config).run_detailed(BuyOnFirstBar(), false);
+            require(nearly_equal(result.summary.total_return, result.summary.benchmark_net_return), "buy-and-hold strategy and benchmark diverged");
+            if (cost == 0.0) {
+                zero_cost_return = result.summary.total_return;
+            } else {
+                cost_adjusted_return = result.summary.total_return;
+            }
+        }
+        require(cost_adjusted_return < zero_cost_return, "costs did not degrade strategy and benchmark consistently");
+    });
+    run_case("configured_benchmark_propagation", [&] {
+        BacktestConfig same;
+        same.ticker = "AAPL";
+        same.start_date = "2023-01-03";
+        same.end_date = "2023-06-30";
+        same.benchmark_ticker = "same_asset";
+        auto same_result = Backtester(same).run_detailed(MovingAverageCrossoverStrategy(5, 50), false);
+        BacktestConfig spy = same;
+        spy.benchmark_ticker = "SPY";
+        auto spy_result = Backtester(spy).run_detailed(MovingAverageCrossoverStrategy(5, 50), false);
+        require(same_result.summary.benchmark_ticker == "AAPL", "same_asset did not resolve to traded ticker");
+        require(spy_result.summary.benchmark_ticker == "SPY", "configured SPY benchmark not propagated");
+        require(!nearly_equal(same_result.summary.benchmark_net_return, spy_result.summary.benchmark_net_return), "changing benchmark did not change output");
+    });
+    run_case("malformed_benchmark_configuration_rejected", [&] {
+        std::ofstream config("test_results/invalid_benchmark.json");
+        config << "{\"experiment_name\":\"bad\",\"benchmark\":\"\"}\n";
+        config.close();
+        bool rejected = false;
+        try {
+            (void)Analysis::load_experiment_config("test_results/invalid_benchmark.json");
+        } catch (const std::exception&) {
+            rejected = true;
+        }
+        require(rejected, "empty benchmark configuration accepted");
+    });
+    run_case("normalized_window_policy_remains_diagnostic", [&] {
+        std::ofstream config("test_results/normalized_window.json");
+        config << "{\"experiment_name\":\"normalized\",\"benchmark\":\"same_asset\","
+               << "\"window_mode\":\"calendar_duration\",\"oos_continuity_policy\":\"normalized_window\","
+               << "\"boundary_position_policy\":\"liquidate_at_test_end_close\"}\n";
+        config.close();
+        auto parsed = Analysis::load_experiment_config("test_results/normalized_window.json");
+        require(parsed.continuity_policy == "normalized_window", "normalized diagnostic policy was not retained");
+        require(parsed.continuity_policy != "continuous_capital", "normalized diagnostic policy became deployable continuity");
+    });
+    run_case("golden_single_asset_regression", [&] {
+        BacktestConfig config;
+        config.ticker = "AAPL";
+        auto result = Backtester(config).run_detailed(MovingAverageCrossoverStrategy(20, 50), false);
+        require(nearly_equal(result.summary.total_return, 1.099404, 1e-6), "single-asset golden changed");
+        require(result.summary.num_trades == 33, "single-asset trade-count golden changed");
+    });
+    run_case("golden_shared_cash_regression", [&] {
+        PortfolioBacktestConfig config;
+        config.tickers = {"AAPL", "MSFT", "SPY", "TSLA", "BTC-USD"};
+        auto result = PortfolioBacktester(config).run(false);
+        require(nearly_equal(result.summary.total_return, 5.858289, 1e-6), "shared-cash golden changed");
+        require(result.summary.number_of_rebalances == 72, "shared-cash rebalance golden changed");
+    });
+    run_case("golden_walk_forward_selection_regression", [&] {
+        MarketData data;
+        require(data.load_csv("AAPL", "data/AAPL.csv"), "could not load walk-forward golden data");
+        auto windows = build_calendar_windows(data.bars("AAPL"), 3, 6, 6);
+        std::string best_parameters;
+        double best_score = -1e18;
+        for (const auto& spec : Analysis::grid_strategy_specs("MA_Cross")) {
+            BacktestConfig config;
+            config.ticker = "AAPL";
+            config.start_date = windows.front().train_start;
+            config.end_date = windows.front().train_end;
+            auto summary = Backtester(config).run_detailed(*spec.instance, false).summary;
+            double score = summary.num_trades >= 3 ? summary.sharpe : -1e9;
+            if (score > best_score) {
+                best_score = score;
+                best_parameters = summary.parameter_set;
+            }
+        }
+        require(best_parameters == "short=5;long=50", "walk-forward selection golden changed");
     });
 
     std::cout << cases_run << " deterministic test cases passed with " << assertions_run << " assertions.\n";

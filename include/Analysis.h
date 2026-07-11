@@ -29,6 +29,12 @@ struct ExperimentConfig {
     int train_days{756};
     int test_days{126};
     int step_days{126};
+    std::string window_mode{"calendar_duration"};
+    int train_years{3};
+    int test_months{6};
+    int step_months{6};
+    std::string continuity_policy{"continuous_capital"};
+    std::string boundary_position_policy{"liquidate_at_test_end_close"};
     std::string benchmark{"SPY"};
     std::string objective{"sharpe_min_trades"};
     int minimum_trades{3};
@@ -44,6 +50,7 @@ struct ExperimentConfig {
     int momentum_lookback{126};
     int top_n{3};
     std::string portfolio_output_dir{"results/portfolio"};
+    int result_schema_version{2};
 };
 
 class Analysis {
