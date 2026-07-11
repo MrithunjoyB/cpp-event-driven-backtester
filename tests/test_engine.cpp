@@ -239,7 +239,7 @@ int main() {
     });
     run_case("Valid CSV fixture accepted", [&] {
         MarketData market_data;
-        require(market_data.load_csv("VALID", "tests/fixtures/valid.csv"), "valid fixture rejected");
+        require(market_data.load_csv("VALID", "tests/fixtures/VALID.csv"), "valid fixture rejected");
     });
     run_case("Malformed CSV rejected", [&] {
         MarketData market_data;
