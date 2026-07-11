@@ -7,11 +7,13 @@
 #include "PortfolioBacktester.h"
 #include "ResearchMethodology.h"
 #include "Strategy.h"
+#include "quant/io/ResultExporter.h"
 
 #include <cmath>
 #include <cstdlib>
 #include <cstdio>
 #include <functional>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <map>
@@ -293,7 +295,7 @@ int main() {
         config.results_dir = "test_results";
         config.transaction_cost_rate = 0.0;
         config.slippage_rate = 0.0;
-        BacktestResult result = Backtester(config).run_detailed(BuyOnSecondBar(), false);
+        BacktestResult result = Backtester(config).run_detailed(BuyOnSecondBar());
         require(!result.trades.empty(), "no trade generated");
         require(result.trades.front().date == "2024-01-03", "trade happened before next bar");
         require(nearly_equal(result.trades.front().price, 103.0), "did not execute at next open");
@@ -305,7 +307,7 @@ int main() {
         config.results_dir = "test_results";
         config.transaction_cost_rate = 0.0;
         config.slippage_rate = 0.0;
-        auto result = Backtester(config).run_detailed(BuyOnFirstBar(), false);
+        auto result = Backtester(config).run_detailed(BuyOnFirstBar());
         require(nearly_equal(result.summary.total_return, result.summary.benchmark_net_return), "benchmark execution differs from equivalent strategy");
     });
     run_case("MA grid rejects invalid short-long pairs", [&] {
@@ -355,7 +357,7 @@ int main() {
         config.tickers = {"AAPL", "MSFT", "SPY"};
         config.starting_capital = 50000.0;
         config.results_dir = "test_results/portfolio_start";
-        auto result = PortfolioBacktester(config).run(false);
+        auto result = PortfolioBacktester(config).run();
         require(!result.equity_curve.empty(), "missing portfolio equity");
         require(result.equity_curve.front().portfolio_value > 0.0, "bad starting value");
         require(result.equity_curve.front().cash >= 0.0, "negative starting cash");
@@ -420,7 +422,7 @@ int main() {
         config.starting_capital = 100000.0;
         config.results_dir = "test_results/portfolio_threshold";
         config.allocation.min_trade_value = 1e12;
-        auto result = PortfolioBacktester(config).run(false);
+        auto result = PortfolioBacktester(config).run();
         require(result.fills.empty(), "tiny-order threshold did not suppress fills");
     });
     run_case("Weekly rebalance dates generated correctly", [&] {
@@ -439,7 +441,7 @@ int main() {
         config.starting_capital = 50000.0;
         config.transaction_cost_rate = 0.01;
         config.results_dir = "test_results/portfolio_costs";
-        auto result = PortfolioBacktester(config).run(false);
+        auto result = PortfolioBacktester(config).run();
         require(result.summary.total_transaction_costs > 0.0, "no transaction costs recorded");
     });
     run_case("Portfolio slippage produces fill costs", [&] {
@@ -448,7 +450,7 @@ int main() {
         config.starting_capital = 50000.0;
         config.slippage_rate = 0.01;
         config.results_dir = "test_results/portfolio_slippage";
-        auto result = PortfolioBacktester(config).run(false);
+        auto result = PortfolioBacktester(config).run();
         bool found = false;
         for (const auto& fill : result.fills) {
             found = found || fill.slippage_cost > 0.0;
@@ -459,7 +461,7 @@ int main() {
         PortfolioBacktestConfig config;
         config.tickers = {"AAPL", "MSFT", "SPY"};
         config.results_dir = "test_results/portfolio_holdings";
-        auto result = PortfolioBacktester(config).run(false);
+        auto result = PortfolioBacktester(config).run();
         for (const auto& position : result.positions) {
             require(position.quantity >= -1e-9, "negative portfolio holding");
         }
@@ -468,7 +470,7 @@ int main() {
         PortfolioBacktestConfig config;
         config.tickers = {"AAPL", "MSFT", "SPY"};
         config.results_dir = "test_results/portfolio_leverage";
-        auto result = PortfolioBacktester(config).run(false);
+        auto result = PortfolioBacktester(config).run();
         for (const auto& point : result.equity_curve) {
             require(point.gross_exposure <= 1.000001, "gross exposure above one");
         }
@@ -477,7 +479,7 @@ int main() {
         PortfolioBacktestConfig config;
         config.tickers = {"AAPL", "MSFT", "SPY"};
         config.results_dir = "test_results/portfolio_reconcile";
-        auto result = PortfolioBacktester(config).run(false);
+        auto result = PortfolioBacktester(config).run();
         for (const auto& point : result.equity_curve) {
             require(nearly_equal(point.cash + point.total_holdings_value, point.portfolio_value, 1e-4), "portfolio value does not reconcile");
         }
@@ -491,14 +493,14 @@ int main() {
         PortfolioBacktestConfig config;
         config.tickers = {"AAPL", "MSFT", "SPY"};
         config.results_dir = "test_results/portfolio_benchmark";
-        auto result = PortfolioBacktester(config).run(false);
+        auto result = PortfolioBacktester(config).run();
         require(std::isfinite(result.summary.equal_weight_benchmark_return), "non-finite benchmark");
     });
     run_case("Portfolio drawdown non-positive", [&] {
         PortfolioBacktestConfig config;
         config.tickers = {"AAPL", "MSFT", "SPY"};
         config.results_dir = "test_results/portfolio_drawdown";
-        auto result = PortfolioBacktester(config).run(false);
+        auto result = PortfolioBacktester(config).run();
         for (const auto& point : result.equity_curve) {
             require(point.drawdown <= 1e-9, "positive portfolio drawdown");
         }
@@ -515,7 +517,7 @@ int main() {
         config.results_dir = "test_results/portfolio_scale";
         config.allocation.cash_buffer = 0.0;
         config.allocation.max_weight = 1.0;
-        auto result = PortfolioBacktester(config).run(false);
+        auto result = PortfolioBacktester(config).run();
         for (const auto& point : result.equity_curve) {
             require(point.cash >= -1e-6, "cash went negative after scaling");
         }
@@ -525,7 +527,7 @@ int main() {
         config.tickers = {"AAPL", "MSFT", "SPY"};
         config.results_dir = "test_results/portfolio_sell_first";
         config.rebalance_frequency = RebalanceFrequency::Weekly;
-        auto result = PortfolioBacktester(config).run(false);
+        auto result = PortfolioBacktester(config).run();
         std::map<int, bool> seen_buy;
         for (const auto& fill : result.fills) {
             if (fill.side == "BUY") {
@@ -540,7 +542,7 @@ int main() {
         PortfolioBacktestConfig config;
         config.tickers = {"AAPL", "MSFT", "SPY"};
         config.results_dir = "test_results/portfolio_weights";
-        auto result = PortfolioBacktester(config).run(false);
+        auto result = PortfolioBacktester(config).run();
         for (const auto& position : result.positions) {
             require(position.actual_weight >= -1e-9 && position.actual_weight <= 1.000001, "actual weight out of bounds");
         }
@@ -642,7 +644,7 @@ int main() {
             config.end_date = windows[i].test_end;
             config.starting_capital = starting;
             config.liquidate_at_end = true;
-            auto result = Backtester(config).run_detailed(MovingAverageCrossoverStrategy(5, 50), false);
+            auto result = Backtester(config).run_detailed(MovingAverageCrossoverStrategy(5, 50));
             capital_value = result.equity_curve.back().portfolio_value;
             require(nearly_equal(result.equity_curve.front().portfolio_value, starting, 1e-4), "window did not start from prior capital");
         }
@@ -671,7 +673,7 @@ int main() {
             config.results_dir = "test_results/benchmark_parity";
             config.transaction_cost_rate = cost;
             config.slippage_rate = cost / 2.0;
-            auto result = Backtester(config).run_detailed(BuyOnFirstBar(), false);
+            auto result = Backtester(config).run_detailed(BuyOnFirstBar());
             require(nearly_equal(result.summary.total_return, result.summary.benchmark_net_return), "buy-and-hold strategy and benchmark diverged");
             if (cost == 0.0) {
                 zero_cost_return = result.summary.total_return;
@@ -687,10 +689,10 @@ int main() {
         same.start_date = "2023-01-03";
         same.end_date = "2023-06-30";
         same.benchmark_ticker = "same_asset";
-        auto same_result = Backtester(same).run_detailed(MovingAverageCrossoverStrategy(5, 50), false);
+        auto same_result = Backtester(same).run_detailed(MovingAverageCrossoverStrategy(5, 50));
         BacktestConfig spy = same;
         spy.benchmark_ticker = "SPY";
-        auto spy_result = Backtester(spy).run_detailed(MovingAverageCrossoverStrategy(5, 50), false);
+        auto spy_result = Backtester(spy).run_detailed(MovingAverageCrossoverStrategy(5, 50));
         require(same_result.summary.benchmark_ticker == "AAPL", "same_asset did not resolve to traded ticker");
         require(spy_result.summary.benchmark_ticker == "SPY", "configured SPY benchmark not propagated");
         require(!nearly_equal(same_result.summary.benchmark_net_return, spy_result.summary.benchmark_net_return), "changing benchmark did not change output");
@@ -720,14 +722,14 @@ int main() {
     run_case("golden_single_asset_regression", [&] {
         BacktestConfig config;
         config.ticker = "AAPL";
-        auto result = Backtester(config).run_detailed(MovingAverageCrossoverStrategy(20, 50), false);
+        auto result = Backtester(config).run_detailed(MovingAverageCrossoverStrategy(20, 50));
         require(nearly_equal(result.summary.total_return, 1.099404, 1e-6), "single-asset golden changed");
         require(result.summary.num_trades == 33, "single-asset trade-count golden changed");
     });
     run_case("golden_shared_cash_regression", [&] {
         PortfolioBacktestConfig config;
         config.tickers = {"AAPL", "MSFT", "SPY", "TSLA", "BTC-USD"};
-        auto result = PortfolioBacktester(config).run(false);
+        auto result = PortfolioBacktester(config).run();
         require(nearly_equal(result.summary.total_return, 5.858289, 1e-6), "shared-cash golden changed");
         require(result.summary.number_of_rebalances == 72, "shared-cash rebalance golden changed");
     });
@@ -742,7 +744,7 @@ int main() {
             config.ticker = "AAPL";
             config.start_date = windows.front().train_start;
             config.end_date = windows.front().train_end;
-            auto summary = Backtester(config).run_detailed(*spec.instance, false).summary;
+            auto summary = Backtester(config).run_detailed(*spec.instance).summary;
             double score = summary.num_trades >= 3 ? summary.sharpe : -1e9;
             if (score > best_score) {
                 best_score = score;
@@ -750,6 +752,46 @@ int main() {
             }
         }
         require(best_parameters == "short=5;long=50", "walk-forward selection golden changed");
+    });
+    run_case("simulation_result_requires_no_filesystem_output", [&] {
+        const std::string output_dir = "test_results/simulation_no_write";
+        std::filesystem::remove_all(output_dir);
+        BacktestConfig config;
+        config.ticker = "VALID";
+        config.data_dir = "tests/fixtures";
+        config.results_dir = output_dir;
+        auto result = Backtester(config).run_detailed(MovingAverageCrossoverStrategy(1, 2));
+        require(!result.equity_curve.empty(), "in-memory simulation returned no equity");
+        require(!std::filesystem::exists(output_dir), "simulation wrote files without an exporter");
+    });
+    run_case("csv_exporter_reproduces_schema_v2", [&] {
+        const std::string output_dir = "test_results/export_schema";
+        std::filesystem::remove_all(output_dir);
+        BacktestConfig config;
+        config.ticker = "VALID";
+        config.data_dir = "tests/fixtures";
+        auto result = Backtester(config).run_detailed(MovingAverageCrossoverStrategy(1, 2));
+        quant::io::CsvResultExporter::write_backtest(result, output_dir);
+        std::ifstream summary(output_dir + "/VALID_MA_Cross_performance_summary.csv");
+        std::string header;
+        std::getline(summary, header);
+        require(header.rfind("schema_version,ticker,strategy,parameter_set", 0) == 0, "exporter schema header changed");
+        std::string row;
+        std::getline(summary, row);
+        require(row.rfind("2,VALID,MA_Cross", 0) == 0, "exporter schema row changed");
+    });
+    run_case("csv_exporter_rejects_invalid_output_path", [&] {
+        BacktestConfig config;
+        config.ticker = "VALID";
+        config.data_dir = "tests/fixtures";
+        auto result = Backtester(config).run_detailed(MovingAverageCrossoverStrategy(1, 2));
+        bool rejected = false;
+        try {
+            quant::io::CsvResultExporter::write_backtest(result, "/dev/null/quant-results");
+        } catch (const std::exception&) {
+            rejected = true;
+        }
+        require(rejected, "invalid exporter path was accepted");
     });
 
     std::cout << cases_run << " deterministic test cases passed with " << assertions_run << " assertions.\n";

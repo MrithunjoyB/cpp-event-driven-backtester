@@ -4,9 +4,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <filesystem>
-#include <fstream>
-#include <iomanip>
 #include <numeric>
 #include <set>
 #include <stdexcept>
@@ -174,8 +171,7 @@ std::map<std::string, std::size_t> PortfolioBacktester::indices_for_date(
     return out;
 }
 
-PortfolioBacktestResult PortfolioBacktester::run(bool write) {
-    std::filesystem::create_directories(config_.results_dir);
+PortfolioBacktestResult PortfolioBacktester::run() {
     std::map<std::string, std::vector<Bar>> history;
     load_data(history);
     std::vector<std::string> dates = common_dates(history);
@@ -356,10 +352,7 @@ PortfolioBacktestResult PortfolioBacktester::run(bool write) {
 
     PortfolioSummary summary = summarize(policy, equity, history, dates, total_turnover, total_costs, rebalance_id, static_cast<int>(fills.size()),
                                          cash_allocation_sum, gross_exposure_sum, benchmark_returns);
-    if (write) {
-        write_outputs(policy, equity, positions_out, fills, weights_by_rebalance, rebalance_dates, turnover_by_rebalance, benchmark_returns, summary);
-    }
-    return {summary, equity, positions_out, fills};
+    return {summary, equity, positions_out, fills, weights_by_rebalance, rebalance_dates, turnover_by_rebalance};
 }
 
 PortfolioSummary PortfolioBacktester::summarize(
@@ -436,115 +429,4 @@ PortfolioSummary PortfolioBacktester::summarize(
         }
     }
     return summary;
-}
-
-void PortfolioBacktester::write_outputs(
-    const AllocationPolicy& policy,
-    const std::vector<PortfolioEquityPoint>& equity,
-    const std::vector<PortfolioPositionPoint>& positions,
-    const std::vector<PortfolioFill>& fills,
-    const std::vector<std::map<std::string, double>>& weights_by_rebalance,
-    const std::vector<std::string>& rebalance_dates,
-    const std::vector<double>& turnover_by_rebalance,
-    const std::vector<double>& benchmark_returns,
-    const PortfolioSummary& base_summary) const {
-    std::filesystem::create_directories(config_.results_dir);
-    std::ofstream eq(config_.results_dir + "/portfolio_equity_curve.csv");
-    std::ofstream pos(config_.results_dir + "/portfolio_positions.csv");
-    std::ofstream orders(config_.results_dir + "/portfolio_orders.csv");
-    std::ofstream fill_out(config_.results_dir + "/portfolio_fills.csv");
-    std::ofstream reb(config_.results_dir + "/portfolio_rebalances.csv");
-    std::ofstream weights(config_.results_dir + "/portfolio_allocation_weights.csv");
-    std::ofstream costs(config_.results_dir + "/portfolio_costs.csv");
-    std::ofstream summary_out(config_.results_dir + "/portfolio_performance_summary.csv");
-    eq << std::fixed << std::setprecision(6);
-    pos << std::fixed << std::setprecision(6);
-    orders << std::fixed << std::setprecision(6);
-    fill_out << std::fixed << std::setprecision(6);
-    reb << std::fixed << std::setprecision(6);
-    weights << std::fixed << std::setprecision(6);
-    costs << std::fixed << std::setprecision(6);
-    summary_out << std::fixed << std::setprecision(6);
-
-    std::vector<double> returns;
-    for (std::size_t i = 1; i < equity.size(); ++i) {
-        if (equity[i - 1].portfolio_value > 0.0) {
-            returns.push_back((equity[i].portfolio_value / equity[i - 1].portfolio_value) - 1.0);
-        }
-    }
-
-    PortfolioSummary s = base_summary;
-    if (!equity.empty()) {
-        s.total_return = equity.back().portfolio_value / config_.starting_capital - 1.0;
-        s.excess_return = s.total_return - s.equal_weight_benchmark_return;
-        s.annualized_return = annualized_return(s.total_return, equity.size());
-        s.volatility = stdev(returns) * std::sqrt(252.0);
-        s.sharpe = s.volatility > 0.0 ? mean(returns) * 252.0 / s.volatility : 0.0;
-        std::vector<double> downside;
-        for (double r : returns) {
-            if (r < 0.0) {
-                downside.push_back(r);
-            }
-        }
-        double down_dev = stdev(downside) * std::sqrt(252.0);
-        s.sortino = down_dev > 0.0 ? mean(returns) * 252.0 / down_dev : 0.0;
-        for (const auto& p : equity) {
-            s.max_drawdown = std::min(s.max_drawdown, p.drawdown);
-        }
-        s.calmar = s.max_drawdown < 0.0 ? s.annualized_return / std::abs(s.max_drawdown) : 0.0;
-        s.var_95 = value_at_risk_95(returns);
-        s.expected_shortfall_95 = expected_shortfall_95(returns);
-    }
-
-    if (returns.size() == benchmark_returns.size()) {
-        double var_b = variance(benchmark_returns);
-        s.beta = var_b > 0.0 ? covariance(returns, benchmark_returns) / var_b : 0.0;
-        s.alpha = (mean(returns) - s.beta * mean(benchmark_returns)) * 252.0;
-        std::vector<double> active;
-        for (std::size_t i = 0; i < returns.size(); ++i) {
-            active.push_back(returns[i] - benchmark_returns[i]);
-        }
-        double active_vol = stdev(active) * std::sqrt(252.0);
-        s.information_ratio = active_vol > 0.0 ? mean(active) * 252.0 / active_vol : 0.0;
-    }
-
-    eq << "date,portfolio_value,cash,total_holdings_value,total_return,drawdown,gross_exposure\n";
-    for (const auto& p : equity) {
-        eq << p.date << ',' << p.portfolio_value << ',' << p.cash << ',' << p.total_holdings_value << ','
-           << p.total_return << ',' << p.drawdown << ',' << p.gross_exposure << '\n';
-    }
-    pos << "date,ticker,quantity,price,market_value,target_weight,actual_weight,rebalance_id\n";
-    for (const auto& p : positions) {
-        pos << p.date << ',' << p.ticker << ',' << p.quantity << ',' << p.price << ',' << p.market_value << ','
-            << p.target_weight << ',' << p.actual_weight << ',' << p.rebalance_id << '\n';
-    }
-    fill_out << "rebalance_id,date,ticker,side,quantity,price,transaction_cost,slippage_cost,cash_after\n";
-    orders << "rebalance_id,date,ticker,side,quantity,price,transaction_cost,slippage_cost\n";
-    costs << "rebalance_id,date,ticker,transaction_cost,slippage_cost,total_cost\n";
-    for (const auto& f : fills) {
-        fill_out << f.rebalance_id << ',' << f.date << ',' << f.ticker << ',' << f.side << ',' << f.quantity << ','
-                 << f.price << ',' << f.transaction_cost << ',' << f.slippage_cost << ',' << f.cash_after << '\n';
-        orders << f.rebalance_id << ',' << f.date << ',' << f.ticker << ',' << f.side << ',' << f.quantity << ','
-               << f.price << ',' << f.transaction_cost << ',' << f.slippage_cost << '\n';
-        costs << f.rebalance_id << ',' << f.date << ',' << f.ticker << ',' << f.transaction_cost << ','
-              << f.slippage_cost << ',' << f.transaction_cost + f.slippage_cost << '\n';
-    }
-    reb << "rebalance_id,date,policy_name,frequency,turnover,cash_buffer,max_weight,min_trade_value\n";
-    weights << "rebalance_id,policy_name,ticker,target_weight\n";
-    for (std::size_t i = 0; i < weights_by_rebalance.size(); ++i) {
-        std::string date = i < rebalance_dates.size() ? rebalance_dates[i] : "";
-        reb << i << ',' << date << ',' << policy.name() << ',' << frequency_name(config_.rebalance_frequency) << ','
-            << (i < turnover_by_rebalance.size() ? turnover_by_rebalance[i] : 0.0) << ','
-            << config_.allocation.cash_buffer << ',' << config_.allocation.max_weight << ',' << config_.allocation.min_trade_value << '\n';
-        for (const auto& kv : weights_by_rebalance[i]) {
-            weights << i << ',' << policy.name() << ',' << kv.first << ',' << kv.second << '\n';
-        }
-    }
-    summary_out << "policy_name,total_return,equal_weight_benchmark_return,spy_benchmark_return,excess_return,annualized_return,volatility,sharpe,sortino,max_drawdown,calmar,var_95,expected_shortfall_95,beta,alpha,information_ratio,turnover,total_transaction_costs,number_of_rebalances,number_of_fills,average_cash_allocation,average_gross_exposure\n";
-    summary_out << s.policy_name << ',' << s.total_return << ',' << s.equal_weight_benchmark_return << ',' << s.spy_benchmark_return << ','
-                << s.excess_return << ',' << s.annualized_return << ',' << s.volatility << ',' << s.sharpe << ','
-                << s.sortino << ',' << s.max_drawdown << ',' << s.calmar << ',' << s.var_95 << ','
-                << s.expected_shortfall_95 << ',' << s.beta << ',' << s.alpha << ',' << s.information_ratio << ','
-                << s.turnover << ',' << s.total_transaction_costs << ',' << s.number_of_rebalances << ','
-                << s.number_of_fills << ',' << s.average_cash_allocation << ',' << s.average_gross_exposure << '\n';
 }

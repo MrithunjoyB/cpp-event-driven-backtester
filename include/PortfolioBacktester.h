@@ -88,13 +88,16 @@ struct PortfolioBacktestResult {
     std::vector<PortfolioEquityPoint> equity_curve;
     std::vector<PortfolioPositionPoint> positions;
     std::vector<PortfolioFill> fills;
+    std::vector<std::map<std::string, double>> target_weights;
+    std::vector<std::string> rebalance_dates;
+    std::vector<double> turnover_by_rebalance;
 };
 
 class PortfolioBacktester {
 public:
     explicit PortfolioBacktester(PortfolioBacktestConfig config);
 
-    PortfolioBacktestResult run(bool write_outputs);
+    PortfolioBacktestResult run();
 
     static RebalanceFrequency parse_frequency(const std::string& value);
     static std::string frequency_name(RebalanceFrequency frequency);
@@ -122,14 +125,4 @@ private:
         double cash_allocation_sum,
         double gross_exposure_sum,
         const std::vector<double>& benchmark_returns) const;
-    void write_outputs(
-        const AllocationPolicy& policy,
-        const std::vector<PortfolioEquityPoint>& equity,
-        const std::vector<PortfolioPositionPoint>& positions,
-        const std::vector<PortfolioFill>& fills,
-        const std::vector<std::map<std::string, double>>& weights_by_rebalance,
-        const std::vector<std::string>& rebalance_dates,
-        const std::vector<double>& turnover_by_rebalance,
-        const std::vector<double>& benchmark_returns,
-        const PortfolioSummary& summary) const;
 };

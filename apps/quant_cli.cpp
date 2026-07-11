@@ -2,6 +2,7 @@
 #include "Backtester.h"
 #include "PortfolioBacktester.h"
 #include "Strategy.h"
+#include "quant/io/ResultExporter.h"
 
 #include <iomanip>
 #include <array>
@@ -167,7 +168,8 @@ int main(int argc, char** argv) {
                 portfolio_config.allocation.volatility_lookback = experiment.volatility_lookback;
                 portfolio_config.allocation.momentum_lookback = experiment.momentum_lookback;
                 portfolio_config.allocation.top_n = experiment.top_n;
-                PortfolioBacktestResult result = PortfolioBacktester(portfolio_config).run(true);
+                PortfolioBacktestResult result = PortfolioBacktester(portfolio_config).run();
+                quant::io::CsvResultExporter::write_portfolio(result, portfolio_config);
                 std::cout << "Shared-cash portfolio experiment written to " << portfolio_config.results_dir
                           << " with return " << result.summary.total_return << "\n";
             } else {
@@ -180,10 +182,11 @@ int main(int argc, char** argv) {
             config.ticker = ticker.empty() ? "AAPL" : ticker;
             Backtester backtester(config);
             auto strategy = make_strategy(strategy_name);
-            auto summary = backtester.run(*strategy);
-            summaries.push_back(summary);
-            print_summary(summary);
-            Backtester::write_combined_summary("results/strategy_comparison.csv", summaries);
+            auto result = backtester.run_detailed(*strategy);
+            quant::io::CsvResultExporter::write_backtest(result, config.results_dir);
+            summaries.push_back(result.summary);
+            print_summary(result.summary);
+            quant::io::CsvResultExporter::write_combined_summary("results/strategy_comparison.csv", summaries);
         } else if (mode == "compare") {
             std::vector<std::string> strategies = {"ma_cross", "rsi", "macd"};
             for (const auto& t : selected_tickers(ticker)) {
@@ -192,12 +195,13 @@ int main(int argc, char** argv) {
                     config.ticker = t;
                     Backtester backtester(config);
                     auto strategy = make_strategy(s);
-                    auto summary = backtester.run(*strategy);
-                    summaries.push_back(summary);
-                    print_summary(summary);
+                    auto result = backtester.run_detailed(*strategy);
+                    quant::io::CsvResultExporter::write_backtest(result, config.results_dir);
+                    summaries.push_back(result.summary);
+                    print_summary(result.summary);
                 }
             }
-            Backtester::write_combined_summary("results/strategy_comparison.csv", summaries);
+            quant::io::CsvResultExporter::write_combined_summary("results/strategy_comparison.csv", summaries);
         } else if (mode == "grid") {
             summaries = Analysis::run_parameter_grid(base_config, selected_tickers(ticker));
         } else if (mode == "cross-asset") {

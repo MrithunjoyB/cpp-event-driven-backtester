@@ -2,6 +2,7 @@
 
 #include "MarketData.h"
 #include "ResearchMethodology.h"
+#include "quant/io/ResultExporter.h"
 
 #include <algorithm>
 #include <chrono>
@@ -54,7 +55,7 @@ std::unique_ptr<Strategy> make_strategy(const std::string& name, const std::stri
 }
 
 void write_summary_csv(const std::string& filepath, const std::vector<PerformanceSummary>& rows) {
-    Backtester::write_combined_summary(filepath, rows);
+    quant::io::CsvResultExporter::write_combined_summary(filepath, rows);
 }
 
 MarketData load_market_data(const BacktestConfig& config, const std::string& ticker) {
@@ -313,7 +314,9 @@ std::vector<PerformanceSummary> Analysis::run_cross_asset(const BacktestConfig& 
             BacktestConfig config = base_config;
             config.ticker = ticker;
             Backtester tester(config);
-            summaries.push_back(tester.run_detailed(*spec.instance, true).summary);
+            BacktestResult result = tester.run_detailed(*spec.instance);
+            quant::io::CsvResultExporter::write_backtest(result, config.results_dir);
+            summaries.push_back(result.summary);
         }
     }
     write_summary_csv(base_config.results_dir + "/cross_asset_comparison.csv", summaries);
@@ -328,7 +331,7 @@ std::vector<PerformanceSummary> Analysis::run_parameter_grid(const BacktestConfi
             BacktestConfig config = base_config;
             config.ticker = ticker;
             Backtester tester(config);
-            summaries.push_back(tester.run_detailed(*spec.instance, false).summary);
+            summaries.push_back(tester.run_detailed(*spec.instance).summary);
         }
     }
     write_summary_csv(base_config.results_dir + "/parameter_grid_results.csv", summaries);
@@ -361,7 +364,7 @@ void Analysis::run_walk_forward(const BacktestConfig& base_config, const std::ve
                 train_config.start_date = window.train_start;
                 train_config.end_date = window.train_end;
                 Backtester train_tester(train_config);
-                PerformanceSummary train_summary = train_tester.run_detailed(*spec.instance, false).summary;
+                PerformanceSummary train_summary = train_tester.run_detailed(*spec.instance).summary;
                 if (!best_by_strategy.count(spec.strategy) || objective(train_summary) > objective(best_by_strategy[spec.strategy])) {
                     best_by_strategy[spec.strategy] = train_summary;
                 }
@@ -378,7 +381,7 @@ void Analysis::run_walk_forward(const BacktestConfig& base_config, const std::ve
                 test_config.end_date = window.test_end;
                 test_config.liquidate_at_end = true;
                 Backtester test_tester(test_config);
-                BacktestResult out_sample = test_tester.run_detailed(*frozen, false);
+                BacktestResult out_sample = test_tester.run_detailed(*frozen);
                 const double ending_capital = out_sample.equity_curve.empty()
                     ? starting_capital : out_sample.equity_curve.back().portfolio_value;
                 capital_by_strategy[selected.first] = ending_capital;
@@ -439,7 +442,7 @@ void Analysis::run_transaction_cost_sensitivity(const BacktestConfig& base_confi
             zero.ticker = ticker;
             zero.transaction_cost_rate = 0.0;
             zero.slippage_rate = 0.0;
-            double zero_return = Backtester(zero).run_detailed(*spec.instance, false).summary.total_return;
+            double zero_return = Backtester(zero).run_detailed(*spec.instance).summary.total_return;
             double best_break_even = 0.0;
             for (int commission_bps : {0, 5, 10, 20, 40}) {
                 for (int slippage_bps : {0, 5, 10, 25, 50}) {
@@ -447,7 +450,7 @@ void Analysis::run_transaction_cost_sensitivity(const BacktestConfig& base_confi
                     config.ticker = ticker;
                     config.transaction_cost_rate = commission_bps / 10000.0;
                     config.slippage_rate = slippage_bps / 10000.0;
-                    PerformanceSummary summary = Backtester(config).run_detailed(*spec.instance, false).summary;
+                    PerformanceSummary summary = Backtester(config).run_detailed(*spec.instance).summary;
                     double total_bps = commission_bps + slippage_bps;
                     double degradation = zero_return - summary.total_return;
                     double break_even = degradation > 0.0 && total_bps > 0.0 ? total_bps * (zero_return / degradation) : 0.0;
@@ -511,7 +514,7 @@ void Analysis::run_regime_evaluation(const BacktestConfig& base_config, const st
         for (const auto& spec : default_strategy_specs()) {
             BacktestConfig config = base_config;
             config.ticker = ticker;
-            BacktestResult result = Backtester(config).run_detailed(*spec.instance, false);
+            BacktestResult result = Backtester(config).run_detailed(*spec.instance);
 
             for (const auto& regime : regimes) {
                 std::vector<double> regime_returns;
@@ -622,7 +625,7 @@ std::vector<BenchmarkTiming> Analysis::run_performance_benchmarks(const Backtest
         config.ticker = "AAPL";
         auto strategy = MovingAverageCrossoverStrategy(20, 50);
         for (int repeat = 0; repeat < 10; ++repeat) {
-            Backtester(config).run_detailed(strategy, false);
+            Backtester(config).run_detailed(strategy);
         }
         return bars.size() * 10;
     });
@@ -632,7 +635,7 @@ std::vector<BenchmarkTiming> Analysis::run_performance_benchmarks(const Backtest
         config.ticker = "AAPL";
         std::size_t runs = 0;
         for (const auto& spec : grid_strategy_specs()) {
-            Backtester(config).run_detailed(*spec.instance, false);
+            Backtester(config).run_detailed(*spec.instance);
             ++runs;
         }
         return runs;
@@ -744,7 +747,7 @@ void Analysis::run_research_experiment(const ExperimentConfig& experiment) {
         for (const auto& spec : grid_strategy_specs(experiment.strategy)) {
             BacktestConfig cfg = base;
             cfg.ticker = ticker;
-            BacktestResult result = Backtester(cfg).run_detailed(*spec.instance, false);
+            BacktestResult result = Backtester(cfg).run_detailed(*spec.instance);
             grid_out << result.summary.schema_version << ',' << ticker << ',' << result.summary.strategy << ',' << result.summary.parameter_set << ",full,full,"
                      << result.summary.benchmark_ticker << ',' << result.summary.benchmark_execution_policy << ','
                      << result.summary.benchmark_cost_policy << ',' << result.summary.excess_return_basis << ','
@@ -812,7 +815,7 @@ void Analysis::run_research_experiment(const ExperimentConfig& experiment) {
                 train.ticker = ticker;
                 train.start_date = window.train_start;
                 train.end_date = window.train_end;
-                BacktestResult r = Backtester(train).run_detailed(*spec.instance, false);
+                BacktestResult r = Backtester(train).run_detailed(*spec.instance);
                 double score = objective(r.summary, experiment.objective, experiment.minimum_trades);
                 insample << experiment.result_schema_version << ',' << experiment.window_mode << ',' << ticker << ',' << r.summary.strategy << ',' << window_id << ',' << r.summary.parameter_set << ','
                          << r.summary.total_return << ',' << r.summary.sharpe << ',' << r.summary.max_drawdown << ',' << r.summary.num_trades << '\n';
@@ -833,7 +836,7 @@ void Analysis::run_research_experiment(const ExperimentConfig& experiment) {
             test.start_date = window.test_start;
             test.end_date = window.test_end;
             test.liquidate_at_end = true;
-            BacktestResult out = Backtester(test).run_detailed(*frozen, false);
+            BacktestResult out = Backtester(test).run_detailed(*frozen);
             const double ending_capital = out.equity_curve.empty() ? starting_capital : out.equity_curve.back().portfolio_value;
             if (experiment.continuity_policy == "continuous_capital") {
                 continuous_capital = ending_capital;
@@ -896,7 +899,7 @@ void Analysis::run_portfolio_research(const ExperimentConfig& experiment, const 
         BacktestConfig cfg = base;
         cfg.ticker = ticker;
         auto specs = default_strategy_specs();
-        legs.push_back(Backtester(cfg).run_detailed(*specs.front().instance, false));
+        legs.push_back(Backtester(cfg).run_detailed(*specs.front().instance));
     }
     std::ofstream eq(base.results_dir + "/portfolio_equity_curve.csv");
     std::ofstream pos(base.results_dir + "/portfolio_positions.csv");
@@ -957,7 +960,7 @@ void Analysis::run_bootstrap_research(const ExperimentConfig& experiment) {
     base.slippage_rate = experiment.slippage_bps / 10000.0;
     base.ticker = experiment.tickers.empty() ? "AAPL" : experiment.tickers.front();
     auto specs = grid_strategy_specs(experiment.strategy);
-    BacktestResult result = Backtester(base).run_detailed(*specs.front().instance, false);
+    BacktestResult result = Backtester(base).run_detailed(*specs.front().instance);
     std::vector<double> returns = returns_from_equity(result.equity_curve);
     std::mt19937 rng(experiment.random_seed);
     std::uniform_int_distribution<std::size_t> pick(0, returns.empty() ? 0 : returns.size() - 1);

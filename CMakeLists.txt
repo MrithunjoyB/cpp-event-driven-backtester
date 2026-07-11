@@ -17,6 +17,7 @@ set(QUANT_CORE_SOURCES
     src/Backtester.cpp
     src/Analysis.cpp
     src/Metrics.cpp
+    src/io/ResultExporter.cpp
 )
 
 add_library(quant_core STATIC ${QUANT_CORE_SOURCES})

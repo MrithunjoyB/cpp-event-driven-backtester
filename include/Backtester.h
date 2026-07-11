@@ -42,16 +42,10 @@ public:
     explicit Backtester(BacktestConfig config);
 
     PerformanceSummary run(const Strategy& strategy);
-    BacktestResult run_detailed(const Strategy& strategy, bool write_outputs);
-    static void write_combined_summary(const std::string& filepath, const std::vector<PerformanceSummary>& summaries);
+    BacktestResult run_detailed(const Strategy& strategy);
 
 private:
     BacktestConfig config_;
 
-    void ensure_results_dir() const;
-    void write_trades(const std::string& filepath, const std::vector<Trade>& trades) const;
-    void write_equity_curve(const std::string& filepath, const std::vector<EquityPoint>& equity_curve) const;
-    void write_summary(const std::string& filepath, const PerformanceSummary& summary) const;
-    std::string result_prefix(const std::string& strategy_name) const;
     BenchmarkResult benchmark_return(const std::string& start_date, const std::string& end_date) const;
 };
