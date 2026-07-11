@@ -3,6 +3,7 @@
 #include "MarketData.h"
 #include "ResearchMethodology.h"
 #include "quant/io/ResultExporter.h"
+#include "quant/config/ConfigLoader.h"
 
 #include <algorithm>
 #include <chrono>
@@ -14,7 +15,6 @@
 #include <map>
 #include <numeric>
 #include <random>
-#include <regex>
 #include <sstream>
 #include <stdexcept>
 
@@ -176,43 +176,6 @@ std::vector<double> optimized_rolling_sma(const std::vector<double>& values, int
         }
     }
     return out;
-}
-
-std::string read_file(const std::string& filepath) {
-    std::ifstream in(filepath);
-    if (!in.is_open()) {
-        throw std::runtime_error("Could not open config: " + filepath);
-    }
-    std::ostringstream ss;
-    ss << in.rdbuf();
-    return ss.str();
-}
-
-std::string json_string(const std::string& text, const std::string& key, const std::string& fallback) {
-    std::regex pattern("\"" + key + "\"\\s*:\\s*\"([^\"]*)\"");
-    std::smatch match;
-    return std::regex_search(text, match, pattern) ? match[1].str() : fallback;
-}
-
-double json_number(const std::string& text, const std::string& key, double fallback) {
-    std::regex pattern("\"" + key + "\"\\s*:\\s*(-?[0-9]+(?:\\.[0-9]+)?)");
-    std::smatch match;
-    return std::regex_search(text, match, pattern) ? std::stod(match[1].str()) : fallback;
-}
-
-std::vector<std::string> json_string_array(const std::string& text, const std::string& key, const std::vector<std::string>& fallback) {
-    std::regex pattern("\"" + key + "\"\\s*:\\s*\\[([^\\]]*)\\]");
-    std::smatch match;
-    if (!std::regex_search(text, match, pattern)) {
-        return fallback;
-    }
-    std::vector<std::string> out;
-    std::regex item("\"([^\"]*)\"");
-    std::string body = match[1].str();
-    for (std::sregex_iterator it(body.begin(), body.end(), item), end; it != end; ++it) {
-        out.push_back((*it)[1].str());
-    }
-    return out.empty() ? fallback : out;
 }
 
 std::vector<double> returns_from_equity(const std::vector<EquityPoint>& equity) {
@@ -655,92 +618,22 @@ void Analysis::write_benchmark_timings(const std::string& filepath, const std::v
 }
 
 ExperimentConfig Analysis::load_experiment_config(const std::string& filepath) {
-    std::string text = read_file(filepath);
-    ExperimentConfig config;
-    config.experiment_name = json_string(text, "experiment_name", config.experiment_name);
-    config.tickers = json_string_array(text, "ticker_universe", default_tickers());
-    config.strategy = json_string(text, "strategy", config.strategy);
-    config.starting_capital = json_number(text, "starting_capital", config.starting_capital);
-    config.commission_bps = json_number(text, "commission_bps", config.commission_bps);
-    config.slippage_bps = json_number(text, "slippage_bps", config.slippage_bps);
-    config.train_days = static_cast<int>(json_number(text, "train_window_days", config.train_days));
-    config.test_days = static_cast<int>(json_number(text, "test_window_days", config.test_days));
-    config.step_days = static_cast<int>(json_number(text, "step_days", config.step_days));
-    config.window_mode = json_string(text, "window_mode", config.window_mode);
-    config.train_years = static_cast<int>(json_number(text, "train_years", config.train_years));
-    config.test_months = static_cast<int>(json_number(text, "test_months", config.test_months));
-    config.step_months = static_cast<int>(json_number(text, "step_months", config.step_months));
-    config.continuity_policy = json_string(text, "oos_continuity_policy", config.continuity_policy);
-    config.boundary_position_policy = json_string(text, "boundary_position_policy", config.boundary_position_policy);
-    config.benchmark = json_string(text, "benchmark", config.benchmark);
-    config.objective = json_string(text, "parameter_selection_objective", config.objective);
-    config.minimum_trades = static_cast<int>(json_number(text, "minimum_trade_requirement", config.minimum_trades));
-    config.regime_method = json_string(text, "regime_classification_method", config.regime_method);
-    config.random_seed = static_cast<unsigned int>(json_number(text, "random_seed", config.random_seed));
-    config.output_dir = json_string(text, "output_directory", "results/research/" + config.experiment_name);
-    config.allocation_policy = json_string(text, "allocation_policy", config.allocation_policy);
-    config.rebalance_frequency = json_string(text, "rebalance_frequency", config.rebalance_frequency);
-    config.max_weight = json_number(text, "max_weight", config.max_weight);
-    config.cash_buffer = json_number(text, "cash_buffer", config.cash_buffer);
-    config.min_trade_value = json_number(text, "min_trade_value", config.min_trade_value);
-    config.volatility_lookback = static_cast<int>(json_number(text, "volatility_lookback", config.volatility_lookback));
-    config.momentum_lookback = static_cast<int>(json_number(text, "momentum_lookback", config.momentum_lookback));
-    config.top_n = static_cast<int>(json_number(text, "top_n", config.top_n));
-    config.portfolio_output_dir = json_string(text, "portfolio_output_directory", config.portfolio_output_dir);
-    config.result_schema_version = static_cast<int>(json_number(text, "result_schema_version", config.result_schema_version));
-    if (config.window_mode != "calendar_duration" && config.window_mode != "observation_count") {
-        throw std::runtime_error("window_mode must be calendar_duration or observation_count");
-    }
-    if (config.continuity_policy != "continuous_capital" && config.continuity_policy != "normalized_window") {
-        throw std::runtime_error("oos_continuity_policy must be continuous_capital or normalized_window");
-    }
-    if (config.boundary_position_policy != "liquidate_at_test_end_close") {
-        throw std::runtime_error("Unsupported boundary_position_policy: " + config.boundary_position_policy);
-    }
-    if (config.benchmark.empty() || config.benchmark == "same_ticker") {
-        throw std::runtime_error("benchmark must be same_asset or an available ticker symbol");
-    }
-    return config;
+    return quant::config::ConfigLoader::load_file(filepath);
 }
 
 void Analysis::run_research_experiment(const ExperimentConfig& experiment) {
-    std::filesystem::create_directories(experiment.output_dir);
-    std::ofstream resolved(experiment.output_dir + "/resolved_config.json");
-    resolved << "{\n"
-             << "  \"experiment_name\": \"" << experiment.experiment_name << "\",\n"
-             << "  \"strategy\": \"" << experiment.strategy << "\",\n"
-             << "  \"starting_capital\": " << experiment.starting_capital << ",\n"
-             << "  \"commission_bps\": " << experiment.commission_bps << ",\n"
-             << "  \"slippage_bps\": " << experiment.slippage_bps << ",\n"
-             << "  \"train_window_days\": " << experiment.train_days << ",\n"
-             << "  \"test_window_days\": " << experiment.test_days << ",\n"
-             << "  \"step_days\": " << experiment.step_days << ",\n"
-             << "  \"window_mode\": \"" << experiment.window_mode << "\",\n"
-             << "  \"train_years\": " << experiment.train_years << ",\n"
-             << "  \"test_months\": " << experiment.test_months << ",\n"
-             << "  \"step_months\": " << experiment.step_months << ",\n"
-             << "  \"oos_continuity_policy\": \"" << experiment.continuity_policy << "\",\n"
-             << "  \"boundary_position_policy\": \"" << experiment.boundary_position_policy << "\",\n"
-             << "  \"benchmark\": \"" << experiment.benchmark << "\",\n"
-             << "  \"benchmark_execution_policy\": \"first_close_decision_next_open_integer_shares_5pct_cash_reserve\",\n"
-             << "  \"benchmark_cost_policy\": \"strategy_costs_for_net_zero_costs_for_gross\",\n"
-             << "  \"excess_return_basis\": \"net_strategy_minus_net_benchmark\",\n"
-             << "  \"regime_information_cutoff\": \"close_t_minus_1_for_open_t_and_start_of_return_interval\",\n"
-             << "  \"volatility_threshold_method\": \"expanding_median_strictly_prior_volatility\",\n"
-             << "  \"parameter_selection_objective\": \"" << experiment.objective << "\",\n"
-             << "  \"minimum_trade_requirement\": " << experiment.minimum_trades << ",\n"
-             << "  \"random_seed\": " << experiment.random_seed << ",\n"
-             << "  \"result_schema_version\": " << experiment.result_schema_version << "\n"
-             << "}\n";
+    std::filesystem::create_directories(experiment.output.results_dir);
+    quant::io::JsonManifestExporter::write_resolved_config(
+        experiment.output.results_dir + "/resolved_config.json", experiment);
 
     BacktestConfig base;
-    base.starting_capital = experiment.starting_capital;
-    base.transaction_cost_rate = experiment.commission_bps / 10000.0;
-    base.slippage_rate = experiment.slippage_bps / 10000.0;
-    base.results_dir = experiment.output_dir;
-    base.benchmark_ticker = experiment.benchmark;
+    base.starting_capital = experiment.execution.starting_capital;
+    base.transaction_cost_rate = experiment.execution.commission_bps / 10000.0;
+    base.slippage_rate = experiment.execution.slippage_bps / 10000.0;
+    base.results_dir = experiment.output.results_dir;
+    base.benchmark_ticker = experiment.benchmark.ticker;
 
-    std::ofstream grid_out(experiment.output_dir + "/in_sample_full_grid.csv");
+    std::ofstream grid_out(experiment.output.results_dir + "/in_sample_full_grid.csv");
     grid_out << std::fixed << std::setprecision(6);
     grid_out << "schema_version,ticker,strategy,parameter_set,start_date,end_date,benchmark_ticker,benchmark_execution_policy,benchmark_cost_policy,excess_return_basis,total_return,benchmark_net_return,excess_return,sharpe,sortino,max_drawdown,calmar,turnover,total_costs,trade_count,win_rate,profit_factor\n";
     for (const auto& ticker : experiment.tickers) {
@@ -759,14 +652,14 @@ void Analysis::run_research_experiment(const ExperimentConfig& experiment) {
         }
     }
 
-    std::filesystem::create_directories(experiment.output_dir + "/walk_forward");
-    std::ofstream windows(experiment.output_dir + "/walk_forward/windows.csv");
-    std::ofstream history(experiment.output_dir + "/walk_forward/parameter_history.csv");
-    std::ofstream insample(experiment.output_dir + "/walk_forward/in_sample_results.csv");
-    std::ofstream oos(experiment.output_dir + "/walk_forward/out_of_sample_results.csv");
-    std::ofstream oos_equity(experiment.output_dir + "/walk_forward/oos_equity_curve.csv");
-    std::ofstream oos_trades(experiment.output_dir + "/walk_forward/oos_trades.csv");
-    std::ofstream summary(experiment.output_dir + "/walk_forward/summary.csv");
+    std::filesystem::create_directories(experiment.output.results_dir + "/walk_forward");
+    std::ofstream windows(experiment.output.results_dir + "/walk_forward/windows.csv");
+    std::ofstream history(experiment.output.results_dir + "/walk_forward/parameter_history.csv");
+    std::ofstream insample(experiment.output.results_dir + "/walk_forward/in_sample_results.csv");
+    std::ofstream oos(experiment.output.results_dir + "/walk_forward/out_of_sample_results.csv");
+    std::ofstream oos_equity(experiment.output.results_dir + "/walk_forward/oos_equity_curve.csv");
+    std::ofstream oos_trades(experiment.output.results_dir + "/walk_forward/oos_trades.csv");
+    std::ofstream summary(experiment.output.results_dir + "/walk_forward/summary.csv");
     windows << std::fixed << std::setprecision(6);
     history << std::fixed << std::setprecision(6);
     insample << std::fixed << std::setprecision(6);
@@ -786,18 +679,18 @@ void Analysis::run_research_experiment(const ExperimentConfig& experiment) {
         MarketData data = load_market_data(base, ticker);
         const auto& bars = data.bars(ticker);
         std::vector<CalendarWindow> experiment_windows;
-        if (experiment.window_mode == "calendar_duration") {
-            experiment_windows = build_calendar_windows(bars, experiment.train_years, experiment.test_months, experiment.step_months);
+        if (experiment.walk_forward.window_mode == "calendar_duration") {
+            experiment_windows = build_calendar_windows(bars, experiment.walk_forward.train_years, experiment.walk_forward.test_months, experiment.walk_forward.step_months);
         } else {
             for (std::size_t begin = 0;
-                 begin + static_cast<std::size_t>(experiment.train_days + experiment.test_days) <= bars.size();
-                 begin += static_cast<std::size_t>(experiment.step_days)) {
-                const std::size_t train_end = begin + static_cast<std::size_t>(experiment.train_days) - 1;
+                 begin + static_cast<std::size_t>(experiment.walk_forward.train_days + experiment.walk_forward.test_days) <= bars.size();
+                 begin += static_cast<std::size_t>(experiment.walk_forward.step_days)) {
+                const std::size_t train_end = begin + static_cast<std::size_t>(experiment.walk_forward.train_days) - 1;
                 const std::size_t test_begin = train_end + 1;
-                const std::size_t test_end = test_begin + static_cast<std::size_t>(experiment.test_days) - 1;
+                const std::size_t test_end = test_begin + static_cast<std::size_t>(experiment.walk_forward.test_days) - 1;
                 experiment_windows.push_back(CalendarWindow{begin, train_end, test_begin, test_end,
                     bars[begin].date, bars[train_end].date, bars[test_begin].date, bars[test_end].date,
-                    static_cast<std::size_t>(experiment.train_days), static_cast<std::size_t>(experiment.test_days)});
+                    static_cast<std::size_t>(experiment.walk_forward.train_days), static_cast<std::size_t>(experiment.walk_forward.test_days)});
             }
         }
         int window_id = 0;
@@ -805,7 +698,7 @@ void Analysis::run_research_experiment(const ExperimentConfig& experiment) {
         int beats_benchmark = 0;
         int parameter_changes = 0;
         double worst_return = 1e9;
-        double continuous_capital = experiment.starting_capital;
+        double continuous_capital = experiment.execution.starting_capital;
         std::string previous_params;
         for (const auto& window : experiment_windows) {
             PerformanceSummary best;
@@ -816,8 +709,8 @@ void Analysis::run_research_experiment(const ExperimentConfig& experiment) {
                 train.start_date = window.train_start;
                 train.end_date = window.train_end;
                 BacktestResult r = Backtester(train).run_detailed(*spec.instance);
-                double score = objective(r.summary, experiment.objective, experiment.minimum_trades);
-                insample << experiment.result_schema_version << ',' << experiment.window_mode << ',' << ticker << ',' << r.summary.strategy << ',' << window_id << ',' << r.summary.parameter_set << ','
+                double score = objective(r.summary, experiment.parameter_selection.objective, experiment.parameter_selection.minimum_trades);
+                insample << experiment.result_schema_version << ',' << experiment.walk_forward.window_mode << ',' << ticker << ',' << r.summary.strategy << ',' << window_id << ',' << r.summary.parameter_set << ','
                          << r.summary.total_return << ',' << r.summary.sharpe << ',' << r.summary.max_drawdown << ',' << r.summary.num_trades << '\n';
                 if (score > best_score) {
                     best_score = score;
@@ -830,15 +723,15 @@ void Analysis::run_research_experiment(const ExperimentConfig& experiment) {
             auto frozen = make_strategy(best.strategy, best.parameter_set);
             BacktestConfig test = base;
             test.ticker = ticker;
-            const double starting_capital = experiment.continuity_policy == "continuous_capital"
-                ? continuous_capital : experiment.starting_capital;
+            const double starting_capital = experiment.walk_forward.continuity_policy == "continuous_capital"
+                ? continuous_capital : experiment.execution.starting_capital;
             test.starting_capital = starting_capital;
             test.start_date = window.test_start;
             test.end_date = window.test_end;
             test.liquidate_at_end = true;
             BacktestResult out = Backtester(test).run_detailed(*frozen);
             const double ending_capital = out.equity_curve.empty() ? starting_capital : out.equity_curve.back().portfolio_value;
-            if (experiment.continuity_policy == "continuous_capital") {
+            if (experiment.walk_forward.continuity_policy == "continuous_capital") {
                 continuous_capital = ending_capital;
             }
             double boundary_costs = 0.0;
@@ -847,38 +740,38 @@ void Analysis::run_research_experiment(const ExperimentConfig& experiment) {
                     boundary_costs += trade.cost + trade.slippage;
                 }
             }
-            const double cumulative_return = (experiment.continuity_policy == "continuous_capital" ? continuous_capital : ending_capital)
-                / experiment.starting_capital - 1.0;
+            const double cumulative_return = (experiment.walk_forward.continuity_policy == "continuous_capital" ? continuous_capital : ending_capital)
+                / experiment.execution.starting_capital - 1.0;
             positive_excess += out.summary.excess_return > 0.0 ? 1 : 0;
             beats_benchmark += out.summary.total_return > out.summary.benchmark_net_return ? 1 : 0;
             worst_return = std::min(worst_return, out.summary.total_return);
-            windows << experiment.result_schema_version << ',' << experiment.window_mode << ',' << ticker << ',' << best.strategy << ',' << window_id << ','
+            windows << experiment.result_schema_version << ',' << experiment.walk_forward.window_mode << ',' << ticker << ',' << best.strategy << ',' << window_id << ','
                     << window.train_start << ',' << window.train_end << ',' << window.test_start << ',' << window.test_end << ','
                     << window.train_observations << ',' << window.test_observations << ',' << best.parameter_set << ',' << best_score << ',' << (changed ? 1 : 0) << ','
-                    << starting_capital << ',' << ending_capital << ',' << experiment.continuity_policy << ',' << experiment.boundary_position_policy << ','
+                    << starting_capital << ',' << ending_capital << ',' << experiment.walk_forward.continuity_policy << ',' << experiment.walk_forward.boundary_position_policy << ','
                     << boundary_costs << ',' << out.summary.total_return << ',' << cumulative_return << ',' << out.summary.benchmark_ticker << ','
                     << out.summary.benchmark_execution_policy << ',' << out.summary.benchmark_cost_policy << ',' << out.summary.excess_return_basis << '\n';
-            history << experiment.result_schema_version << ',' << experiment.window_mode << ',' << ticker << ',' << best.strategy << ',' << window_id << ',' << best.parameter_set << ',' << best_score << ',' << best.sharpe << ',' << best.total_return << '\n';
-            oos << experiment.result_schema_version << ',' << experiment.window_mode << ',' << experiment.continuity_policy << ',' << ticker << ',' << out.summary.strategy << ',' << window_id << ',' << out.summary.parameter_set << ','
+            history << experiment.result_schema_version << ',' << experiment.walk_forward.window_mode << ',' << ticker << ',' << best.strategy << ',' << window_id << ',' << best.parameter_set << ',' << best_score << ',' << best.sharpe << ',' << best.total_return << '\n';
+            oos << experiment.result_schema_version << ',' << experiment.walk_forward.window_mode << ',' << experiment.walk_forward.continuity_policy << ',' << ticker << ',' << out.summary.strategy << ',' << window_id << ',' << out.summary.parameter_set << ','
                 << starting_capital << ',' << ending_capital << ',' << out.summary.total_return << ',' << cumulative_return << ',' << out.summary.benchmark_ticker << ','
                 << out.summary.benchmark_net_return << ',' << out.summary.excess_return << ',' << out.summary.excess_return_basis << ','
                 << out.summary.sharpe << ',' << out.summary.max_drawdown << ',' << out.summary.num_trades << ',' << out.summary.total_transaction_costs << ',' << boundary_costs << '\n';
             for (const auto& p : out.equity_curve) {
-                oos_equity << experiment.result_schema_version << ',' << experiment.window_mode << ',' << experiment.continuity_policy << ',' << ticker << ',' << out.summary.strategy << ',' << window_id << ',' << p.date << ',' << p.portfolio_value << ','
-                           << p.cash << ',' << p.holdings << ',' << p.total_return << ',' << p.portfolio_value / experiment.starting_capital - 1.0 << ',' << p.drawdown << '\n';
+                oos_equity << experiment.result_schema_version << ',' << experiment.walk_forward.window_mode << ',' << experiment.walk_forward.continuity_policy << ',' << ticker << ',' << out.summary.strategy << ',' << window_id << ',' << p.date << ',' << p.portfolio_value << ','
+                           << p.cash << ',' << p.holdings << ',' << p.total_return << ',' << p.portfolio_value / experiment.execution.starting_capital - 1.0 << ',' << p.drawdown << '\n';
             }
             for (const auto& t : out.trades) {
-                oos_trades << experiment.result_schema_version << ',' << experiment.window_mode << ',' << experiment.continuity_policy << ',' << ticker << ',' << t.strategy << ',' << window_id << ',' << t.date << ',' << t.action << ',' << t.price << ','
+                oos_trades << experiment.result_schema_version << ',' << experiment.walk_forward.window_mode << ',' << experiment.walk_forward.continuity_policy << ',' << ticker << ',' << t.strategy << ',' << window_id << ',' << t.date << ',' << t.action << ',' << t.price << ','
                            << t.quantity << ',' << t.cost << ',' << t.slippage << ',' << t.portfolio_value << ',' << t.realized_pnl << '\n';
             }
             ++window_id;
         }
         if (window_id > 0) {
-            summary << experiment.result_schema_version << ',' << experiment.window_mode << ',' << experiment.continuity_policy << ',' << experiment.boundary_position_policy << ',' << ticker << ',' << experiment.strategy << ',' << window_id << ','
+            summary << experiment.result_schema_version << ',' << experiment.walk_forward.window_mode << ',' << experiment.walk_forward.continuity_policy << ',' << experiment.walk_forward.boundary_position_policy << ',' << ticker << ',' << experiment.strategy << ',' << window_id << ','
                     << static_cast<double>(positive_excess) / window_id << ','
                     << static_cast<double>(beats_benchmark) / window_id << ','
-                    << parameter_changes << ',' << worst_return << ',' << experiment.starting_capital << ',' << continuous_capital << ','
-                    << continuous_capital / experiment.starting_capital - 1.0 << ',' << (experiment.benchmark == "same_asset" ? ticker : experiment.benchmark) << '\n';
+                    << parameter_changes << ',' << worst_return << ',' << experiment.execution.starting_capital << ',' << continuous_capital << ','
+                    << continuous_capital / experiment.execution.starting_capital - 1.0 << ',' << (experiment.benchmark.ticker == "same_asset" ? ticker : experiment.benchmark.ticker) << '\n';
         }
     }
 
@@ -887,12 +780,12 @@ void Analysis::run_research_experiment(const ExperimentConfig& experiment) {
 }
 
 void Analysis::run_portfolio_research(const ExperimentConfig& experiment, const std::string& policy) {
-    std::filesystem::create_directories(experiment.output_dir + "/portfolio");
+    std::filesystem::create_directories(experiment.output.results_dir + "/portfolio");
     BacktestConfig base;
-    base.starting_capital = experiment.starting_capital;
-    base.transaction_cost_rate = experiment.commission_bps / 10000.0;
-    base.slippage_rate = experiment.slippage_bps / 10000.0;
-    base.results_dir = experiment.output_dir + "/portfolio";
+    base.starting_capital = experiment.execution.starting_capital;
+    base.transaction_cost_rate = experiment.execution.commission_bps / 10000.0;
+    base.slippage_rate = experiment.execution.slippage_bps / 10000.0;
+    base.results_dir = experiment.output.results_dir + "/portfolio";
 
     std::vector<BacktestResult> legs;
     for (const auto& ticker : experiment.tickers) {
@@ -923,9 +816,9 @@ void Analysis::run_portfolio_research(const ExperimentConfig& experiment, const 
         return;
     }
     std::size_t n = legs.front().equity_curve.size();
-    double peak = experiment.starting_capital;
+    double peak = experiment.execution.starting_capital;
     double max_drawdown = 0.0;
-    double final_portfolio_value = experiment.starting_capital;
+    double final_portfolio_value = experiment.execution.starting_capital;
     for (std::size_t i = 0; i < n; ++i) {
         double value = 0.0;
         for (const auto& leg : legs) {
@@ -936,7 +829,7 @@ void Analysis::run_portfolio_research(const ExperimentConfig& experiment, const 
         peak = std::max(peak, value);
         double dd = peak > 0.0 ? value / peak - 1.0 : 0.0;
         max_drawdown = std::min(max_drawdown, dd);
-        double total_return = experiment.starting_capital > 0.0 ? value / experiment.starting_capital - 1.0 : 0.0;
+        double total_return = experiment.execution.starting_capital > 0.0 ? value / experiment.execution.starting_capital - 1.0 : 0.0;
         final_portfolio_value = value;
         eq << legs.front().equity_curve[i].date << ',' << value << ",0," << value << ',' << total_return << ',' << dd << '\n';
         if (i % 21 == 0) {
@@ -948,30 +841,30 @@ void Analysis::run_portfolio_research(const ExperimentConfig& experiment, const 
             }
         }
     }
-    sum << policy << ',' << final_portfolio_value / experiment.starting_capital - 1.0 << ',' << max_drawdown << ',' << experiment.tickers.size()
+    sum << policy << ',' << final_portfolio_value / experiment.execution.starting_capital - 1.0 << ',' << max_drawdown << ',' << experiment.tickers.size()
         << ",transparent composite of independently audited legs; no leverage or shorting\n";
 }
 
 void Analysis::run_bootstrap_research(const ExperimentConfig& experiment) {
-    std::filesystem::create_directories(experiment.output_dir + "/bootstrap");
+    std::filesystem::create_directories(experiment.output.results_dir + "/bootstrap");
     BacktestConfig base;
-    base.starting_capital = experiment.starting_capital;
-    base.transaction_cost_rate = experiment.commission_bps / 10000.0;
-    base.slippage_rate = experiment.slippage_bps / 10000.0;
+    base.starting_capital = experiment.execution.starting_capital;
+    base.transaction_cost_rate = experiment.execution.commission_bps / 10000.0;
+    base.slippage_rate = experiment.execution.slippage_bps / 10000.0;
     base.ticker = experiment.tickers.empty() ? "AAPL" : experiment.tickers.front();
     auto specs = grid_strategy_specs(experiment.strategy);
     BacktestResult result = Backtester(base).run_detailed(*specs.front().instance);
     std::vector<double> returns = returns_from_equity(result.equity_curve);
-    std::mt19937 rng(experiment.random_seed);
+    std::mt19937 rng(experiment.bootstrap.random_seed);
     std::uniform_int_distribution<std::size_t> pick(0, returns.empty() ? 0 : returns.size() - 1);
     std::vector<double> terminal;
-    std::ofstream paths(experiment.output_dir + "/bootstrap/bootstrap_paths_sample.csv");
-    std::ofstream dist(experiment.output_dir + "/bootstrap/bootstrap_metric_distributions.csv");
+    std::ofstream paths(experiment.output.results_dir + "/bootstrap/bootstrap_paths_sample.csv");
+    std::ofstream dist(experiment.output.results_dir + "/bootstrap/bootstrap_metric_distributions.csv");
     paths << "path,step,equity\n";
     dist << "path,total_return,terminal_wealth,max_drawdown,sharpe\n";
     int paths_count = 1000;
     for (int path = 0; path < paths_count; ++path) {
-        double equity = experiment.starting_capital;
+        double equity = experiment.execution.starting_capital;
         double peak = equity;
         double maxdd = 0.0;
         std::vector<double> sampled;
@@ -987,16 +880,16 @@ void Analysis::run_bootstrap_research(const ExperimentConfig& experiment) {
         }
         terminal.push_back(equity);
         double sharpe = stdev(sampled) > 0.0 ? mean(sampled) * 252.0 / (stdev(sampled) * std::sqrt(252.0)) : 0.0;
-        dist << path << ',' << equity / experiment.starting_capital - 1.0 << ',' << equity << ',' << maxdd << ',' << sharpe << '\n';
+        dist << path << ',' << equity / experiment.execution.starting_capital - 1.0 << ',' << equity << ',' << maxdd << ',' << sharpe << '\n';
     }
-    std::ofstream summary(experiment.output_dir + "/bootstrap/bootstrap_summary.csv");
+    std::ofstream summary(experiment.output.results_dir + "/bootstrap/bootstrap_summary.csv");
     int losses = 0;
     for (double wealth : terminal) {
-        losses += wealth < experiment.starting_capital ? 1 : 0;
+        losses += wealth < experiment.execution.starting_capital ? 1 : 0;
     }
     summary << "metric,value\n";
     summary << "paths," << paths_count << '\n';
-    summary << "seed," << experiment.random_seed << '\n';
+    summary << "seed," << experiment.bootstrap.random_seed << '\n';
     summary << "terminal_wealth_p05," << percentile(terminal, 0.05) << '\n';
     summary << "terminal_wealth_p50," << percentile(terminal, 0.50) << '\n';
     summary << "terminal_wealth_p95," << percentile(terminal, 0.95) << '\n';

@@ -4,6 +4,7 @@
 #include <fstream>
 #include <iomanip>
 #include <stdexcept>
+#include <sstream>
 
 namespace quant::io {
 namespace {
@@ -173,6 +174,53 @@ void CsvResultExporter::write_portfolio(
     verify_output(weights, config.results_dir + "/portfolio_allocation_weights.csv");
     verify_output(costs, config.results_dir + "/portfolio_costs.csv");
     verify_output(summary, config.results_dir + "/portfolio_performance_summary.csv");
+}
+
+void JsonManifestExporter::write_text(const std::string& filepath, const std::string& json) {
+    const std::filesystem::path path(filepath);
+    std::error_code error;
+    if (path.has_parent_path()) {
+        std::filesystem::create_directories(path.parent_path(), error);
+    }
+    if (error) {
+        throw std::runtime_error("Could not create manifest directory for " + filepath + ": " + error.message());
+    }
+    auto output = open_output(filepath);
+    output << json;
+    verify_output(output, filepath);
+}
+
+void JsonManifestExporter::write_resolved_config(
+    const std::string& filepath,
+    const quant::config::ExperimentConfig& config) {
+    std::ostringstream json;
+    json << "{\n"
+         << "  \"experiment_name\": \"" << config.name << "\",\n"
+         << "  \"strategy\": \"" << config.strategy << "\",\n"
+         << "  \"starting_capital\": " << config.execution.starting_capital << ",\n"
+         << "  \"commission_bps\": " << config.execution.commission_bps << ",\n"
+         << "  \"slippage_bps\": " << config.execution.slippage_bps << ",\n"
+         << "  \"train_window_days\": " << config.walk_forward.train_days << ",\n"
+         << "  \"test_window_days\": " << config.walk_forward.test_days << ",\n"
+         << "  \"step_days\": " << config.walk_forward.step_days << ",\n"
+         << "  \"window_mode\": \"" << config.walk_forward.window_mode << "\",\n"
+         << "  \"train_years\": " << config.walk_forward.train_years << ",\n"
+         << "  \"test_months\": " << config.walk_forward.test_months << ",\n"
+         << "  \"step_months\": " << config.walk_forward.step_months << ",\n"
+         << "  \"oos_continuity_policy\": \"" << config.walk_forward.continuity_policy << "\",\n"
+         << "  \"boundary_position_policy\": \"" << config.walk_forward.boundary_position_policy << "\",\n"
+         << "  \"benchmark\": \"" << config.benchmark.ticker << "\",\n"
+         << "  \"benchmark_execution_policy\": \"first_close_decision_next_open_integer_shares_5pct_cash_reserve\",\n"
+         << "  \"benchmark_cost_policy\": \"strategy_costs_for_net_zero_costs_for_gross\",\n"
+         << "  \"excess_return_basis\": \"net_strategy_minus_net_benchmark\",\n"
+         << "  \"regime_information_cutoff\": \"close_t_minus_1_for_open_t_and_start_of_return_interval\",\n"
+         << "  \"volatility_threshold_method\": \"expanding_median_strictly_prior_volatility\",\n"
+         << "  \"parameter_selection_objective\": \"" << config.parameter_selection.objective << "\",\n"
+         << "  \"minimum_trade_requirement\": " << config.parameter_selection.minimum_trades << ",\n"
+         << "  \"random_seed\": " << config.bootstrap.random_seed << ",\n"
+         << "  \"result_schema_version\": " << config.result_schema_version << "\n"
+         << "}\n";
+    write_text(filepath, json.str());
 }
 
 }  // namespace quant::io

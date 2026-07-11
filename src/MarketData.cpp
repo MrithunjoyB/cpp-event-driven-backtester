@@ -1,4 +1,5 @@
 #include "MarketData.h"
+#include "quant/domain/Date.h"
 
 #include <fstream>
 #include <cmath>
@@ -37,7 +38,7 @@ bool MarketData::load_csv(const std::string& ticker, const std::string& filepath
         if (!validate_bar(bar, error)) {
             return false;
         }
-        if (!rows.empty() && bar.date <= rows.back().date) {
+        if (!rows.empty() && quant::Date::parse(bar.date) <= quant::Date::parse(rows.back().date)) {
             return false;
         }
         if (seen_dates.count(bar.date) > 0) {
@@ -118,6 +119,12 @@ bool MarketData::validate_header(const std::string& line) {
 bool MarketData::validate_bar(const Bar& bar, std::string& error) {
     if (bar.date.empty()) {
         error = "Missing date";
+        return false;
+    }
+    try {
+        (void)quant::Date::parse(bar.date);
+    } catch (const std::exception&) {
+        error = "Date must be a valid YYYY-MM-DD value";
         return false;
     }
     if (!std::isfinite(bar.open) || !std::isfinite(bar.high) || !std::isfinite(bar.low) || !std::isfinite(bar.close)) {

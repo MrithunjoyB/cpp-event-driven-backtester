@@ -8,6 +8,9 @@
 #include "ResearchMethodology.h"
 #include "Strategy.h"
 #include "quant/io/ResultExporter.h"
+#include "quant/config/ConfigLoader.h"
+#include "quant/domain/Date.h"
+#include "quant/domain/Errors.h"
 
 #include <cmath>
 #include <cstdlib>
@@ -335,10 +338,10 @@ int main() {
     });
     run_case("Experiment config parsing", [&] {
         ExperimentConfig config = Analysis::load_experiment_config("configs/ma_walk_forward.json");
-        require(config.experiment_name == "ma_walk_forward", "bad experiment name");
+        require(config.name == "ma_walk_forward", "bad experiment name");
         require(config.tickers.size() == 5, "bad ticker universe");
         require(config.strategy == "MA_Cross", "bad strategy");
-        require(config.minimum_trades == 3, "bad minimum trades");
+        require(config.parameter_selection.minimum_trades == 3, "bad minimum trades");
     });
     run_case("Default grid includes all supported strategies", [&] {
         auto specs = Analysis::grid_strategy_specs();
@@ -716,8 +719,8 @@ int main() {
                << "\"boundary_position_policy\":\"liquidate_at_test_end_close\"}\n";
         config.close();
         auto parsed = Analysis::load_experiment_config("test_results/normalized_window.json");
-        require(parsed.continuity_policy == "normalized_window", "normalized diagnostic policy was not retained");
-        require(parsed.continuity_policy != "continuous_capital", "normalized diagnostic policy became deployable continuity");
+        require(parsed.walk_forward.continuity_policy == "normalized_window", "normalized diagnostic policy was not retained");
+        require(parsed.walk_forward.continuity_policy != "continuous_capital", "normalized diagnostic policy became deployable continuity");
     });
     run_case("golden_single_asset_regression", [&] {
         BacktestConfig config;
@@ -792,6 +795,61 @@ int main() {
             rejected = true;
         }
         require(rejected, "invalid exporter path was accepted");
+    });
+    run_case("validated_date_parsing_and_ordering", [&] {
+        const auto leap = quant::Date::parse("2024-02-29");
+        require(leap.to_string() == "2024-02-29", "date formatting is not canonical");
+        require(quant::Date::parse("2023-12-31") < quant::Date::parse("2024-01-01"), "date ordering failed");
+        bool rejected = false;
+        try {
+            (void)quant::Date::parse("2023-02-29");
+        } catch (const quant::DataError&) {
+            rejected = true;
+        }
+        require(rejected, "invalid civil date accepted");
+    });
+    run_case("date_abstraction_preserves_calendar_boundaries", [&] {
+        require(quant::Date::parse("2020-02-29").add_years(3).to_string() == add_calendar_years("2020-02-29", 3), "year boundary drifted");
+        require(quant::Date::parse("2020-01-31").add_months(1).to_string() == add_calendar_months("2020-01-31", 1), "month boundary drifted");
+    });
+    run_case("strict_config_rejects_unknown_and_wrong_type_fields", [&] {
+        std::ofstream unknown("test_results/unknown_config.json");
+        unknown << "{\"experiment_name\":\"bad\",\"ticker_universe\":[\"AAPL\"],\"strategy\":\"MA_Cross\",\"typo_field\":1}\n";
+        unknown.close();
+        bool unknown_rejected = false;
+        try { (void)quant::config::ConfigLoader::load_file("test_results/unknown_config.json"); }
+        catch (const quant::ConfigurationError&) { unknown_rejected = true; }
+        require(unknown_rejected, "unknown configuration field accepted");
+
+        std::ofstream wrong_type("test_results/wrong_type_config.json");
+        wrong_type << "{\"experiment_name\":3,\"ticker_universe\":[\"AAPL\"],\"strategy\":\"MA_Cross\"}\n";
+        wrong_type.close();
+        bool type_rejected = false;
+        try { (void)quant::config::ConfigLoader::load_file("test_results/wrong_type_config.json"); }
+        catch (const quant::ConfigurationError&) { type_rejected = true; }
+        require(type_rejected, "wrong configuration type accepted");
+    });
+    run_case("typed_config_rejects_negative_values", [&] {
+        std::ofstream negative("test_results/negative_config.json");
+        negative << "{\"experiment_name\":\"bad\",\"ticker_universe\":[\"AAPL\"],\"strategy\":\"MA_Cross\",\"starting_capital\":-1}\n";
+        negative.close();
+        bool rejected = false;
+        try { (void)quant::config::ConfigLoader::load_file("test_results/negative_config.json"); }
+        catch (const quant::ConfigurationError&) { rejected = true; }
+        require(rejected, "negative starting capital accepted");
+    });
+    run_case("typed_config_round_trip", [&] {
+        auto original = quant::config::ConfigLoader::load_file("configs/ma_walk_forward.json");
+        std::ofstream output("test_results/round_trip_config.json");
+        output << quant::config::ConfigLoader::to_json(original);
+        output.close();
+        auto restored = quant::config::ConfigLoader::load_file("test_results/round_trip_config.json");
+        require(restored.name == original.name, "config name changed on round trip");
+        require(restored.tickers == original.tickers, "ticker universe changed on round trip");
+        require(restored.execution.starting_capital == original.execution.starting_capital, "capital changed on round trip");
+        require(restored.walk_forward.window_mode == original.walk_forward.window_mode, "window mode changed on round trip");
+        require(restored.benchmark.ticker == original.benchmark.ticker, "benchmark changed on round trip");
+        require(restored.output.results_dir == original.output.results_dir, "output directory changed on round trip");
     });
 
     std::cout << cases_run << " deterministic test cases passed with " << assertions_run << " assertions.\n";

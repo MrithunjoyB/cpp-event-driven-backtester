@@ -1,4 +1,5 @@
 #include "Backtester.h"
+#include "quant/domain/Date.h"
 
 #include <limits>
 #include <optional>
@@ -6,10 +7,11 @@
 
 namespace {
 bool in_window(const Bar& bar, const BacktestConfig& config) {
-    if (!config.start_date.empty() && bar.date < config.start_date) {
+    const quant::Date bar_date = quant::Date::parse(bar.date);
+    if (!config.start_date.empty() && bar_date < quant::Date::parse(config.start_date)) {
         return false;
     }
-    if (!config.end_date.empty() && bar.date > config.end_date) {
+    if (!config.end_date.empty() && bar_date > quant::Date::parse(config.end_date)) {
         return false;
     }
     return true;

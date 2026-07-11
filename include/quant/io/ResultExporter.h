@@ -2,6 +2,7 @@
 
 #include "Backtester.h"
 #include "PortfolioBacktester.h"
+#include "quant/config/ExperimentConfig.h"
 
 #include <string>
 #include <vector>
@@ -19,6 +20,14 @@ public:
     static void write_portfolio(
         const PortfolioBacktestResult& result,
         const PortfolioBacktestConfig& config);
+};
+
+class JsonManifestExporter {
+public:
+    static void write_text(const std::string& filepath, const std::string& json);
+    static void write_resolved_config(
+        const std::string& filepath,
+        const quant::config::ExperimentConfig& config);
 };
 
 }  // namespace quant::io
