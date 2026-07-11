@@ -86,8 +86,8 @@ bool MarketData::parse_row(const std::string& line, Bar& bar, std::string& error
     while (std::getline(ss, item, ',')) {
         cols.push_back(item);
     }
-    if (cols.size() != 6) {
-        error = "Expected exactly 6 columns";
+    if (cols.size() != 6 && cols.size() != 9) {
+        error = "Expected 6 legacy columns or 9 corporate-action columns";
         return false;
     }
     for (const auto& col : cols) {
@@ -104,6 +104,12 @@ bool MarketData::parse_row(const std::string& line, Bar& bar, std::string& error
         bar.low = std::stod(cols[3]);
         bar.close = std::stod(cols[4]);
         bar.volume = static_cast<long long>(std::stod(cols[5]));
+        if (cols.size() == 9) {
+            bar.adjusted_close = std::stod(cols[6]);
+            bar.dividends = std::stod(cols[7]);
+            bar.stock_splits = std::stod(cols[8]);
+            bar.has_adjusted_close = true;
+        }
     } catch (...) {
         error = "Could not parse numeric value";
         return false;
@@ -113,7 +119,8 @@ bool MarketData::parse_row(const std::string& line, Bar& bar, std::string& error
 }
 
 bool MarketData::validate_header(const std::string& line) {
-    return line == "Date,Open,High,Low,Close,Volume";
+    return line == "Date,Open,High,Low,Close,Volume" ||
+           line == "Date,Open,High,Low,Close,Volume,AdjustedClose,Dividends,StockSplits";
 }
 
 bool MarketData::validate_bar(const Bar& bar, std::string& error) {
@@ -137,6 +144,18 @@ bool MarketData::validate_bar(const Bar& bar, std::string& error) {
     }
     if (bar.volume < 0) {
         error = "Volume cannot be negative";
+        return false;
+    }
+    if (bar.has_adjusted_close && (!std::isfinite(bar.adjusted_close) || bar.adjusted_close <= 0.0)) {
+        error = "AdjustedClose must be positive and finite";
+        return false;
+    }
+    if (!std::isfinite(bar.dividends) || bar.dividends < 0.0) {
+        error = "Dividends cannot be negative or non-finite";
+        return false;
+    }
+    if (!std::isfinite(bar.stock_splits) || bar.stock_splits < 0.0 || (bar.stock_splits > 0.0 && bar.stock_splits < 1e-12)) {
+        error = "StockSplits must be zero or a positive finite ratio";
         return false;
     }
     if (bar.high < bar.low) {

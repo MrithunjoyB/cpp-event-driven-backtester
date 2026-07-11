@@ -95,11 +95,33 @@ int Application::run_config(const std::string& config_path, bool dry_run) {
     if (!experiment.portfolio.allocation_policy.empty()) {
         PortfolioBacktestConfig config;
         config.tickers = experiment.tickers;
+        config.data_dir = experiment.portfolio.data_dir;
         config.starting_capital = experiment.execution.starting_capital;
         config.transaction_cost_rate = experiment.execution.commission_bps / 10000.0;
         config.slippage_rate = experiment.execution.slippage_bps / 10000.0;
         config.results_dir = experiment.output.portfolio_results_dir;
         config.benchmark_ticker = experiment.benchmark.ticker;
+        config.calendar.mode = experiment.calendar.valuation_mode == "union"
+            ? quant::market_data::CalendarMode::Union : quant::market_data::CalendarMode::LegacyIntersection;
+        config.calendar.stale_mark_policy = experiment.calendar.stale_mark_policy == "last_known"
+            ? quant::market_data::StaleMarkPolicy::LastKnown : quant::market_data::StaleMarkPolicy::Unavailable;
+        config.calendar.max_stale_calendar_days = experiment.calendar.max_stale_calendar_days;
+        config.calendar.missing_bar_policy = experiment.calendar.missing_bar_policy == "error"
+            ? quant::market_data::MissingBarPolicy::Error
+            : (experiment.calendar.missing_bar_policy == "mark_unavailable"
+                ? quant::market_data::MissingBarPolicy::MarkUnavailable : quant::market_data::MissingBarPolicy::UseLastKnown);
+        config.calendar.closed_asset_policy = experiment.calendar.rebalance_closed_asset_policy == "defer"
+            ? quant::market_data::ClosedAssetPolicy::Defer
+            : (experiment.calendar.rebalance_closed_asset_policy == "skip_asset"
+                ? quant::market_data::ClosedAssetPolicy::SkipAsset : quant::market_data::ClosedAssetPolicy::PartialRebalance);
+        config.annualization_method = experiment.calendar.annualization_method;
+        config.configured_periods_per_year = experiment.calendar.configured_periods_per_year;
+        config.result_schema_version = experiment.calendar.valuation_mode == "union" ? 3 : experiment.result_schema_version;
+        config.adjustment_policy = experiment.adjustment.policy == "raw_price"
+            ? quant::market_data::AdjustmentPolicy::RawPrice
+            : (experiment.adjustment.policy == "split_adjusted"
+                ? quant::market_data::AdjustmentPolicy::SplitAdjusted
+                : quant::market_data::AdjustmentPolicy::TotalReturnAdjusted);
         config.rebalance_frequency = PortfolioBacktester::parse_frequency(experiment.portfolio.rebalance_frequency);
         config.allocation.type = AllocationPolicy::parse_type(experiment.portfolio.allocation_policy);
         config.allocation.max_weight = experiment.portfolio.max_weight;

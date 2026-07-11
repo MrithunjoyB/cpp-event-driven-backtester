@@ -218,9 +218,13 @@ ExperimentConfig ConfigLoader::load_file(const std::string& filepath) {
         "parameter_selection_objective", "minimum_trade_requirement", "regime_classification_method", "random_seed",
         "output_directory", "allocation_policy", "rebalance_frequency", "max_weight", "cash_buffer",
         "min_trade_value", "volatility_lookback", "momentum_lookback", "top_n",
-        "portfolio_output_directory", "result_schema_version"};
+        "portfolio_output_directory", "data_directory", "result_schema_version"};
+    const std::set<std::string> calendar_fields = {
+        "calendar_valuation_mode", "stale_mark_policy", "max_stale_calendar_days", "missing_bar_policy",
+        "rebalance_closed_asset_policy", "annualization_method", "configured_periods_per_year",
+        "adjustment_policy", "dividend_convention", "fractional_share_policy", "pending_order_policy"};
     for (const auto& value : values) {
-        if (known.count(value.first) == 0) {
+        if (known.count(value.first) == 0 && calendar_fields.count(value.first) == 0) {
             throw ConfigurationError("Unknown configuration field '" + value.first + "'");
         }
     }
@@ -251,6 +255,7 @@ ExperimentConfig ConfigLoader::load_file(const std::string& filepath) {
     }
     config.bootstrap.random_seed = static_cast<unsigned int>(random_seed);
     config.output.results_dir = get_or<std::string>(values, "output_directory", "results/research/" + config.name);
+    config.portfolio.data_dir = get_or<std::string>(values, "data_directory", config.portfolio.data_dir);
     config.portfolio.allocation_policy = get_or<std::string>(values, "allocation_policy", config.portfolio.allocation_policy);
     config.portfolio.rebalance_frequency = get_or<std::string>(values, "rebalance_frequency", config.portfolio.rebalance_frequency);
     config.portfolio.max_weight = get_or<double>(values, "max_weight", config.portfolio.max_weight);
@@ -261,6 +266,17 @@ ExperimentConfig ConfigLoader::load_file(const std::string& filepath) {
     config.portfolio.top_n = integer_or(values, "top_n", config.portfolio.top_n);
     config.output.portfolio_results_dir = get_or<std::string>(values, "portfolio_output_directory", config.output.portfolio_results_dir);
     config.result_schema_version = integer_or(values, "result_schema_version", config.result_schema_version);
+    config.calendar.valuation_mode = get_or<std::string>(values, "calendar_valuation_mode", config.calendar.valuation_mode);
+    config.calendar.stale_mark_policy = get_or<std::string>(values, "stale_mark_policy", config.calendar.stale_mark_policy);
+    config.calendar.max_stale_calendar_days = integer_or(values, "max_stale_calendar_days", config.calendar.max_stale_calendar_days);
+    config.calendar.missing_bar_policy = get_or<std::string>(values, "missing_bar_policy", config.calendar.missing_bar_policy);
+    config.calendar.rebalance_closed_asset_policy = get_or<std::string>(values, "rebalance_closed_asset_policy", config.calendar.rebalance_closed_asset_policy);
+    config.calendar.annualization_method = get_or<std::string>(values, "annualization_method", config.calendar.annualization_method);
+    config.calendar.configured_periods_per_year = get_or<double>(values, "configured_periods_per_year", config.calendar.configured_periods_per_year);
+    config.adjustment.policy = get_or<std::string>(values, "adjustment_policy", config.adjustment.policy);
+    config.adjustment.dividend_convention = get_or<std::string>(values, "dividend_convention", config.adjustment.dividend_convention);
+    config.adjustment.fractional_share_policy = get_or<std::string>(values, "fractional_share_policy", config.adjustment.fractional_share_policy);
+    config.adjustment.pending_order_policy = get_or<std::string>(values, "pending_order_policy", config.adjustment.pending_order_policy);
     validate(config);
     return config;
 }
@@ -297,6 +313,21 @@ void ConfigLoader::validate(const ExperimentConfig& config) {
         throw ConfigurationError("Unknown allocation_policy '" + config.portfolio.allocation_policy + "'");
     if (config.portfolio.rebalance_frequency != "weekly" && config.portfolio.rebalance_frequency != "monthly")
         throw ConfigurationError("Unknown rebalance_frequency '" + config.portfolio.rebalance_frequency + "'");
+    if (config.calendar.valuation_mode != "union" && config.calendar.valuation_mode != "intersection_legacy")
+        throw ConfigurationError("calendar_valuation_mode must be union or intersection_legacy");
+    if (config.calendar.stale_mark_policy != "last_known" && config.calendar.stale_mark_policy != "unavailable")
+        throw ConfigurationError("stale_mark_policy must be last_known or unavailable");
+    if (config.calendar.max_stale_calendar_days < 0) throw ConfigurationError("max_stale_calendar_days cannot be negative");
+    if (config.calendar.missing_bar_policy != "error" && config.calendar.missing_bar_policy != "mark_unavailable" &&
+        config.calendar.missing_bar_policy != "use_last_known") throw ConfigurationError("Invalid missing_bar_policy");
+    if (config.calendar.rebalance_closed_asset_policy != "defer" && config.calendar.rebalance_closed_asset_policy != "skip_asset" &&
+        config.calendar.rebalance_closed_asset_policy != "partial_rebalance") throw ConfigurationError("Invalid rebalance_closed_asset_policy");
+    if (config.calendar.annualization_method != "inferred_observed_periods" && config.calendar.annualization_method != "configured")
+        throw ConfigurationError("Invalid annualization_method");
+    require_positive(config.calendar.configured_periods_per_year, "configured_periods_per_year");
+    if (config.adjustment.policy != "raw_price" && config.adjustment.policy != "split_adjusted" &&
+        config.adjustment.policy != "total_return_adjusted") throw ConfigurationError("Invalid adjustment_policy");
+    if (config.adjustment.dividend_convention != "ex_date") throw ConfigurationError("Only ex_date dividend_convention is supported");
     if (config.portfolio.max_weight <= 0.0 || config.portfolio.max_weight > 1.0)
         throw ConfigurationError("max_weight must be in (0, 1]");
     if (config.portfolio.cash_buffer < 0.0 || config.portfolio.cash_buffer >= 1.0)
@@ -304,8 +335,14 @@ void ConfigLoader::validate(const ExperimentConfig& config) {
     require_non_negative(config.portfolio.min_trade_value, "min_trade_value");
     if (config.portfolio.volatility_lookback <= 1 || config.portfolio.momentum_lookback <= 0 || config.portfolio.top_n <= 0)
         throw ConfigurationError("Portfolio lookbacks and top_n must be positive");
-    if (config.result_schema_version != 2) throw ConfigurationError("Only result_schema_version 2 is supported");
+    if (config.result_schema_version != 2 && config.result_schema_version != 3)
+        throw ConfigurationError("result_schema_version must be 2 or 3");
+    if (config.calendar.valuation_mode == "union" && config.result_schema_version != 3)
+        throw ConfigurationError("union calendar requires result_schema_version 3");
+    if (config.calendar.valuation_mode == "intersection_legacy" && config.result_schema_version != 2)
+        throw ConfigurationError("intersection_legacy requires result_schema_version 2");
     if (config.output.results_dir.empty()) throw ConfigurationError("output_directory cannot be empty");
+    if (config.portfolio.data_dir.empty()) throw ConfigurationError("data_directory cannot be empty");
     if (config.output.portfolio_results_dir.empty()) throw ConfigurationError("portfolio_output_directory cannot be empty");
 }
 
@@ -339,6 +376,7 @@ std::string ConfigLoader::to_json(const ExperimentConfig& config) {
            << "  \"regime_classification_method\": \"" << config.regime.method << "\",\n"
            << "  \"random_seed\": " << config.bootstrap.random_seed << ",\n"
            << "  \"output_directory\": \"" << config.output.results_dir << "\",\n"
+           << "  \"data_directory\": \"" << config.portfolio.data_dir << "\",\n"
            << "  \"allocation_policy\": \"" << config.portfolio.allocation_policy << "\",\n"
            << "  \"rebalance_frequency\": \"" << config.portfolio.rebalance_frequency << "\",\n"
            << "  \"max_weight\": " << config.portfolio.max_weight << ",\n"
@@ -347,6 +385,17 @@ std::string ConfigLoader::to_json(const ExperimentConfig& config) {
            << "  \"volatility_lookback\": " << config.portfolio.volatility_lookback << ",\n"
            << "  \"momentum_lookback\": " << config.portfolio.momentum_lookback << ",\n"
            << "  \"top_n\": " << config.portfolio.top_n << ",\n"
+           << "  \"calendar_valuation_mode\": \"" << config.calendar.valuation_mode << "\",\n"
+           << "  \"stale_mark_policy\": \"" << config.calendar.stale_mark_policy << "\",\n"
+           << "  \"max_stale_calendar_days\": " << config.calendar.max_stale_calendar_days << ",\n"
+           << "  \"missing_bar_policy\": \"" << config.calendar.missing_bar_policy << "\",\n"
+           << "  \"rebalance_closed_asset_policy\": \"" << config.calendar.rebalance_closed_asset_policy << "\",\n"
+           << "  \"annualization_method\": \"" << config.calendar.annualization_method << "\",\n"
+           << "  \"configured_periods_per_year\": " << config.calendar.configured_periods_per_year << ",\n"
+           << "  \"adjustment_policy\": \"" << config.adjustment.policy << "\",\n"
+           << "  \"dividend_convention\": \"" << config.adjustment.dividend_convention << "\",\n"
+           << "  \"fractional_share_policy\": \"" << config.adjustment.fractional_share_policy << "\",\n"
+           << "  \"pending_order_policy\": \"" << config.adjustment.pending_order_policy << "\",\n"
            << "  \"portfolio_output_directory\": \"" << config.output.portfolio_results_dir << "\",\n"
            << "  \"result_schema_version\": " << config.result_schema_version << "\n}\n";
     return output.str();

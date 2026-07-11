@@ -21,6 +21,13 @@
   "random_seed": 46,
   "allocation_policy": "inverse_volatility",
   "rebalance_frequency": "monthly",
+  "calendar_valuation_mode": "union",
+  "stale_mark_policy": "last_known",
+  "max_stale_calendar_days": 7,
+  "missing_bar_policy": "error",
+  "rebalance_closed_asset_policy": "partial_rebalance",
+  "annualization_method": "inferred_observed_periods",
+  "adjustment_policy": "raw_price",
   "max_weight": 0.40,
   "cash_buffer": 0.02,
   "min_trade_value": 25,
@@ -28,6 +35,6 @@
   "momentum_lookback": 126,
   "top_n": 3,
   "output_directory": "results/research/portfolio_inverse_volatility",
-  "portfolio_output_directory": "results/portfolio/inverse_volatility",
-  "result_schema_version": 2
+  "portfolio_output_directory": "results/research_v3/portfolio_inverse_volatility",
+  "result_schema_version": 3
 }

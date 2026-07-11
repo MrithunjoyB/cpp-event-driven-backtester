@@ -119,6 +119,10 @@ void CsvResultExporter::write_portfolio(
     auto weights = open_output(config.results_dir + "/portfolio_allocation_weights.csv");
     auto costs = open_output(config.results_dir + "/portfolio_costs.csv");
     auto summary = open_output(config.results_dir + "/portfolio_performance_summary.csv");
+    std::ofstream valuations;
+    std::ofstream corporate_actions;
+    if (config.result_schema_version >= 3) valuations = open_output(config.results_dir + "/portfolio_valuations.csv");
+    if (config.result_schema_version >= 3) corporate_actions = open_output(config.results_dir + "/portfolio_corporate_actions.csv");
 
     equity << "date,portfolio_value,cash,total_holdings_value,total_return,drawdown,gross_exposure\n";
     for (const auto& point : result.equity_curve) {
@@ -131,32 +135,50 @@ void CsvResultExporter::write_portfolio(
                   << point.market_value << ',' << point.target_weight << ',' << point.actual_weight << ','
                   << point.rebalance_id << '\n';
     }
-    fills << "rebalance_id,date,ticker,side,quantity,price,transaction_cost,slippage_cost,cash_after\n";
+    fills << "rebalance_id,date,ticker,side,quantity,price,transaction_cost,slippage_cost,cash_after";
+    if (config.result_schema_version >= 3) fills << ",scheduled_rebalance_date,decision_date,execution_date";
+    fills << '\n';
     orders << "rebalance_id,date,ticker,side,quantity,price,transaction_cost,slippage_cost\n";
     costs << "rebalance_id,date,ticker,transaction_cost,slippage_cost,total_cost\n";
     for (const auto& fill : result.fills) {
         fills << fill.rebalance_id << ',' << fill.date << ',' << fill.ticker << ',' << fill.side << ','
               << fill.quantity << ',' << fill.price << ',' << fill.transaction_cost << ',' << fill.slippage_cost
-              << ',' << fill.cash_after << '\n';
+              << ',' << fill.cash_after;
+        if (config.result_schema_version >= 3) fills << ',' << fill.scheduled_rebalance_date << ',' << fill.decision_date << ',' << fill.execution_date;
+        fills << '\n';
         orders << fill.rebalance_id << ',' << fill.date << ',' << fill.ticker << ',' << fill.side << ','
                << fill.quantity << ',' << fill.price << ',' << fill.transaction_cost << ',' << fill.slippage_cost << '\n';
         costs << fill.rebalance_id << ',' << fill.date << ',' << fill.ticker << ',' << fill.transaction_cost << ','
               << fill.slippage_cost << ',' << fill.transaction_cost + fill.slippage_cost << '\n';
     }
-    rebalances << "rebalance_id,date,policy_name,frequency,turnover,cash_buffer,max_weight,min_trade_value\n";
+    if (config.result_schema_version >= 3) {
+        rebalances << "rebalance_id,scheduled_rebalance_date,decision_date,execution_date,deferred_asset_count,skipped_asset_count,partial_rebalance,closed_asset_policy,turnover,cash_buffer,max_weight,min_trade_value\n";
+    } else {
+        rebalances << "rebalance_id,date,policy_name,frequency,turnover,cash_buffer,max_weight,min_trade_value\n";
+    }
     weights << "rebalance_id,policy_name,ticker,target_weight\n";
     for (std::size_t i = 0; i < result.target_weights.size(); ++i) {
         const std::string date = i < result.rebalance_dates.size() ? result.rebalance_dates[i] : "";
-        rebalances << i << ',' << date << ',' << result.summary.policy_name << ','
-                   << PortfolioBacktester::frequency_name(config.rebalance_frequency) << ','
-                   << (i < result.turnover_by_rebalance.size() ? result.turnover_by_rebalance[i] : 0.0) << ','
-                   << config.allocation.cash_buffer << ',' << config.allocation.max_weight << ','
-                   << config.allocation.min_trade_value << '\n';
+        if (config.result_schema_version >= 3 && i < result.rebalances.size()) {
+            const auto& record = result.rebalances[i];
+            rebalances << record.rebalance_id << ',' << record.scheduled_rebalance_date << ',' << record.decision_date << ','
+                       << record.execution_date << ',' << record.deferred_asset_count << ',' << record.skipped_asset_count << ','
+                       << (record.partial_rebalance ? 1 : 0) << ',' << record.policy << ',' << record.turnover << ','
+                       << config.allocation.cash_buffer << ',' << config.allocation.max_weight << ',' << config.allocation.min_trade_value << '\n';
+        } else {
+            rebalances << i << ',' << date << ',' << result.summary.policy_name << ','
+                       << PortfolioBacktester::frequency_name(config.rebalance_frequency) << ','
+                       << (i < result.turnover_by_rebalance.size() ? result.turnover_by_rebalance[i] : 0.0) << ','
+                       << config.allocation.cash_buffer << ',' << config.allocation.max_weight << ','
+                       << config.allocation.min_trade_value << '\n';
+        }
         for (const auto& weight : result.target_weights[i]) {
             weights << i << ',' << result.summary.policy_name << ',' << weight.first << ',' << weight.second << '\n';
         }
     }
-    summary << "policy_name,total_return,equal_weight_benchmark_return,spy_benchmark_return,excess_return,annualized_return,volatility,sharpe,sortino,max_drawdown,calmar,var_95,expected_shortfall_95,beta,alpha,information_ratio,turnover,total_transaction_costs,number_of_rebalances,number_of_fills,average_cash_allocation,average_gross_exposure\n";
+    summary << "policy_name,total_return,equal_weight_benchmark_return,spy_benchmark_return,excess_return,annualized_return,volatility,sharpe,sortino,max_drawdown,calmar,var_95,expected_shortfall_95,beta,alpha,information_ratio,turnover,total_transaction_costs,number_of_rebalances,number_of_fills,average_cash_allocation,average_gross_exposure";
+    if (config.result_schema_version >= 3) summary << ",schema_version,calendar_mode,valuation_frequency,observations_per_year,annualization_method,total_valuation_observations,weekend_observations,stale_mark_observations,stale_mark_policy,max_stale_calendar_days";
+    summary << '\n';
     const auto& value = result.summary;
     summary << value.policy_name << ',' << value.total_return << ',' << value.equal_weight_benchmark_return << ','
             << value.spy_benchmark_return << ',' << value.excess_return << ',' << value.annualized_return << ','
@@ -164,7 +186,27 @@ void CsvResultExporter::write_portfolio(
             << value.calmar << ',' << value.var_95 << ',' << value.expected_shortfall_95 << ',' << value.beta << ','
             << value.alpha << ',' << value.information_ratio << ',' << value.turnover << ','
             << value.total_transaction_costs << ',' << value.number_of_rebalances << ',' << value.number_of_fills << ','
-            << value.average_cash_allocation << ',' << value.average_gross_exposure << '\n';
+            << value.average_cash_allocation << ',' << value.average_gross_exposure;
+    if (config.result_schema_version >= 3) {
+        summary << ',' << value.schema_version << ',' << value.calendar_mode << ',' << value.valuation_frequency << ','
+                << value.observations_per_year << ',' << value.annualization_method << ',' << value.total_valuation_observations << ','
+                << value.weekend_observations << ',' << value.stale_mark_observations << ','
+                << quant::market_data::to_string(config.calendar.stale_mark_policy) << ',' << config.calendar.max_stale_calendar_days;
+        valuations << "date,ticker,tradable,has_bar,mark_price,mark_source,stale_age_days,position_quantity,marked_value,actual_weight\n";
+        for (const auto& mark : result.valuations) {
+            valuations << mark.date << ',' << mark.ticker << ',' << (mark.tradable ? 1 : 0) << ',' << (mark.has_bar ? 1 : 0) << ','
+                       << mark.mark_price << ',' << mark.mark_source << ',' << mark.stale_age_days << ',' << mark.position_quantity << ','
+                       << mark.marked_value << ',' << mark.actual_weight << '\n';
+        }
+        corporate_actions << "action_date,ticker,action_type,value,quantity_before,quantity_after,cash_effect,portfolio_value_before,portfolio_value_after,adjustment_policy,source\n";
+        for (const auto& action : result.corporate_actions) {
+            corporate_actions << action.date << ',' << action.ticker << ',' << action.action_type << ',' << action.value << ','
+                              << action.quantity_before << ',' << action.quantity_after << ',' << action.cash_effect << ','
+                              << action.portfolio_value_before << ',' << action.portfolio_value_after << ',' << action.policy << ','
+                              << action.source << '\n';
+        }
+    }
+    summary << '\n';
 
     verify_output(equity, config.results_dir + "/portfolio_equity_curve.csv");
     verify_output(positions, config.results_dir + "/portfolio_positions.csv");
@@ -174,6 +216,8 @@ void CsvResultExporter::write_portfolio(
     verify_output(weights, config.results_dir + "/portfolio_allocation_weights.csv");
     verify_output(costs, config.results_dir + "/portfolio_costs.csv");
     verify_output(summary, config.results_dir + "/portfolio_performance_summary.csv");
+    if (config.result_schema_version >= 3) verify_output(valuations, config.results_dir + "/portfolio_valuations.csv");
+    if (config.result_schema_version >= 3) verify_output(corporate_actions, config.results_dir + "/portfolio_corporate_actions.csv");
 }
 
 void CsvResultExporter::write_bootstrap(
@@ -249,6 +293,13 @@ void JsonManifestExporter::write_resolved_config(
          << "  \"parameter_selection_objective\": \"" << config.parameter_selection.objective << "\",\n"
          << "  \"minimum_trade_requirement\": " << config.parameter_selection.minimum_trades << ",\n"
          << "  \"random_seed\": " << config.bootstrap.random_seed << ",\n"
+         << "  \"calendar_mode\": \"" << config.calendar.valuation_mode << "\",\n"
+         << "  \"stale_mark_policy\": \"" << config.calendar.stale_mark_policy << "\",\n"
+         << "  \"max_stale_calendar_days\": " << config.calendar.max_stale_calendar_days << ",\n"
+         << "  \"missing_bar_policy\": \"" << config.calendar.missing_bar_policy << "\",\n"
+         << "  \"rebalance_closed_asset_policy\": \"" << config.calendar.rebalance_closed_asset_policy << "\",\n"
+         << "  \"annualization_method\": \"" << config.calendar.annualization_method << "\",\n"
+         << "  \"adjustment_policy\": \"" << config.adjustment.policy << "\",\n"
          << "  \"result_schema_version\": " << config.result_schema_version << "\n"
          << "}\n";
     write_text(filepath, json.str());

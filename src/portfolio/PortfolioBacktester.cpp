@@ -172,6 +172,9 @@ std::map<std::string, std::size_t> PortfolioBacktester::indices_for_date(
 }
 
 PortfolioBacktestResult PortfolioBacktester::run() {
+    if (config_.calendar.mode == quant::market_data::CalendarMode::Union) {
+        return run_union();
+    }
     std::map<std::string, std::vector<Bar>> history;
     load_data(history);
     std::vector<std::string> dates = common_dates(history);
@@ -262,7 +265,7 @@ PortfolioBacktestResult PortfolioBacktester::run() {
                 total_costs += fill.transaction_cost + fill.slippage_cost;
                 total_turnover += fill.gross_value;
                 rebalance_turnover += fill.gross_value;
-                fills.push_back({rebalance_id, dates[d], ticker, "SELL", fill.quantity, fill.fill_price, fill.transaction_cost, fill.slippage_cost, cash});
+                fills.push_back({rebalance_id, dates[d], ticker, "SELL", fill.quantity, fill.fill_price, fill.transaction_cost, fill.slippage_cost, cash, dates[d], dates[d - 1], dates[d]});
             }
 
             std::vector<std::pair<std::string, double>> desired_buys;
@@ -315,7 +318,7 @@ PortfolioBacktestResult PortfolioBacktester::run() {
                 total_costs += fill.transaction_cost + fill.slippage_cost;
                 total_turnover += fill.gross_value;
                 rebalance_turnover += fill.gross_value;
-                fills.push_back({rebalance_id, dates[d], ticker, "BUY", fill.quantity, fill.fill_price, fill.transaction_cost, fill.slippage_cost, cash});
+                fills.push_back({rebalance_id, dates[d], ticker, "BUY", fill.quantity, fill.fill_price, fill.transaction_cost, fill.slippage_cost, cash, dates[d], dates[d - 1], dates[d]});
             }
             weights_by_rebalance.push_back(target_weights);
             rebalance_dates.push_back(dates[d]);
@@ -352,7 +355,15 @@ PortfolioBacktestResult PortfolioBacktester::run() {
 
     PortfolioSummary summary = summarize(policy, equity, history, dates, total_turnover, total_costs, rebalance_id, static_cast<int>(fills.size()),
                                          cash_allocation_sum, gross_exposure_sum, benchmark_returns);
-    return {summary, equity, positions_out, fills, weights_by_rebalance, rebalance_dates, turnover_by_rebalance};
+    PortfolioBacktestResult result;
+    result.summary = summary;
+    result.equity_curve = std::move(equity);
+    result.positions = std::move(positions_out);
+    result.fills = std::move(fills);
+    result.target_weights = std::move(weights_by_rebalance);
+    result.rebalance_dates = std::move(rebalance_dates);
+    result.turnover_by_rebalance = std::move(turnover_by_rebalance);
+    return result;
 }
 
 PortfolioSummary PortfolioBacktester::summarize(

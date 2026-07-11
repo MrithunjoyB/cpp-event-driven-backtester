@@ -3,6 +3,8 @@
 #include "AllocationPolicy.h"
 #include "Event.h"
 #include "MarketData.h"
+#include "quant/market_data/TradingCalendar.h"
+#include "quant/market_data/CorporateAction.h"
 
 #include <map>
 #include <string>
@@ -23,6 +25,16 @@ struct PortfolioBacktestConfig {
     RebalanceFrequency rebalance_frequency{RebalanceFrequency::Monthly};
     AllocationPolicyConfig allocation;
     std::string benchmark_ticker{"SPY"};
+    quant::market_data::CalendarPolicy calendar{
+        quant::market_data::CalendarMode::LegacyIntersection,
+        quant::market_data::StaleMarkPolicy::LastKnown,
+        quant::market_data::MissingBarPolicy::Error,
+        quant::market_data::ClosedAssetPolicy::PartialRebalance,
+        7};
+    std::string annualization_method{"inferred_observed_periods"};
+    double configured_periods_per_year{252.0};
+    int result_schema_version{2};
+    quant::market_data::AdjustmentPolicy adjustment_policy{quant::market_data::AdjustmentPolicy::RawPrice};
 };
 
 struct PortfolioFill {
@@ -35,6 +47,48 @@ struct PortfolioFill {
     double transaction_cost{0.0};
     double slippage_cost{0.0};
     double cash_after{0.0};
+    std::string scheduled_rebalance_date;
+    std::string decision_date;
+    std::string execution_date;
+};
+
+struct PortfolioValuationMark {
+    std::string date;
+    std::string ticker;
+    bool tradable{false};
+    bool has_bar{false};
+    double mark_price{0.0};
+    std::string mark_source;
+    int stale_age_days{0};
+    double position_quantity{0.0};
+    double marked_value{0.0};
+    double actual_weight{0.0};
+};
+
+struct PortfolioRebalanceRecord {
+    int rebalance_id{0};
+    std::string scheduled_rebalance_date;
+    std::string decision_date;
+    std::string execution_date;
+    int deferred_asset_count{0};
+    int skipped_asset_count{0};
+    bool partial_rebalance{false};
+    std::string policy;
+    double turnover{0.0};
+};
+
+struct PortfolioCorporateActionRecord {
+    std::string date;
+    std::string ticker;
+    std::string action_type;
+    double value{0.0};
+    double quantity_before{0.0};
+    double quantity_after{0.0};
+    double cash_effect{0.0};
+    double portfolio_value_before{0.0};
+    double portfolio_value_after{0.0};
+    std::string policy;
+    std::string source;
 };
 
 struct PortfolioPositionPoint {
@@ -59,6 +113,7 @@ struct PortfolioEquityPoint {
 };
 
 struct PortfolioSummary {
+    int schema_version{2};
     std::string policy_name;
     double total_return{0.0};
     double equal_weight_benchmark_return{0.0};
@@ -81,6 +136,13 @@ struct PortfolioSummary {
     int number_of_fills{0};
     double average_cash_allocation{0.0};
     double average_gross_exposure{0.0};
+    std::string calendar_mode{"intersection_legacy"};
+    std::string valuation_frequency{"intersection_sessions"};
+    double observations_per_year{252.0};
+    std::string annualization_method{"configured"};
+    int total_valuation_observations{0};
+    int weekend_observations{0};
+    int stale_mark_observations{0};
 };
 
 struct PortfolioBacktestResult {
@@ -91,6 +153,9 @@ struct PortfolioBacktestResult {
     std::vector<std::map<std::string, double>> target_weights;
     std::vector<std::string> rebalance_dates;
     std::vector<double> turnover_by_rebalance;
+    std::vector<PortfolioValuationMark> valuations;
+    std::vector<PortfolioRebalanceRecord> rebalances;
+    std::vector<PortfolioCorporateActionRecord> corporate_actions;
 };
 
 class PortfolioBacktester {
@@ -107,6 +172,7 @@ public:
 
 private:
     PortfolioBacktestConfig config_;
+    PortfolioBacktestResult run_union();
 
     void load_data(std::map<std::string, std::vector<Bar>>& history) const;
     std::vector<std::string> common_dates(const std::map<std::string, std::vector<Bar>>& history) const;

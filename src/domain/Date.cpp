@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cstdio>
 #include <tuple>
+#include <ctime>
 
 namespace quant {
 namespace {
@@ -75,6 +76,37 @@ std::string Date::to_string() const {
     char buffer[11];
     std::snprintf(buffer, sizeof(buffer), "%04d-%02d-%02d", year_, month_, day_);
     return buffer;
+}
+
+int Date::days_until(const Date& other) const {
+    std::tm lhs{};
+    lhs.tm_year = year_ - 1900;
+    lhs.tm_mon = month_ - 1;
+    lhs.tm_mday = day_;
+    lhs.tm_hour = 12;
+    std::tm rhs{};
+    rhs.tm_year = other.year_ - 1900;
+    rhs.tm_mon = other.month_ - 1;
+    rhs.tm_mday = other.day_;
+    rhs.tm_hour = 12;
+    const std::time_t lhs_time = std::mktime(&lhs);
+    const std::time_t rhs_time = std::mktime(&rhs);
+    if (lhs_time == static_cast<std::time_t>(-1) || rhs_time == static_cast<std::time_t>(-1)) {
+        throw MethodologyError("Calendar-day difference is outside the supported civil-time range");
+    }
+    return static_cast<int>(std::difftime(rhs_time, lhs_time) / (60.0 * 60.0 * 24.0));
+}
+
+int Date::iso_weekday() const {
+    std::tm value{};
+    value.tm_year = year_ - 1900;
+    value.tm_mon = month_ - 1;
+    value.tm_mday = day_;
+    value.tm_hour = 12;
+    if (std::mktime(&value) == static_cast<std::time_t>(-1)) {
+        throw MethodologyError("Weekday calculation is outside the supported civil-time range");
+    }
+    return value.tm_wday == 0 ? 7 : value.tm_wday;
 }
 
 bool operator==(const Date& lhs, const Date& rhs) {

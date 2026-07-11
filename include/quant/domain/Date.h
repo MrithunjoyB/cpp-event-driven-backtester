@@ -12,6 +12,8 @@ public:
     Date add_months(int months) const;
     Date add_years(int years) const;
     std::string to_string() const;
+    int days_until(const Date& other) const;
+    int iso_weekday() const;
 
     int year() const { return year_; }
     int month() const { return month_; }
