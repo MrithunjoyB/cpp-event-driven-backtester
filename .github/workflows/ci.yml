@@ -26,8 +26,12 @@ jobs:
       - run: ./build/quant_cli run --config configs/fixtures/mixed_union.json
       - run: python3 scripts/validate_results.py test_results/schema_v3
       - run: python3 scripts/test_attribution_validator.py
+      - run: python3 scripts/test_statistics_reference.py test_results/schema_v3/statistics
+      - run: python3 scripts/test_statistics_validator.py
       - run: MPLCONFIGDIR=${{ runner.temp }}/matplotlib python3 scripts/visualize_attribution.py --directory test_results/schema_v3/attribution
       - run: python3 scripts/generate_attribution_report.py --directory test_results/schema_v3/attribution
+      - run: MPLCONFIGDIR=${{ runner.temp }}/matplotlib python3 scripts/visualize_statistics.py --directory test_results/schema_v3/statistics
+      - run: python3 scripts/generate_statistics_report.py --directory test_results/schema_v3/statistics
 
   sanitizers:
     strategy:

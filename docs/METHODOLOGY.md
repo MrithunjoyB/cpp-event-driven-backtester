@@ -7,3 +7,5 @@ Deferred targets are frozen at their original decision cutoff. Closed assets may
 Schema v3 is an intentional methodology change for shared-cash portfolios. Schema-v2 single-asset, walk-forward, causal regime, benchmark-parity, and explicit legacy-intersection behavior remain unchanged.
 
 Attribution is an additive currency-P&L decomposition of consecutive union-calendar valuations. It is distinct from geometric compounded return and is descriptive rather than causal. Deferred and partial rebalances use their recorded scheduled, decision, and execution dates; holding-period contribution is measured after actual execution.
+
+Statistical inference defaults to moving-block resampling of continuous linked returns. IID bootstrap is comparison-only. Normalized-window OOS curves cannot be treated as deployable histories, and full-sample inputs require an explicit diagnostic label.

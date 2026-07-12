@@ -14,6 +14,8 @@ Targets cover the preserved regression suite, typed date/config behavior, causal
 
 `attribution_tests` covers pure appreciation, multiple assets, actual trade flows, commission/slippage decomposition, cash treatment, stale marks, split neutrality, dividends, drawdown recovery, volatility/beta contribution, year aggregation, schema export, and residual rejection. The Python validator independently recomputes accounting identities and contribution sums.
 
+`statistical_tests` covers fixed-seed IID and moving-block reproducibility, path lengths, block validation, sample sufficiency, empirical intervals, probability bounds, positive/negative and benchmark-identical series, active returns, Sharpe inference, input labelling, and the centered moving-block reality check. Python independently recomputes exported Sharpe and confidence intervals.
+
 Methodology coverage includes next-bar execution, causal regime attribution, calendar walk-forward boundaries, continuous OOS capital, benchmark execution parity, and configured benchmark propagation. `tests/fixtures/regression/stage0_architecture_baseline.csv` records eight numerical snapshots from commit `dc040a9...`; compare generated artifacts with:
 
 ```bash

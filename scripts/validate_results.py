@@ -150,6 +150,40 @@ def validate_file(path: Path, issues: list[str]) -> None:
             if abs((trough - peak) - contribution) > 1e-3:
                 issues.append(f"{path}: drawdown episode {key} does not reconcile")
 
+    statistical_files = {
+        "bootstrap_summary.csv", "bootstrap_metric_distributions.csv", "bootstrap_paths_sample.csv",
+        "sharpe_inference.csv", "multiple_testing_summary.csv", "parameter_selection_history.csv",
+        "parameter_stability.csv", "oos_degradation.csv", "strategy_robustness.csv",
+        "portfolio_policy_robustness.csv", "attribution_robustness.csv", "statistical_warnings.csv",
+        "statistical_input_series.csv",
+    }
+    if path.name in statistical_files and "simulation_count" in rows[0]:
+        required = {"schema_version", "experiment_id", "method", "seed", "simulation_count", "block_length",
+                    "input_series", "benchmark", "confidence_level", "candidate_count", "observation_count", "annualization_method"}
+        missing = required - set(rows[0])
+        if missing:
+            issues.append(f"{path}: missing statistical metadata {sorted(missing)}")
+        for line_number, row in enumerate(rows, start=2):
+            simulations = as_float(row.get("simulation_count", ""))
+            block = as_float(row.get("block_length", ""))
+            observations = as_float(row.get("observation_count", ""))
+            confidence = as_float(row.get("confidence_level", ""))
+            if simulations is None or simulations <= 0 or block is None or block <= 0 or observations is None or block > observations:
+                issues.append(f"{path}:{line_number}: malformed simulation or block metadata")
+            if confidence is None or not 0.0 < confidence < 1.0:
+                issues.append(f"{path}:{line_number}: invalid confidence level")
+            for name, value in row.items():
+                if name.startswith("probability") and value != "":
+                    probability = as_float(value)
+                    if probability is None or not 0.0 <= probability <= 1.0:
+                        issues.append(f"{path}:{line_number}: probability outside [0,1] for {name}")
+            if "lower_bound" in row and row.get("lower_bound") and row.get("upper_bound"):
+                lower, upper = as_float(row["lower_bound"]), as_float(row["upper_bound"])
+                if lower is None or upper is None or lower > upper:
+                    issues.append(f"{path}:{line_number}: invalid confidence interval")
+        if "normalized_window" in rows[0].get("input_series", ""):
+            issues.append(f"{path}: normalized-window statistical input is forbidden")
+
     if path.name == "portfolio_performance_summary.csv" and rows[0].get("schema_version") == "3":
         required = {"calendar_mode", "valuation_frequency", "observations_per_year", "annualization_method",
                     "total_valuation_observations", "weekend_observations", "stale_mark_observations",
@@ -404,6 +438,18 @@ def main() -> int:
         missing = sorted(name for name in required_attribution if not (directory / name).exists())
         if missing:
             issues.append(f"{directory}: missing required attribution files {missing}")
+    required_statistics = {
+        "bootstrap_summary.csv", "bootstrap_metric_distributions.csv", "bootstrap_paths_sample.csv",
+        "sharpe_inference.csv", "multiple_testing_summary.csv", "parameter_selection_history.csv",
+        "parameter_stability.csv", "oos_degradation.csv", "strategy_robustness.csv",
+        "portfolio_policy_robustness.csv", "attribution_robustness.csv", "statistical_warnings.csv",
+        "statistical_manifest.json", "statistical_input_series.csv",
+    }
+    statistics_dirs = {path.parent for path in RESULTS.rglob("statistical_manifest.json") if path.parent.name == "statistics"}
+    for directory in sorted(statistics_dirs):
+        missing = sorted(name for name in required_statistics if not (directory / name).exists())
+        if missing:
+            issues.append(f"{directory}: missing required statistical files {missing}")
     if issues:
         print("Result validation failed:")
         for issue in issues:
