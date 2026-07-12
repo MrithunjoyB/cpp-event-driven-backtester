@@ -9,3 +9,5 @@ CSV headers are centralized in `CsvResultExporter` for reusable simulation and p
 ## Schema V3
 
 Schema v3 applies to union-calendar shared-cash portfolio results under `results/research_v3/`. It adds per-asset valuation marks, tradability and stale age, scheduled/decision/execution rebalance dates, corporate-action records, calendar and annualization metadata, and weekend/stale observation counts. Schema v2 remains the corrected legacy intersection methodology and is not overwritten.
+
+Attribution extends schema v3 under each portfolio's `attribution/` directory. Daily asset rows, period reconciliation, cash, costs, corporate actions, rebalances, benchmark-relative return, drawdowns, covariance risk, causal regimes, and calendar years share experiment, policy, benchmark, adjustment, calendar, methodology, unit, and residual-tolerance metadata. Existing schema-v3 files are unchanged.

@@ -12,6 +12,8 @@ Targets cover the preserved regression suite, typed date/config behavior, causal
 
 `calendar_tests`, `union_portfolio_tests`, and `corporate_action_tests` cover union/intersection timelines, stale marks, weekend risk, closed-market execution prevention, civil schedules, causal deferral, splits, reverse splits, dividends, adjusted-mode double-count prevention, and invalid actions. Run `python3 scripts/test_download_data.py` for deterministic downloader normalization.
 
+`attribution_tests` covers pure appreciation, multiple assets, actual trade flows, commission/slippage decomposition, cash treatment, stale marks, split neutrality, dividends, drawdown recovery, volatility/beta contribution, year aggregation, schema export, and residual rejection. The Python validator independently recomputes accounting identities and contribution sums.
+
 Methodology coverage includes next-bar execution, causal regime attribution, calendar walk-forward boundaries, continuous OOS capital, benchmark execution parity, and configured benchmark propagation. `tests/fixtures/regression/stage0_architecture_baseline.csv` records eight numerical snapshots from commit `dc040a9...`; compare generated artifacts with:
 
 ```bash

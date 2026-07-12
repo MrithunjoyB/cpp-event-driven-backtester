@@ -59,12 +59,96 @@ def validate_file(path: Path, issues: list[str]) -> None:
             "action_date", "ticker", "action_type", "value", "adjustment_policy", "source"
         }.issubset(reader.fieldnames):
             return
+        if path.name in {"transaction_cost_attribution.csv", "corporate_action_attribution.csv"} and reader.fieldnames:
+            return
         issues.append(f"{path}: empty CSV")
         return
     relative_parts = path.relative_to(RESULTS).parts
     if relative_parts and relative_parts[0] == "research" and "portfolio" in relative_parts:
         return
     check_required_columns(path, rows, issues)
+
+    attribution_files = {
+        "daily_asset_attribution.csv", "portfolio_attribution_summary.csv", "cash_attribution.csv",
+        "transaction_cost_attribution.csv", "corporate_action_attribution.csv", "rebalance_attribution.csv",
+        "benchmark_relative_attribution.csv", "drawdown_episode_attribution.csv", "risk_contribution.csv",
+        "regime_attribution.csv", "calendar_year_attribution.csv", "walk_forward_window_attribution.csv",
+        "attribution_reconciliation.csv",
+    }
+    if path.name in attribution_files:
+        common = {"schema_version", "experiment_id", "policy", "benchmark", "adjustment_basis", "calendar_mode",
+                  "attribution_methodology", "contribution_units", "residual_tolerance"}
+        missing = common - set(rows[0])
+        if missing:
+            issues.append(f"{path}: missing attribution metadata {sorted(missing)}")
+
+    if path.name == "daily_asset_attribution.csv":
+        required = {"start_date", "end_date", "ticker", "market_pnl", "dividend_income", "commission",
+                    "spread_cost", "slippage_cost", "net_contribution", "stale_mark", "stale_age_days"}
+        missing = required - set(rows[0])
+        if missing:
+            issues.append(f"{path}: missing daily attribution columns {sorted(missing)}")
+        seen: set[tuple[str, str]] = set()
+        for line_number, row in enumerate(rows, start=2):
+            key = (row.get("end_date", ""), row.get("ticker", ""))
+            if key in seen:
+                issues.append(f"{path}:{line_number}: duplicate asset/date attribution {key}")
+            seen.add(key)
+            expected = sum((as_float(row.get(name, "")) or 0.0) for name in
+                           ("market_pnl", "dividend_income", "split_adjustment")) - sum(
+                           (as_float(row.get(name, "")) or 0.0) for name in ("commission", "spread_cost", "slippage_cost"))
+            actual = as_float(row.get("net_contribution", ""))
+            if actual is None or abs(actual - expected) > 1e-4:
+                issues.append(f"{path}:{line_number}: asset contribution does not reconcile")
+
+    if path.name == "attribution_reconciliation.csv":
+        for line_number, row in enumerate(rows, start=2):
+            beginning = as_float(row.get("beginning_value", ""))
+            ending = as_float(row.get("ending_value", ""))
+            tolerance = as_float(row.get("residual_tolerance", ""))
+            residual = as_float(row.get("residual", ""))
+            if None in (beginning, ending, tolerance, residual):
+                issues.append(f"{path}:{line_number}: invalid reconciliation values")
+                continue
+            explained = sum((as_float(row.get(name, "")) or 0.0) for name in
+                            ("market_pnl", "dividend_income", "corporate_action_effect", "cash_return", "external_cash_flow")) - sum(
+                            (as_float(row.get(name, "")) or 0.0) for name in ("commission", "spread_cost", "slippage_cost"))
+            if abs((ending - beginning) - explained - residual) > 1e-4:
+                issues.append(f"{path}:{line_number}: accounting identity failed")
+            if abs(residual) > tolerance * max(1.0, abs(beginning)) + 1e-6:
+                issues.append(f"{path}:{line_number}: residual exceeds configured tolerance")
+
+    if path.name == "transaction_cost_attribution.csv":
+        for line_number, row in enumerate(rows, start=2):
+            for name in ("commission", "spread_cost", "slippage_cost", "total_cost"):
+                value = as_float(row.get(name, ""))
+                if value is None or value < 0.0:
+                    issues.append(f"{path}:{line_number}: invalid cost sign for {name}")
+
+    if path.name == "corporate_action_attribution.csv":
+        for line_number, row in enumerate(rows, start=2):
+            if row.get("action_type") == "stock_split" and abs(as_float(row.get("economic_contribution", "")) or 0.0) > 1e-4:
+                issues.append(f"{path}:{line_number}: split creates economic contribution")
+            if row.get("adjustment_basis") == "total_return_adjusted" and abs(as_float(row.get("cash_effect", "")) or 0.0) > 1e-9:
+                issues.append(f"{path}:{line_number}: total-return mode double counts dividend cash")
+
+    if path.name == "risk_contribution.csv":
+        total = sum(as_float(row.get("percentage_contribution", "")) or 0.0 for row in rows)
+        if abs(total - 1.0) > 1e-4:
+            issues.append(f"{path}: risk percentage contributions sum to {total}, expected 1")
+
+    if path.name == "drawdown_episode_attribution.csv":
+        episodes: dict[str, tuple[float, float, float]] = {}
+        for row in rows:
+            key = row.get("episode_id", "")
+            peak = as_float(row.get("peak_value", "")) or 0.0
+            trough = as_float(row.get("trough_value", "")) or 0.0
+            contribution = as_float(row.get("contribution", "")) or 0.0
+            prior = episodes.get(key, (peak, trough, 0.0))
+            episodes[key] = (peak, trough, prior[2] + contribution)
+        for key, (peak, trough, contribution) in episodes.items():
+            if abs((trough - peak) - contribution) > 1e-3:
+                issues.append(f"{path}: drawdown episode {key} does not reconcile")
 
     if path.name == "portfolio_performance_summary.csv" and rows[0].get("schema_version") == "3":
         required = {"calendar_mode", "valuation_frequency", "observations_per_year", "annualization_method",
@@ -308,6 +392,18 @@ def main() -> int:
         return 1
     for path in sorted(RESULTS.rglob("*.csv")):
         validate_file(path, issues)
+    required_attribution = {
+        "daily_asset_attribution.csv", "portfolio_attribution_summary.csv", "cash_attribution.csv",
+        "transaction_cost_attribution.csv", "corporate_action_attribution.csv", "rebalance_attribution.csv",
+        "benchmark_relative_attribution.csv", "drawdown_episode_attribution.csv", "risk_contribution.csv",
+        "regime_attribution.csv", "calendar_year_attribution.csv", "walk_forward_window_attribution.csv",
+        "attribution_reconciliation.csv",
+    }
+    attribution_dirs = {path.parent for path in RESULTS.rglob("attribution_reconciliation.csv") if path.parent.name == "attribution"}
+    for directory in sorted(attribution_dirs):
+        missing = sorted(name for name in required_attribution if not (directory / name).exists())
+        if missing:
+            issues.append(f"{directory}: missing required attribution files {missing}")
     if issues:
         print("Result validation failed:")
         for issue in issues:

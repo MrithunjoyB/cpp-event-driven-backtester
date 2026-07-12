@@ -27,6 +27,7 @@ This project was built as an honest, interview-ready quantitative development pr
 - Compares strategy returns against a configured same-asset or external buy-and-hold benchmark using comparable execution assumptions.
 - Supports JSON experiment configs, parameter grid search, walk-forward validation, cross-asset evaluation, transaction-cost sensitivity, regime evaluation, bootstrap uncertainty, true shared-cash multi-asset portfolio backtesting, and runtime benchmarking.
 - Supports schema-v3 union-calendar valuation for mixed equity/crypto portfolios, stale closed-market marks, civil-calendar rebalancing, and explicit split/dividend accounting.
+- Produces trade-aware portfolio return, cash, execution-cost, corporate-action, rebalance, benchmark-relative, drawdown, risk, regime, and calendar-year attribution with checked residuals.
 - Prevents buying beyond available cash and prevents long-only portfolios from selling more shares than held.
 - Exports trades, equity curves, performance summaries, and strategy comparison files.
 - Includes Python scripts for yFinance data download and Matplotlib visualization.
@@ -200,6 +201,9 @@ The engine writes:
 - `results/research_v3/<portfolio>/portfolio_valuations.csv`
 - `results/research_v3/<portfolio>/portfolio_corporate_actions.csv`
 - `results/research_v3/<portfolio>/portfolio_rebalances.csv`
+- `results/research_v3/<portfolio>/attribution/*.csv`
+- `results/research_v3/<portfolio>/attribution/figures/*.png`
+- `results/research_v3/<portfolio>/attribution/attribution_report.md`
 - `results/portfolio/inverse_volatility/*.csv`
 - `results/portfolio/momentum_top_n/*.csv`
 - `results/report/research_report.md`

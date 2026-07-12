@@ -22,6 +22,7 @@ quant_cli -> application -> experiments/portfolio -> strategy + execution + mark
 - `portfolio`: long-only single-asset accounting and true shared-cash multi-asset accounting.
 - `allocation`: equal-weight, inverse-volatility, and momentum top-N policies.
 - `analytics`: returns, drawdown, risk, and trade metrics.
+- `analytics/PortfolioAttribution`: trade-aware period accounting, cash/cost/corporate-action contribution, drawdown episodes, and ex-post covariance risk contribution.
 - `methodology`: causal regimes and calendar-duration windows.
 - `experiments`: backtests, parameter search, walk-forward, regime/cost analysis, and deterministic bootstrap analysis.
 - `config`: strict typed JSON loading, validation, and resolved configuration.
