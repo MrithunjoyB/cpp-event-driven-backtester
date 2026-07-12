@@ -8,6 +8,7 @@
 #include "quant/config/ConfigLoader.h"
 #include "quant/io/ResultExporter.h"
 #include "quant/analytics/PortfolioAttribution.h"
+#include "quant/analytics/StatisticalAnalysis.h"
 #include "quant/domain/Errors.h"
 
 #include <iomanip>
@@ -16,6 +17,7 @@
 #include <ctime>
 #include <iostream>
 #include <memory>
+#include <map>
 #include <stdexcept>
 #include <vector>
 #include <sstream>
@@ -138,6 +140,33 @@ int Application::run_config(const std::string& config_path, bool dry_run) {
                 result, config, experiment.name, 1e-8);
             quant::io::CsvResultExporter::write_attribution(
                 attribution, config.results_dir + "/attribution");
+            std::map<std::string, double> benchmark_marks;
+            for (const auto& mark : result.valuations) if (mark.ticker == config.benchmark_ticker && mark.mark_price > 0.0)
+                benchmark_marks[mark.date] = mark.mark_price;
+            std::vector<quant::analytics::DatedReturn> portfolio_returns;
+            std::vector<quant::analytics::DatedReturn> benchmark_returns;
+            std::vector<double> active_returns;
+            for (std::size_t i = 1; i < result.equity_curve.size(); ++i) {
+                const auto& previous = result.equity_curve[i - 1];
+                const auto& current = result.equity_curve[i];
+                const double pr = current.portfolio_value / previous.portfolio_value - 1.0;
+                const double br = benchmark_marks.count(previous.date) && benchmark_marks.count(current.date)
+                    ? benchmark_marks[current.date] / benchmark_marks[previous.date] - 1.0 : 0.0;
+                portfolio_returns.push_back({current.date, pr});
+                benchmark_returns.push_back({current.date, br});
+                active_returns.push_back(pr - br);
+            }
+            quant::analytics::StatisticalConfig statistics_config;
+            statistics_config.seed = experiment.bootstrap.random_seed;
+            statistics_config.simulations = 1000;
+            statistics_config.annualization_factor = result.summary.observations_per_year;
+            if (portfolio_returns.size() < 30 && config.data_dir.find("tests/fixtures") != std::string::npos)
+                statistics_config.minimum_observations = 5;
+            const auto statistics = quant::analytics::StatisticalAnalyzer::bootstrap(
+                experiment.name, "portfolio_policy_union_returns", portfolio_returns, benchmark_returns,
+                config.benchmark_ticker, statistics_config);
+            const auto multiple_testing = quant::analytics::StatisticalAnalyzer::reality_check({active_returns}, statistics_config);
+            quant::io::CsvResultExporter::write_statistics(statistics, multiple_testing, config.results_dir + "/statistics");
         }
         write_run_metadata(config.results_dir, "portfolio_config", experiment.benchmark.ticker);
         std::cout << "Shared-cash portfolio experiment written to " << config.results_dir

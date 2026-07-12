@@ -5,6 +5,7 @@
 #include "quant/config/ExperimentConfig.h"
 #include "quant/experiments/BootstrapAnalyzer.h"
 #include "quant/analytics/PortfolioAttribution.h"
+#include "quant/analytics/StatisticalAnalysis.h"
 
 #include <string>
 #include <vector>
@@ -28,6 +29,8 @@ public:
     static void write_attribution(
         const quant::analytics::PortfolioAttributionResult& result,
         const std::string& directory);
+    static void write_statistics(const quant::analytics::StatisticalResult& result,
+        const quant::analytics::MultipleTestingResult& multiple_testing, const std::string& directory);
 };
 
 class JsonManifestExporter {

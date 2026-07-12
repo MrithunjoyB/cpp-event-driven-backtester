@@ -363,6 +363,31 @@ void CsvResultExporter::write_attribution(
         {&regimes, regime_path}, {&windows, window_path}}) verify_output(*item.first, item.second);
 }
 
+void CsvResultExporter::write_statistics(const quant::analytics::StatisticalResult& r,
+    const quant::analytics::MultipleTestingResult& mt, const std::string& directory) {
+    std::error_code ec; std::filesystem::create_directories(directory,ec); if(ec)throw std::runtime_error("Could not create statistics directory: "+ec.message());
+    std::ostringstream m;m<<r.schema_version<<','<<r.experiment_id<<','<<r.method<<','<<r.seed<<','<<r.simulations<<','<<r.block_length<<','<<r.input_series<<','<<r.benchmark<<','<<r.confidence_level<<','<<r.candidate_count<<','<<r.observation_count<<','<<r.annualization_method;
+    const std::string meta=m.str(),p="schema_version,experiment_id,method,seed,simulation_count,block_length,input_series,benchmark,confidence_level,candidate_count,observation_count,annualization_method,";
+    auto summary=open_output(directory+"/bootstrap_summary.csv");summary<<p<<"metric,mean,median,standard_deviation,lower_bound,upper_bound,probability\n";
+    auto ci=[&](const char*n,const quant::analytics::ConfidenceInterval&c,double pr){summary<<meta<<','<<n<<','<<c.mean<<','<<c.median<<','<<c.standard_deviation<<','<<c.lower<<','<<c.upper<<','<<pr<<'\n';};
+    ci("cumulative_return",r.cumulative_return_ci,r.probability_loss);ci("sharpe",r.sharpe_ci,r.probability_sharpe_positive);
+    auto input=open_output(directory+"/statistical_input_series.csv");input<<p<<"date,return,benchmark_return,active_return\n";for(std::size_t i=0;i<r.input_returns.size();++i){double b=i<r.benchmark_returns.size()?r.benchmark_returns[i].value:0.0;input<<meta<<','<<r.input_returns[i].date<<','<<r.input_returns[i].value<<','<<b<<','<<r.input_returns[i].value-b<<'\n';}
+    auto dist=open_output(directory+"/bootstrap_metric_distributions.csv");dist<<p<<"simulation,cumulative_return,annualized_return,volatility,sharpe,sortino,max_drawdown,calmar,terminal_wealth,active_return,information_ratio\n";
+    for(auto&x:r.metrics)dist<<meta<<','<<x.simulation<<','<<x.cumulative_return<<','<<x.annualized_return<<','<<x.volatility<<','<<x.sharpe<<','<<x.sortino<<','<<x.max_drawdown<<','<<x.calmar<<','<<x.terminal_wealth<<','<<x.active_return<<','<<x.information_ratio<<'\n';
+    auto paths=open_output(directory+"/bootstrap_paths_sample.csv");paths<<p<<"path,step,return\n";for(std::size_t i=0;i<r.sampled_paths.size();++i)for(std::size_t j=0;j<r.sampled_paths[i].size();++j)paths<<meta<<','<<i<<','<<j<<','<<r.sampled_paths[i][j]<<'\n';
+    auto sharpe=open_output(directory+"/sharpe_inference.csv");sharpe<<p<<"sharpe_mean,sharpe_lower,sharpe_upper,probability_sharpe_positive,probability_sharpe_exceeds_benchmark\n"<<meta<<','<<r.sharpe_ci.mean<<','<<r.sharpe_ci.lower<<','<<r.sharpe_ci.upper<<','<<r.probability_sharpe_positive<<','<<r.probability_sharpe_exceeds_benchmark<<'\n';
+    auto multi=open_output(directory+"/multiple_testing_summary.csv");multi<<p<<"test_method,eligible_count,observed_best_mean,p_value,null_hypothesis\n"<<meta<<','<<mt.method<<','<<mt.eligible_count<<','<<mt.observed_best_mean<<','<<mt.p_value<<",no_candidate_outperforms_benchmark_in_expected_return\n";
+    auto history=open_output(directory+"/parameter_selection_history.csv");history<<p<<"window_id,selected_parameter,status\n"<<meta<<",-1,not_applicable,portfolio_policy_has_no_parameter_grid\n";
+    auto stability=open_output(directory+"/parameter_stability.csv");stability<<p<<"parameter,selection_frequency,changes,stability_score,status\n"<<meta<<",not_applicable,0,0,0,portfolio_policy_has_no_parameter_grid\n";
+    auto degradation=open_output(directory+"/oos_degradation.csv");degradation<<p<<"in_sample_return,oos_return,return_degradation,in_sample_sharpe,oos_sharpe,sharpe_degradation,status\n"<<meta<<",0,0,0,0,0,0,not_available_for_portfolio_policy_series\n";
+    auto strategy=open_output(directory+"/strategy_robustness.csv");strategy<<p<<"strategy,return_lower,return_upper,sharpe_lower,sharpe_upper,probability_positive_active,status\n"<<meta<<",not_applicable,0,0,0,0,0,portfolio_policy_input\n";
+    auto policy=open_output(directory+"/portfolio_policy_robustness.csv");policy<<p<<"policy,return_lower,return_upper,sharpe_lower,sharpe_upper,probability_positive_active,probability_loss\n"<<meta<<','<<r.experiment_id<<','<<r.cumulative_return_ci.lower<<','<<r.cumulative_return_ci.upper<<','<<r.sharpe_ci.lower<<','<<r.sharpe_ci.upper<<','<<r.probability_positive_active<<','<<r.probability_loss<<'\n';
+    auto attr=open_output(directory+"/attribution_robustness.csv");attr<<p<<"component,estimate,status\n"<<meta<<",joint_asset_concentration,0,requires_joint_contribution_series_bootstrap\n";
+    auto warnings=open_output(directory+"/statistical_warnings.csv");warnings<<p<<"warning\n";if(r.warnings.empty())warnings<<meta<<",none\n";else for(auto&w:r.warnings)warnings<<meta<<','<<w<<'\n';
+    std::ostringstream manifest;manifest<<"{\n  \"schema_version\": 3,\n  \"experiment_id\": \""<<r.experiment_id<<"\",\n  \"method\": \""<<r.method<<"\",\n  \"seed\": "<<r.seed<<",\n  \"simulation_count\": "<<r.simulations<<",\n  \"block_length\": "<<r.block_length<<",\n  \"input_series\": \""<<r.input_series<<"\",\n  \"observation_count\": "<<r.observation_count<<",\n  \"assumptions\": \""<<r.assumptions<<"\"\n}\n";
+    JsonManifestExporter::write_text(directory+"/statistical_manifest.json",manifest.str());
+}
+
 void JsonManifestExporter::write_text(const std::string& filepath, const std::string& json) {
     const std::filesystem::path path(filepath);
     std::error_code error;
