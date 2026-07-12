@@ -36,13 +36,14 @@ jobs:
       - run: python3 scripts/validate_selection_risk.py results/research_v3/selection_risk/ma/selection_risk
       - run: python3 scripts/test_selection_risk_reference.py results/research_v3/selection_risk/ma/selection_risk
       - run: python3 scripts/test_selection_risk_validator.py
+      - run: python3 scripts/test_parallel_equivalence.py --build build --packages ma --threads 1,2,4
       - run: MPLCONFIGDIR=${{ runner.temp }}/matplotlib python3 scripts/visualize_selection_risk.py --directory results/research_v3/selection_risk/ma/selection_risk
       - run: python3 scripts/generate_selection_risk_report.py --directory results/research_v3/selection_risk/ma/selection_risk
 
   sanitizers:
     strategy:
       matrix:
-        sanitizer: [address, undefined]
+        sanitizer: [address, undefined, thread]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5

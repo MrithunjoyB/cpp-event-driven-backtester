@@ -12,6 +12,7 @@ Major sections in `ExperimentConfig` are:
 - `portfolio`: allocation policy, rebalance frequency, constraints, and lookbacks.
 - `output`: research and portfolio result directories.
 - `parameter_selection`: documented objective and minimum trade count.
+- `execution_control`: `execution_mode` (`serial` or `parallel`) and `threads` (1-64). Serial mode requires one thread.
 
 Existing examples are in `configs/`. The canonical commands are:
 
@@ -20,7 +21,10 @@ Existing examples are in `configs/`. The canonical commands are:
 ./build/quant_cli print-resolved-config --config configs/ma_walk_forward.json
 ./build/quant_cli run --config configs/ma_walk_forward.json --dry-run
 ./build/quant_cli run --config configs/ma_walk_forward.json
+./build/quant_cli run --config configs/selection_risk_all.json --execution-mode parallel --threads 4
 ```
+
+CLI execution flags override the corresponding typed configuration for that invocation. Parallel execution currently applies only to independent candidate training and counterfactual OOS simulations in selection-risk experiments. The effective mode and thread count are exported in `parallel_execution_metadata.json`; serial execution remains the canonical reference.
 
 Legacy `--mode` invocation remains available for reproducible single-purpose runs, but new automation should use typed config files.
 

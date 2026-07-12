@@ -27,6 +27,11 @@ quant_cli -> application -> experiments/portfolio -> strategy + execution + mark
 - `experiments`: backtests, parameter search, walk-forward, regime/cost analysis, and deterministic bootstrap analysis.
 - `config`: strict typed JSON loading, validation, and resolved configuration.
 - `io`: schema-v2 CSV and JSON manifest output with checked writes.
+- `performance`: bounded deterministic indexed execution for independent candidate simulations.
+
+Selection-risk experiments load each required dataset once into immutable shared ownership. Training and test benchmark paths are constructed once per ticker/window and reused only within the exact matching capital, date, cost, and liquidation context. No global mutable cache is used.
+
+Candidate training and counterfactual OOS simulations within one fixed window are independent and may use the bounded executor. Task indices define result slots, so completion order cannot affect ranking or export order. Event chronology, linked selected-strategy OOS capital, shared-cash portfolio updates, bootstrap reductions, output assembly, and file writing remain serial.
 
 The shared-cash portfolio owns one cash balance and synchronized positions. It is intentionally separate from cross-asset evaluation, where each ticker is an independent backtest. The removed legacy composite path averaged independent account curves and was not a portfolio accounting model.
 

@@ -21,7 +21,7 @@ The portfolio research path additionally handles mixed equity and cryptocurrency
 | Corporate Actions | Raw-price, split-adjusted, and total-return-adjusted policies; stock and reverse splits; cash dividends; dividend double-count prevention |
 | Attribution | Trade-aware asset, cash, cost, corporate-action, rebalance, benchmark-relative, drawdown, volatility, regime, and calendar-year attribution; exact reconciliation with residual rejection |
 | Statistical Inference | Circular moving-block bootstrap by default; IID comparison mode; empirical confidence intervals; centered max-mean reality checks over MA, RSI, MACD, Volatility Breakout, and combined candidate grids; parameter stability and neighbourhood diagnostics |
-| Engineering | Reusable `quant_core` C++17 library; thin `quant_cli`; typed JSON configuration; validated civil dates; categorized errors; schema-versioned export; deterministic C++/Python tests; strict warnings; Linux/macOS CI; ASan and UBSan |
+| Engineering | Reusable `quant_core` C++17 library; thin `quant_cli`; typed JSON configuration; validated civil dates; categorized errors; schema-versioned export; deterministic bounded candidate execution; immutable per-run data reuse; deterministic C++/Python tests; strict warnings; Linux/macOS CI; ASan, UBSan, and TSan |
 
 ## Methodological Design
 
@@ -74,6 +74,7 @@ See [Architecture](docs/ARCHITECTURE.md) and [Data Model](docs/DATA_MODEL.md) fo
 python3 scripts/download_data.py
 ./build/quant_cli validate-config --config configs/portfolio_equal_weight.json
 ./build/quant_cli run --config configs/portfolio_equal_weight.json
+./build/quant_cli run --config configs/selection_risk_all.json --execution-mode parallel --threads 4
 python3 scripts/validate_results.py results
 python3 scripts/visualize_results.py
 ```
@@ -116,13 +117,15 @@ ctest --test-dir build --output-on-failure
 ./build/quant_cli --version
 ```
 
-JSON configurations define the data universe, strategy or allocation policy, capital, costs, calendar behavior, benchmark, and experiment parameters. See [Configuration](docs/CONFIGURATION.md). Legacy `--mode` commands remain available for compatibility but are not the preferred research interface.
+JSON configurations define the data universe, strategy or allocation policy, capital, costs, calendar behavior, benchmark, experiment parameters, and execution controls. Parallelism is limited to independent selection-risk candidate simulations; serial mode remains the reference. See [Configuration](docs/CONFIGURATION.md). Legacy `--mode` commands remain available for compatibility but are not the preferred research interface.
+
+On the measured Apple M1 Release workload, immutable data and benchmark reuse reduced the complete seven-package selection-risk median from 109.06 s to 22.05 s (4.95x). Four threads reduced the optimized median to 14.45 s (1.53x over optimized serial). Component-level thread scaling was noisy, so these are machine-specific end-to-end results rather than a universal thread-count recommendation. See [Performance](docs/PERFORMANCE.md).
 
 ## Validation
 
-The current tree has 16 CTest targets covering deterministic regression, domain/configuration, methodology, export, bootstrap, calendar, corporate actions, union-calendar portfolios, attribution, statistics, candidate selection risk, and CLI behavior. The statistical and selection-risk targets each contain 27 deterministic cases, and the regression snapshot check matches 8/8 tracked scenarios.
+The current tree has 17 CTest targets covering deterministic regression, domain/configuration, methodology, export, bootstrap, calendar, corporate actions, union-calendar portfolios, attribution, statistics, candidate selection risk, performance/concurrency, and CLI behavior. The statistical and selection-risk targets each contain 27 deterministic cases, and the regression snapshot check matches 8/8 tracked scenarios.
 
-Validation also includes strict compiler warnings, ASan, UBSan, Linux and macOS Release CI, schema/result validation, dedicated attribution and statistical corruption tests, and Python reference cross-checks. See [Testing](docs/TESTING.md) for commands and test boundaries.
+Validation also includes strict compiler warnings, ASan, UBSan, TSan, Linux and macOS Release CI, schema/result validation, dedicated attribution and statistical corruption tests, parallel package equivalence, and Python reference cross-checks. See [Testing](docs/TESTING.md) for commands and test boundaries.
 
 ## Outputs
 
@@ -146,6 +149,7 @@ Reproducibility mechanisms include typed configurations, deterministic random se
 - [Statistical Methodology](docs/STATISTICAL_METHODOLOGY.md)
 - [Result Schema](docs/RESULT_SCHEMA.md)
 - [Testing](docs/TESTING.md)
+- [Performance](docs/PERFORMANCE.md)
 
 ## Limitations
 
@@ -163,13 +167,11 @@ Reproducibility mechanisms include typed configurations, deterministic random se
 
 ### Near-Term Roadmap
 
-1. Optimize repeated data loading, indicator computation, and date lookup.
-2. Add deterministic parallel execution for independent experiments.
-3. Add versioned experiment manifests and reproducibility commands.
-4. Produce publication-quality benchmark methodology and reports.
-5. Curate tracked artifacts and prepare `v1.0.0`.
-6. Conduct a final independent methodology and engineering audit.
-7. Optionally integrate authoritative exchange calendars.
+1. Add versioned experiment manifests and reproducibility commands.
+2. Produce publication-quality benchmark methodology and reports.
+3. Curate tracked artifacts and prepare `v1.0.0`.
+4. Conduct a final independent methodology and engineering audit.
+5. Optionally integrate authoritative exchange calendars.
 
 ### Longer-Term Extensions
 

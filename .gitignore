@@ -13,4 +13,6 @@ test_next_bar.csv
 NEXT.csv
 test_results/
 results/research_v3/
+results/research_v2/*/selection_risk/
+results/performance/
 .matplotlib-cache/
