@@ -14,5 +14,12 @@ jobs:
           cache: pip
       - run: python3 -m pip install -r requirements-validation.txt
       - run: python3 scripts/validate_reproducibility.py manifests --verify-inputs
-      - run: python3 scripts/reproduce.py --manifest manifests/canonical_research_suite.json --output-directory ${{ runner.temp }}/canonical-suite --build-directory build-reproduce --execution-mode parallel --threads 4 --allow-compatible-environment --json-report ${{ runner.temp }}/canonical-suite-report.json
+      - run: python3 scripts/reproduce.py --manifest manifests/canonical_research_suite.json --output-directory ${{ runner.temp }}/canonical-suite --build-directory build-reproduce --execution-mode parallel --threads 4 --allow-compatible-environment --keep-failed-output --json-report ${{ runner.temp }}/canonical-suite-report.json
       - run: python3 scripts/validate_reproducibility.py manifests --verify-inputs --report ${{ runner.temp }}/canonical-suite-report.json
+      - name: Upload failed reconstruction evidence
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failed-canonical-suite
+          path: ${{ runner.temp }}/canonical-suite.failed
+          retention-days: 3
