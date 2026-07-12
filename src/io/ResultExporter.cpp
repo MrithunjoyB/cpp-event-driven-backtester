@@ -251,6 +251,118 @@ void CsvResultExporter::write_bootstrap(
     verify_output(summary, summary_path);
 }
 
+void CsvResultExporter::write_attribution(
+    const quant::analytics::PortfolioAttributionResult& result,
+    const std::string& directory) {
+    std::error_code error;
+    std::filesystem::create_directories(directory, error);
+    if (error) throw std::runtime_error("Could not create attribution directory " + directory + ": " + error.message());
+    std::ostringstream metadata_stream;
+    metadata_stream << result.schema_version << ',' << result.experiment_id << ',' << result.policy << ',' << result.benchmark << ','
+        << result.adjustment_basis << ',' << result.calendar_mode << ",trade_aware_accounting,pnl_currency," << std::scientific
+        << std::setprecision(3) << result.residual_tolerance;
+    const std::string metadata = metadata_stream.str();
+    const std::string prefix = "schema_version,experiment_id,policy,benchmark,adjustment_basis,calendar_mode,attribution_methodology,contribution_units,residual_tolerance,";
+
+    const std::string daily_path = directory + "/daily_asset_attribution.csv";
+    auto daily = open_output(daily_path);
+    daily << prefix << "start_date,end_date,ticker,beginning_quantity,ending_quantity,beginning_mark,ending_mark,beginning_marked_value,ending_marked_value,trade_cash_flow,market_pnl,dividend_income,split_adjustment,commission,spread_cost,slippage_cost,net_contribution,beginning_weight,ending_weight,tradable,stale_mark,stale_age_days,regime\n";
+    for (const auto& row : result.assets) daily << metadata << ',' << row.start_date << ',' << row.end_date << ',' << row.ticker << ','
+        << row.beginning_quantity << ',' << row.ending_quantity << ',' << row.beginning_mark << ',' << row.ending_mark << ','
+        << row.beginning_value << ',' << row.ending_value << ',' << row.trade_cash_flow << ',' << row.market_pnl << ','
+        << row.dividend_income << ',' << row.split_adjustment << ',' << row.commission << ',' << row.spread_cost << ','
+        << row.slippage_cost << ',' << row.net_contribution << ',' << row.beginning_weight << ',' << row.ending_weight << ','
+        << (row.tradable ? 1 : 0) << ',' << (row.stale_mark ? 1 : 0) << ',' << row.stale_age_days << ',' << row.regime << '\n';
+
+    const std::string reconciliation_path = directory + "/attribution_reconciliation.csv";
+    auto reconciliation = open_output(reconciliation_path);
+    reconciliation << prefix << "start_date,end_date,beginning_value,ending_value,external_cash_flow,market_pnl,dividend_income,corporate_action_effect,cash_return,commission,spread_cost,slippage_cost,residual\n";
+    for (const auto& row : result.periods) reconciliation << metadata << ',' << row.start_date << ',' << row.end_date << ','
+        << row.beginning_value << ',' << row.ending_value << ',' << row.external_cash_flow << ',' << row.market_pnl << ','
+        << row.dividend_income << ',' << row.corporate_action_effect << ',' << row.cash_return << ',' << row.commission << ','
+        << row.spread_cost << ',' << row.slippage_cost << ',' << row.residual << '\n';
+
+    const std::string summary_path = directory + "/portfolio_attribution_summary.csv";
+    auto summary = open_output(summary_path);
+    summary << prefix << "component,contribution,contribution_return,percentage_of_net_profit\n";
+    for (const auto& row : result.summary) summary << metadata << ',' << row.component << ',' << row.contribution << ','
+        << row.contribution_return << ',' << row.percentage_of_net_profit << '\n';
+
+    const std::string cash_path = directory + "/cash_attribution.csv";
+    auto cash = open_output(cash_path);
+    cash << prefix << "start_date,end_date,beginning_cash,ending_cash,average_cash,average_cash_allocation,cash_return,uninvested_cash_drag,dividend_cash,costs_paid\n";
+    for (const auto& row : result.cash) cash << metadata << ',' << row.start_date << ',' << row.end_date << ',' << row.beginning_cash << ','
+        << row.ending_cash << ',' << row.average_cash << ',' << row.average_allocation << ',' << row.cash_return << ','
+        << row.benchmark_drag << ',' << row.dividend_cash << ',' << row.costs_paid << '\n';
+
+    const std::string cost_path = directory + "/transaction_cost_attribution.csv";
+    auto costs = open_output(cost_path);
+    costs << prefix << "date,ticker,commission,fixed_commission,minimum_commission,spread_cost,slippage_cost,total_cost,cumulative_cost,regime\n";
+    double cumulative = 0.0;
+    for (const auto& row : result.assets) if (row.commission + row.spread_cost + row.slippage_cost > 0.0) {
+        const double total = row.commission + row.spread_cost + row.slippage_cost;
+        cumulative += total;
+        costs << metadata << ',' << row.end_date << ',' << row.ticker << ',' << row.commission << ",0,0," << row.spread_cost << ','
+              << row.slippage_cost << ',' << total << ',' << cumulative << ',' << row.regime << '\n';
+    }
+
+    const std::string action_path = directory + "/corporate_action_attribution.csv";
+    auto actions = open_output(action_path);
+    actions << prefix << "date,ticker,action_type,declared_value,economic_contribution,cash_effect,source\n";
+    for (const auto& row : result.corporate_actions) actions << metadata << ',' << row.date << ',' << row.ticker << ','
+        << row.action_type << ',' << row.declared_value << ',' << row.economic_contribution << ',' << row.cash_effect << ',' << row.source << '\n';
+
+    const std::string rebalance_path = directory + "/rebalance_attribution.csv";
+    auto rebalances = open_output(rebalance_path);
+    rebalances << prefix << "rebalance_id,scheduled_date,decision_date,execution_date,next_rebalance_date,turnover,gross_trade_value,transaction_costs,cash_after,holding_period_contribution,deferred_assets,skipped_assets,partial_rebalance\n";
+    for (const auto& row : result.rebalances) rebalances << metadata << ',' << row.rebalance_id << ',' << row.scheduled_date << ','
+        << row.decision_date << ',' << row.execution_date << ',' << row.next_rebalance_date << ',' << row.turnover << ','
+        << row.gross_trade_value << ',' << row.costs << ',' << row.cash_after << ',' << row.holding_period_contribution << ','
+        << row.deferred_assets << ',' << row.skipped_assets << ',' << (row.partial ? 1 : 0) << '\n';
+
+    const std::string benchmark_path = directory + "/benchmark_relative_attribution.csv";
+    auto benchmark = open_output(benchmark_path);
+    benchmark << prefix << "component,portfolio_contribution_return,benchmark_contribution_return,active_contribution_return\n";
+    for (const auto& row : result.summary) if (row.component == "PORTFOLIO_RETURN" || row.component == "BENCHMARK_RETURN" || row.component == "ACTIVE_RETURN")
+        benchmark << metadata << ',' << row.component << ','
+                  << (row.component == "PORTFOLIO_RETURN" ? row.contribution_return : 0.0) << ','
+                  << (row.component == "BENCHMARK_RETURN" ? -row.contribution_return : 0.0) << ','
+                  << (row.component == "ACTIVE_RETURN" ? row.contribution_return : 0.0) << '\n';
+
+    const std::string drawdown_path = directory + "/drawdown_episode_attribution.csv";
+    auto drawdowns = open_output(drawdown_path);
+    drawdowns << prefix << "episode_id,peak_date,trough_date,recovery_date,drawdown_depth,peak_value,trough_value,duration_observations,recovery_observations,ticker,contribution,stale_mark_observations,unresolved\n";
+    for (const auto& row : result.drawdowns) drawdowns << metadata << ',' << row.episode_id << ',' << row.peak_date << ',' << row.trough_date << ','
+        << row.recovery_date << ',' << row.depth << ',' << row.peak_value << ',' << row.trough_value << ',' << row.duration_observations << ',' << row.recovery_observations << ','
+        << row.ticker << ',' << row.contribution << ',' << row.stale_mark_observations << ',' << (row.unresolved ? 1 : 0) << '\n';
+
+    const std::string risk_path = directory + "/risk_contribution.csv";
+    auto risk = open_output(risk_path);
+    risk << prefix << "ticker,component_volatility,percentage_contribution,beta_contribution,observations,risk_methodology\n";
+    for (const auto& row : result.risk) risk << metadata << ',' << row.ticker << ',' << row.component_volatility << ','
+        << row.percentage_contribution << ',' << row.beta_contribution << ',' << row.observations << ",ex_post_covariance_euler\n";
+
+    const std::string year_path = directory + "/calendar_year_attribution.csv";
+    auto years = open_output(year_path);
+    years << prefix << "calendar_year,ticker,contribution,residual\n";
+    for (const auto& row : result.calendar_years) years << metadata << ',' << row.year << ',' << row.ticker << ',' << row.contribution << ',' << row.residual << '\n';
+
+    const std::string regime_path = directory + "/regime_attribution.csv";
+    auto regimes = open_output(regime_path);
+    regimes << prefix << "regime,ticker,contribution,observations,trades,rebalances,status\n";
+    for (const auto& row : result.regimes) regimes << metadata << ',' << row.regime << ',' << row.ticker << ',' << row.contribution << ','
+        << row.observations << ',' << row.trades << ',' << row.rebalances << ",existing_causal_regime_method\n";
+    const std::string window_path = directory + "/walk_forward_window_attribution.csv";
+    auto windows = open_output(window_path);
+    windows << prefix << "window_id,ticker,contribution,starting_capital,ending_capital,residual,status\n";
+    windows << metadata << ",-1,no_ticker,0,0,0,0,not_applicable_to_portfolio_policy_run\n";
+
+    for (const auto& item : std::vector<std::pair<std::ofstream*, std::string>>{{&daily, daily_path}, {&reconciliation, reconciliation_path},
+        {&summary, summary_path}, {&cash, cash_path}, {&costs, cost_path}, {&actions, action_path}, {&rebalances, rebalance_path},
+        {&benchmark, benchmark_path}, {&drawdowns, drawdown_path}, {&risk, risk_path}, {&years, year_path},
+        {&regimes, regime_path}, {&windows, window_path}}) verify_output(*item.first, item.second);
+}
+
 void JsonManifestExporter::write_text(const std::string& filepath, const std::string& json) {
     const std::filesystem::path path(filepath);
     std::error_code error;

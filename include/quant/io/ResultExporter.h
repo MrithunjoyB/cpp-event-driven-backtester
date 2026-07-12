@@ -4,6 +4,7 @@
 #include "PortfolioBacktester.h"
 #include "quant/config/ExperimentConfig.h"
 #include "quant/experiments/BootstrapAnalyzer.h"
+#include "quant/analytics/PortfolioAttribution.h"
 
 #include <string>
 #include <vector>
@@ -23,6 +24,9 @@ public:
         const PortfolioBacktestConfig& config);
     static void write_bootstrap(
         const quant::experiments::BootstrapResult& result,
+        const std::string& directory);
+    static void write_attribution(
+        const quant::analytics::PortfolioAttributionResult& result,
         const std::string& directory);
 };
 

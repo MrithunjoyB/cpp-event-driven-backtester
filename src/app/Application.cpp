@@ -7,6 +7,7 @@
 #include "Strategy.h"
 #include "quant/config/ConfigLoader.h"
 #include "quant/io/ResultExporter.h"
+#include "quant/analytics/PortfolioAttribution.h"
 #include "quant/domain/Errors.h"
 
 #include <iomanip>
@@ -132,6 +133,12 @@ int Application::run_config(const std::string& config_path, bool dry_run) {
         config.allocation.top_n = experiment.portfolio.top_n;
         const auto result = PortfolioBacktester(config).run();
         quant::io::CsvResultExporter::write_portfolio(result, config);
+        if (config.result_schema_version >= 3) {
+            const auto attribution = quant::analytics::PortfolioAttributionAnalyzer::analyze(
+                result, config, experiment.name, 1e-8);
+            quant::io::CsvResultExporter::write_attribution(
+                attribution, config.results_dir + "/attribution");
+        }
         write_run_metadata(config.results_dir, "portfolio_config", experiment.benchmark.ticker);
         std::cout << "Shared-cash portfolio experiment written to " << config.results_dir
                   << " with return " << result.summary.total_return << '\n';
