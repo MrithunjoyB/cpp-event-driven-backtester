@@ -31,3 +31,11 @@ cmake --build build-asan --parallel && ctest --test-dir build-asan --output-on-f
 cmake -S . -B build-ubsan -DCMAKE_BUILD_TYPE=Debug -DQUANT_SANITIZER=undefined
 cmake --build build-ubsan --parallel && ctest --test-dir build-ubsan --output-on-failure
 ```
+
+The dedicated `selection_risk_tests` target checks stable candidate identity, strict common-date panel construction, duplicate/non-finite rejection, minimum samples, deterministic moving-block resampling, max-statistic calculation, null fixtures, and bootstrap metadata. Production exports are independently checked with:
+
+```bash
+python3 scripts/validate_selection_risk.py results/research_v3/selection_risk/ma/selection_risk
+python3 scripts/test_selection_risk_reference.py results/research_v3/selection_risk/ma/selection_risk
+python3 scripts/test_selection_risk_validator.py
+```

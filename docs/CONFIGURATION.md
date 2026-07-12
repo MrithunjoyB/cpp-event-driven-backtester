@@ -23,3 +23,5 @@ Existing examples are in `configs/`. The canonical commands are:
 ```
 
 Legacy `--mode` invocation remains available for reproducible single-purpose runs, but new automation should use typed config files.
+
+Selection-risk configurations are provided for MA, RSI, MACD, Volatility Breakout, the combined four-family universe, and zero/high-cost combined checks under `configs/selection_risk_*.json`. They preserve the standard three-year training, six-month testing, six-month step, SPY benchmark, minimum-trade eligibility, explicit costs, and deterministic seed fields. Their parent single-asset experiment schema remains version 2; generated selection-risk artifacts declare schema version 3.

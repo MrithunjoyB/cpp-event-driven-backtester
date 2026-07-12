@@ -8,7 +8,7 @@ The system supports reproducible strategy and allocation-policy experiments on d
 
 Historical strategy evaluation is vulnerable to timing errors, optimistic execution assumptions, benchmark mismatches, calendar misalignment, accounting omissions, and selection bias. This repository addresses those problems through causal signal-to-fill timing, explicit costs, calendar-duration walk-forward tests, continuous out-of-sample capital, benchmark execution parity, and validated portfolio accounting.
 
-The portfolio research path additionally handles mixed equity and cryptocurrency calendars, concentration and attribution analysis, corporate actions, and uncertainty estimates that preserve short-range return dependence. Parameter-selection risk is measured where the retained experiment history permits it; complete candidate-grid correction remains an explicit boundary.
+The portfolio research path additionally handles mixed equity and cryptocurrency calendars, concentration and attribution analysis, corporate actions, and uncertainty estimates that preserve short-range return dependence. Strategy research retains exact candidate-level OOS diagnostics and applies family-wise and cross-family selection-risk correction on strict common-date panels.
 
 ## Capabilities
 
@@ -20,7 +20,7 @@ The portfolio research path additionally handles mixed equity and cryptocurrency
 | Validation Methodology | Calendar-duration walk-forward windows; continuous OOS capital; boundary liquidation with costs; causal regimes; same-asset and external benchmarks; parameter grids; transaction-cost sensitivity |
 | Corporate Actions | Raw-price, split-adjusted, and total-return-adjusted policies; stock and reverse splits; cash dividends; dividend double-count prevention |
 | Attribution | Trade-aware asset, cash, cost, corporate-action, rebalance, benchmark-relative, drawdown, volatility, regime, and calendar-year attribution; exact reconciliation with residual rejection |
-| Statistical Inference | Circular moving-block bootstrap by default; IID comparison mode; empirical confidence intervals; return, volatility, Sharpe, Sortino, drawdown, Calmar, terminal-wealth, and benchmark-relative distributions; centered max-mean diagnostic |
+| Statistical Inference | Circular moving-block bootstrap by default; IID comparison mode; empirical confidence intervals; centered max-mean reality checks over MA, RSI, MACD, Volatility Breakout, and combined candidate grids; parameter stability and neighbourhood diagnostics |
 | Engineering | Reusable `quant_core` C++17 library; thin `quant_cli`; typed JSON configuration; validated civil dates; categorized errors; schema-versioned export; deterministic C++/Python tests; strict warnings; Linux/macOS CI; ASan and UBSan |
 
 ## Methodological Design
@@ -92,7 +92,9 @@ Using 1,000 circular moving-block bootstrap simulations over 2,190 return observ
 
 Inverse Volatility currently has the strongest statistical evidence, while Equal Weight also shows comparatively strong evidence. Momentum Top-N remains inconclusive. These are historical findings, not forecasts; portfolio performance is materially concentrated in BTC-USD and TSLA.
 
-Full tables are available in the generated [attribution report](results/research_v3/portfolio_equal_weight/attribution/attribution_report.md) and [statistical report](results/research_v3/portfolio_equal_weight/statistics/statistical_report.md).
+The strategy-grid reality check retains 41 configured candidates per ticker across the four families. No family/ticker or combined cross-family panel rejects the no-superior-candidate null at 5% after correction. TSLA MACD is the closest family result (`p` approximately 0.057 at base costs); its adjusted value moves from approximately 0.052 at zero cost to 0.071 under the high-cost configuration. Cross-family adjusted values range from approximately 0.322 to 0.996. Median IS-to-OOS degradation is negative in every family, so the corrected evidence remains inconclusive.
+
+Full generated reports are written locally to `results/research_v3/portfolio_equal_weight/attribution/attribution_report.md`, `results/research_v3/portfolio_equal_weight/statistics/statistical_report.md`, and `results/research_v3/selection_risk/all_families/selection_risk/selection_risk_report.md`. Generated research artifacts are intentionally not tracked.
 
 ## Build
 
@@ -118,7 +120,7 @@ JSON configurations define the data universe, strategy or allocation policy, cap
 
 ## Validation
 
-At commit `17c51819ac79ea2cfef38116ebb849dd9f964ea6`, the project has 15 CTest targets covering deterministic regression, domain/configuration, methodology, export, bootstrap, calendar, corporate actions, union-calendar portfolios, attribution, statistics, and CLI behavior. The statistical target contains 27 deterministic cases, and the regression snapshot check matches 8/8 tracked scenarios.
+The current tree has 16 CTest targets covering deterministic regression, domain/configuration, methodology, export, bootstrap, calendar, corporate actions, union-calendar portfolios, attribution, statistics, candidate selection risk, and CLI behavior. The statistical and selection-risk targets each contain 27 deterministic cases, and the regression snapshot check matches 8/8 tracked scenarios.
 
 Validation also includes strict compiler warnings, ASan, UBSan, Linux and macOS Release CI, schema/result validation, dedicated attribution and statistical corruption tests, and Python reference cross-checks. See [Testing](docs/TESTING.md) for commands and test boundaries.
 
@@ -151,8 +153,9 @@ Reproducibility mechanisms include typed configurations, deterministic random se
 - Exchange closures are inferred from data availability because authoritative exchange calendars are not yet integrated.
 - Payable-date settlement, delistings, symbol changes, and cash-in-lieu processing are incomplete.
 - Downloaded market data may not contain complete dividend, split, or other corporate-action provenance.
-- Continuous candidate-level OOS histories are not yet retained for every parameter candidate. Grid-wide MA, RSI, MACD, and Volatility Breakout selection-risk correction is therefore incomplete.
-- The centered reality-check result is a diagnostic at the portfolio-policy level, not a complete correction across all strategy grids.
+- Candidate histories are normalized counterfactual OOS diagnostics, not deployable continuous-capital paths; selected-strategy continuous capital remains separate.
+- Reality-check evidence is conditional on eligibility and strict common-date intersection. Regime-conditioned tests are exploratory because they are not additionally corrected across regime slices.
+- Portfolio-policy reality-check outputs remain one-policy diagnostics and are distinct from the strategy-grid correction.
 - Attribution is a historical accounting decomposition, not a claim of economic causality.
 - Statistical evidence from historical samples does not imply future profitability.
 
@@ -160,15 +163,13 @@ Reproducibility mechanisms include typed configurations, deterministic random se
 
 ### Near-Term Roadmap
 
-1. Retain candidate-level continuous OOS histories.
-2. Complete grid-wide selection-risk analysis for MA, RSI, MACD, and Volatility Breakout candidates.
-3. Optimize repeated data loading, indicator computation, and date lookup.
-4. Add deterministic parallel execution for independent experiments.
-5. Add versioned experiment manifests and reproducibility commands.
-6. Produce publication-quality benchmark methodology and reports.
-7. Curate tracked artifacts and prepare `v1.0.0`.
-8. Conduct a final independent methodology and engineering audit.
-9. Optionally integrate authoritative exchange calendars.
+1. Optimize repeated data loading, indicator computation, and date lookup.
+2. Add deterministic parallel execution for independent experiments.
+3. Add versioned experiment manifests and reproducibility commands.
+4. Produce publication-quality benchmark methodology and reports.
+5. Curate tracked artifacts and prepare `v1.0.0`.
+6. Conduct a final independent methodology and engineering audit.
+7. Optionally integrate authoritative exchange calendars.
 
 ### Longer-Term Extensions
 

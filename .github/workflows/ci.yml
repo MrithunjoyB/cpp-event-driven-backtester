@@ -9,8 +9,8 @@ jobs:
         os: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: pip
@@ -32,6 +32,12 @@ jobs:
       - run: python3 scripts/generate_attribution_report.py --directory test_results/schema_v3/attribution
       - run: MPLCONFIGDIR=${{ runner.temp }}/matplotlib python3 scripts/visualize_statistics.py --directory test_results/schema_v3/statistics
       - run: python3 scripts/generate_statistics_report.py --directory test_results/schema_v3/statistics
+      - run: ./build/quant_cli run --config configs/selection_risk_ma.json
+      - run: python3 scripts/validate_selection_risk.py results/research_v3/selection_risk/ma/selection_risk
+      - run: python3 scripts/test_selection_risk_reference.py results/research_v3/selection_risk/ma/selection_risk
+      - run: python3 scripts/test_selection_risk_validator.py
+      - run: MPLCONFIGDIR=${{ runner.temp }}/matplotlib python3 scripts/visualize_selection_risk.py --directory results/research_v3/selection_risk/ma/selection_risk
+      - run: python3 scripts/generate_selection_risk_report.py --directory results/research_v3/selection_risk/ma/selection_risk
 
   sanitizers:
     strategy:
@@ -39,7 +45,7 @@ jobs:
         sanitizer: [address, undefined]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - run: cmake -S . -B build-${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=Debug -DQUANT_SANITIZER=${{ matrix.sanitizer }}
       - run: cmake --build build-${{ matrix.sanitizer }} --parallel 2
       - run: ctest --test-dir build-${{ matrix.sanitizer }} --output-on-failure
