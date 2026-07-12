@@ -1,0 +1,1307 @@
+{
+  "build": {
+    "build_type": "Release",
+    "compiler_policy": "recorded_not_identity_bound",
+    "cxx_standard": 17,
+    "required_cli_version": "2.0.0",
+    "sanitizer": "none",
+    "strict_warnings": true,
+    "system": "CMake"
+  },
+  "commands": [
+    {
+      "argv": [
+        "{cli}",
+        "run",
+        "--config",
+        "{config}",
+        "--execution-mode",
+        "{execution_mode}",
+        "--threads",
+        "{threads}"
+      ],
+      "name": "experiment"
+    },
+    {
+      "argv": [
+        "{python}",
+        "scripts/validate_selection_risk.py",
+        "{output}/selection_risk"
+      ],
+      "name": "validate_selection_risk"
+    },
+    {
+      "argv": [
+        "{python}",
+        "scripts/test_selection_risk_reference.py",
+        "{output}/selection_risk"
+      ],
+      "name": "selection_reference"
+    },
+    {
+      "argv": [
+        "{python}",
+        "scripts/visualize_selection_risk.py",
+        "--directory",
+        "{output}/selection_risk"
+      ],
+      "name": "selection_figures"
+    },
+    {
+      "argv": [
+        "{python}",
+        "scripts/generate_selection_risk_report.py",
+        "--directory",
+        "{output}/selection_risk"
+      ],
+      "name": "selection_report"
+    }
+  ],
+  "configuration": {
+    "defaults_applied": true,
+    "driver": "typed_config",
+    "path": "configs/selection_risk_all_zero_cost.json",
+    "resolved": {
+      "adjustment_policy": "raw_price",
+      "allocation_policy": "",
+      "annualization_method": "inferred_observed_periods",
+      "benchmark": "SPY",
+      "boundary_position_policy": "liquidate_at_test_end_close",
+      "calendar_valuation_mode": "intersection_legacy",
+      "cash_buffer": 0.02,
+      "commission_bps": 0.0,
+      "configured_periods_per_year": 252.0,
+      "data_directory": "data",
+      "dividend_convention": "ex_date",
+      "execution_mode": "serial",
+      "experiment_name": "selection_risk_all_zero_cost",
+      "fractional_share_policy": "retain_fractional",
+      "max_stale_calendar_days": 7,
+      "max_weight": 0.4,
+      "min_trade_value": 25.0,
+      "minimum_trade_requirement": 3,
+      "missing_bar_policy": "error",
+      "momentum_lookback": 126,
+      "oos_continuity_policy": "continuous_capital",
+      "output_directory": "results/research_v3/selection_risk/cost_zero",
+      "parameter_selection_objective": "sharpe_min_trades",
+      "pending_order_policy": "cancel",
+      "portfolio_output_directory": "results/portfolio",
+      "random_seed": 55,
+      "rebalance_closed_asset_policy": "partial_rebalance",
+      "rebalance_frequency": "monthly",
+      "regime_classification_method": "trend_200_sma_60_return_vol_20_expanding_median",
+      "result_schema_version": 2,
+      "slippage_bps": 0.0,
+      "stale_mark_policy": "last_known",
+      "starting_capital": 100000.0,
+      "step_days": 126,
+      "step_months": 6,
+      "strategy": "All_Strategies",
+      "test_months": 6,
+      "test_window_days": 126,
+      "threads": 1,
+      "ticker_universe": [
+        "AAPL",
+        "MSFT",
+        "SPY",
+        "TSLA",
+        "BTC-USD"
+      ],
+      "top_n": 3,
+      "train_window_days": 756,
+      "train_years": 3,
+      "volatility_lookback": 60,
+      "window_mode": "calendar_duration"
+    },
+    "sha256": "8d3bafe4bb3bb94a69c267825556d9e411b39048a70674387d14b994930c853d"
+  },
+  "created_by": "generate_reproducibility_manifests.py/reproducibility_v1",
+  "description": "Canonical reproducibility package for selection_risk_combined_zero_cost",
+  "execution": {
+    "default_mode": "serial",
+    "effective_threads": 1,
+    "policy": "close_decision_next_open_fill",
+    "supported_modes": [
+      "serial",
+      "parallel"
+    ],
+    "supported_threads": [
+      1,
+      2,
+      4,
+      8
+    ]
+  },
+  "experiment_id": "selection_risk_combined_zero_cost",
+  "inputs": [
+    {
+      "acquisition_date": null,
+      "acquisition_method": "historical yFinance download; exact reproduction uses this tracked file only",
+      "adjustment_policy": "manifest_configuration",
+      "corporate_action_availability": "not guaranteed by downloaded OHLCV provenance",
+      "date_range": {
+        "end": "2025-12-30",
+        "start": "2020-01-02"
+      },
+      "format": "csv",
+      "license_or_redistribution_constraint": "Subject to upstream Yahoo data terms; provenance is incomplete",
+      "logical_name": "ohlcv_AAPL",
+      "mutability": "immutable_by_sha256",
+      "path": "data/AAPL.csv",
+      "role": "canonical_market_data",
+      "row_count": 1507,
+      "schema": "Date,Open,High,Low,Close,Volume",
+      "sha256": "e49cd4203cf2ef6fe0d5e24279721ffe05b11c4821980042892248f5c4559ecb",
+      "size_bytes": 137660,
+      "source_description": "Repository-tracked historical dataset originally acquired through yFinance",
+      "ticker_or_universe": "AAPL"
+    },
+    {
+      "acquisition_date": null,
+      "acquisition_method": "historical yFinance download; exact reproduction uses this tracked file only",
+      "adjustment_policy": "manifest_configuration",
+      "corporate_action_availability": "not guaranteed by downloaded OHLCV provenance",
+      "date_range": {
+        "end": "2025-12-30",
+        "start": "2020-01-02"
+      },
+      "format": "csv",
+      "license_or_redistribution_constraint": "Subject to upstream Yahoo data terms; provenance is incomplete",
+      "logical_name": "ohlcv_MSFT",
+      "mutability": "immutable_by_sha256",
+      "path": "data/MSFT.csv",
+      "role": "canonical_market_data",
+      "row_count": 1507,
+      "schema": "Date,Open,High,Low,Close,Volume",
+      "sha256": "acd37f190cac9757cffa56970cd631cc6caed5f62d902567cfae9b62a5df46b8",
+      "size_bytes": 135429,
+      "source_description": "Repository-tracked historical dataset originally acquired through yFinance",
+      "ticker_or_universe": "MSFT"
+    },
+    {
+      "acquisition_date": null,
+      "acquisition_method": "historical yFinance download; exact reproduction uses this tracked file only",
+      "adjustment_policy": "manifest_configuration",
+      "corporate_action_availability": "not guaranteed by downloaded OHLCV provenance",
+      "date_range": {
+        "end": "2025-12-30",
+        "start": "2020-01-02"
+      },
+      "format": "csv",
+      "license_or_redistribution_constraint": "Subject to upstream Yahoo data terms; provenance is incomplete",
+      "logical_name": "ohlcv_SPY",
+      "mutability": "immutable_by_sha256",
+      "path": "data/SPY.csv",
+      "role": "canonical_market_data",
+      "row_count": 1507,
+      "schema": "Date,Open,High,Low,Close,Volume",
+      "sha256": "96638f4d7acc232c410ab909fd2449720cd6c30c6c7fc76676d8478dcc54c9ca",
+      "size_bytes": 136178,
+      "source_description": "Repository-tracked historical dataset originally acquired through yFinance",
+      "ticker_or_universe": "SPY"
+    },
+    {
+      "acquisition_date": null,
+      "acquisition_method": "historical yFinance download; exact reproduction uses this tracked file only",
+      "adjustment_policy": "manifest_configuration",
+      "corporate_action_availability": "not guaranteed by downloaded OHLCV provenance",
+      "date_range": {
+        "end": "2025-12-30",
+        "start": "2020-01-02"
+      },
+      "format": "csv",
+      "license_or_redistribution_constraint": "Subject to upstream Yahoo data terms; provenance is incomplete",
+      "logical_name": "ohlcv_TSLA",
+      "mutability": "immutable_by_sha256",
+      "path": "data/TSLA.csv",
+      "role": "canonical_market_data",
+      "row_count": 1507,
+      "schema": "Date,Open,High,Low,Close,Volume",
+      "sha256": "d8855157e58a7f60826f73285587e4b336a2d430235601ecb7b064d8584f33f0",
+      "size_bytes": 136484,
+      "source_description": "Repository-tracked historical dataset originally acquired through yFinance",
+      "ticker_or_universe": "TSLA"
+    },
+    {
+      "acquisition_date": null,
+      "acquisition_method": "historical yFinance download; exact reproduction uses this tracked file only",
+      "adjustment_policy": "manifest_configuration",
+      "corporate_action_availability": "not guaranteed by downloaded OHLCV provenance",
+      "date_range": {
+        "end": "2025-12-30",
+        "start": "2020-01-01"
+      },
+      "format": "csv",
+      "license_or_redistribution_constraint": "Subject to upstream Yahoo data terms; provenance is incomplete",
+      "logical_name": "ohlcv_BTC-USD",
+      "mutability": "immutable_by_sha256",
+      "path": "data/BTC-USD.csv",
+      "role": "canonical_market_data",
+      "row_count": 2191,
+      "schema": "Date,Open,High,Low,Close,Volume",
+      "sha256": "fac9fbcee758363bba73a7b02acf2b75529c6c4df50f1a3109896076bb971d60",
+      "size_bytes": 176364,
+      "source_description": "Repository-tracked historical dataset originally acquired through yFinance",
+      "ticker_or_universe": "BTC-USD"
+    }
+  ],
+  "known_volatile_fields": [
+    "actual_commit",
+    "elapsed_seconds",
+    "generated_at",
+    "generated_at_utc",
+    "git_commit_hash",
+    "hostname",
+    "output_directory",
+    "portfolio_output_directory",
+    "run_timestamp_utc",
+    "source_tree_status",
+    "timestamp",
+    "username"
+  ],
+  "limitations": [
+    "Mutable remote downloads are excluded from exact reconstruction",
+    "PNG bytes are presentation-only across platforms",
+    "Compiler and standard-library versions are recorded but not identity-bound for semantic reconstruction"
+  ],
+  "lineage": {
+    "edges": [
+      [
+        "inputs",
+        "simulation"
+      ],
+      [
+        "resolved_config",
+        "simulation"
+      ],
+      [
+        "quant_cli",
+        "simulation"
+      ],
+      [
+        "simulation",
+        "analytics"
+      ],
+      [
+        "analytics",
+        "validators"
+      ],
+      [
+        "analytics",
+        "reports"
+      ]
+    ],
+    "nodes": [
+      "inputs",
+      "resolved_config",
+      "quant_cli",
+      "simulation",
+      "analytics",
+      "validators",
+      "reports"
+    ]
+  },
+  "manifest_id": "sha256:c4dcb26f1a02235f543f4f445adc3904986d4b0bc2cb79fc7b06f626c80c76e8",
+  "manifest_schema_version": 1,
+  "methodology": {
+    "adjustment_policy": "raw_price",
+    "benchmark": "SPY",
+    "calendar_policy": "intersection_legacy",
+    "result_schema": 3,
+    "version": "causal_daily_v3"
+  },
+  "outputs": {
+    "artifacts": [
+      {
+        "artifact_type": "json",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "resolved_config.json",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": null,
+        "schema": {
+          "root_type": "dict"
+        },
+        "semantic_sha256": "ec47ad74a56a8b0284506a19146f576c726d82df76f6ed44dfcaf3e732519db9",
+        "sha256": "7ec90e950d34a6138a646a9baa5a4e99c117752d3452d3388f81f50ea4ac4436",
+        "size_bytes": 1302,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "json",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "run_metadata.json",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": null,
+        "schema": {
+          "root_type": "dict"
+        },
+        "semantic_sha256": "72dd2a42d1373d445f03b51c5894ac334bd2a1e38f2a4ca1966e1edbbb168be4",
+        "sha256": "5e2f22577d83626a2f42437bb11495d6d6252412ae8780aedb61a35d24fa459c",
+        "size_bytes": 486,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "selection_risk/candidate_active_returns.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 120246,
+        "schema": {
+          "columns": [
+            "schema_version",
+            "experiment_id",
+            "strategy_family",
+            "ticker",
+            "window_id",
+            "date",
+            "candidate_id",
+            "diagnostic_value",
+            "daily_return",
+            "benchmark_return",
+            "active_return",
+            "selected",
+            "tradability_status",
+            "valuation_status",
+            "annualization_convention",
+            "cost_model",
+            "continuity_type",
+            "history_type"
+          ]
+        },
+        "semantic_sha256": "fc9bcaac7810e6924f3a4a423791084e00b4441013dfbb9ed3facdf8dce134ae",
+        "sha256": "7f7edcb694c541600ad8aa24ae7b6516220845839ca6efd4699a8dbb6f3b136b",
+        "size_bytes": 29552650,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "selection_risk/candidate_definitions.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 206,
+        "schema": {
+          "columns": [
+            "schema_version",
+            "experiment_id",
+            "strategy_family",
+            "ticker",
+            "candidate_id",
+            "parameter_serialization",
+            "identity_context",
+            "benchmark",
+            "commission_bps",
+            "slippage_bps",
+            "history_type"
+          ]
+        },
+        "semantic_sha256": "20cc302be99e63e20ea1ff76d50174a8f56f70aa2366de8b0cc6cece6315062d",
+        "sha256": "bdffac3ba33adc2d30f2d91e77d8049aaa3dfeaeb5103b8af995ef17102df27b",
+        "size_bytes": 62799,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "selection_risk/candidate_eligibility.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 1026,
+        "schema": {
+          "columns": [
+            "schema_version",
+            "experiment_id",
+            "strategy_family",
+            "ticker",
+            "window_id",
+            "candidate_id",
+            "parameter_serialization",
+            "train_start",
+            "train_end",
+            "test_start",
+            "test_end",
+            "eligible",
+            "rejection_reason",
+            "selected",
+            "training_rank",
+            "training_objective"
+          ]
+        },
+        "semantic_sha256": "ddf196268f520ba2ba916d4370bc5bd500d17a25318a644c4989c0dd7033a00f",
+        "sha256": "1d89e42c48760a88d0c38251521918d5ef2118e7a4111b8f68db628eeeea07d0",
+        "size_bytes": 164231,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "selection_risk/candidate_oos_returns.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 120246,
+        "schema": {
+          "columns": [
+            "schema_version",
+            "experiment_id",
+            "strategy_family",
+            "ticker",
+            "window_id",
+            "date",
+            "candidate_id",
+            "diagnostic_value",
+            "daily_return",
+            "benchmark_return",
+            "active_return",
+            "selected",
+            "tradability_status",
+            "valuation_status",
+            "annualization_convention",
+            "cost_model",
+            "continuity_type",
+            "history_type"
+          ]
+        },
+        "semantic_sha256": "fc9bcaac7810e6924f3a4a423791084e00b4441013dfbb9ed3facdf8dce134ae",
+        "sha256": "7f7edcb694c541600ad8aa24ae7b6516220845839ca6efd4699a8dbb6f3b136b",
+        "size_bytes": 29552650,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "selection_risk/candidate_parameter_frequency.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 202,
+        "schema": {
+          "columns": [
+            "schema_version",
+            "experiment_id",
+            "ticker",
+            "strategy_family",
+            "candidate_id",
+            "parameter_serialization",
+            "eligible_windows",
+            "selected_windows",
+            "selection_frequency",
+            "positive_oos_window_frequency",
+            "benchmark_beating_window_frequency"
+          ]
+        },
+        "semantic_sha256": "6384d3081c09aaf2d488c6d91759b66e1785bc9c4bcb30abd98a9fca38c1b37e",
+        "sha256": "5631a6430d77816ae81f63bff7de324e98fb33b5fc672111c86b6b8935d964ec",
+        "size_bytes": 22123,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "selection_risk/candidate_rank_stability.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 202,
+        "schema": {
+          "columns": [
+            "schema_version",
+            "experiment_id",
+            "ticker",
+            "strategy_family",
+            "candidate_id",
+            "average_training_rank",
+            "training_rank_stddev",
+            "average_oos_rank",
+            "oos_rank_stddev",
+            "is_oos_spearman_rank_correlation",
+            "average_oos_active_return",
+            "median_oos_active_return",
+            "worst_oos_active_return",
+            "best_oos_active_return"
+          ]
+        },
+        "semantic_sha256": "ae12d20eb8d9409574b897d1179331c97b6c2c4419aa6565e808794805fc4bbd",
+        "sha256": "7de8617b885bcb4aa6459c30a41dbf55f8f84503ad952ede2ca2ab2a6936e14e",
+        "size_bytes": 28873,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "selection_risk/candidate_selection_history.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 101,
+        "schema": {
+          "columns": [
+            "schema_version",
+            "experiment_id",
+            "ticker",
+            "strategy_family",
+            "window_id",
+            "candidate_id",
+            "parameter_serialization",
+            "training_rank",
+            "training_objective",
+            "oos_active_return"
+          ]
+        },
+        "semantic_sha256": "098abfed3dab4920ca3c1ab6c334ff197ac9160e698c178d61b5f4d1debecd41",
+        "sha256": "b9823d88e9e62fd82b24ef433c24c7b5c7f6ab01f8882560d1e991ad837edb73",
+        "size_bytes": 12104,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "selection_risk/candidate_window_metrics.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 1026,
+        "schema": {
+          "columns": [
+            "schema_version",
+            "experiment_id",
+            "strategy_family",
+            "ticker",
+            "window_id",
+            "candidate_id",
+            "parameter_serialization",
+            "train_start",
+            "train_end",
+            "test_start",
+            "test_end",
+            "train_observations",
+            "test_observations",
+            "eligible",
+            "selected",
+            "training_objective",
+            "training_rank",
+            "oos_rank",
+            "oos_return",
+            "benchmark_return",
+            "active_return",
+            "sharpe",
+            "sortino",
+            "volatility",
+            "max_drawdown",
+            "trade_count",
+            "turnover",
+            "transaction_costs",
+            "liquidation_costs",
+            "history_type"
+          ]
+        },
+        "semantic_sha256": "cbadbea586e904aad41319ef97c79b41922f076a7abb81cb95ba1b3d23b40c14",
+        "sha256": "865154470d2961c6454bfb2990ee8981c10bea59e1ca863c4788804f30d81b0c",
+        "size_bytes": 282985,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "selection_risk/cross_family_selection_risk.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 6,
+        "schema": {
+          "columns": [
+            "schema_version",
+            "experiment_id",
+            "ticker",
+            "strategy_family",
+            "configured_candidates",
+            "eligible_candidates",
+            "common_observations",
+            "common_start",
+            "common_end",
+            "observed_best_mean_active_return",
+            "adjusted_p_value",
+            "seed",
+            "simulations",
+            "block_length",
+            "method",
+            "null_hypothesis",
+            "centering"
+          ]
+        },
+        "semantic_sha256": "b1474379f36524384bd4e738e81e6443687bc53d168078d21891e2abeb1e6906",
+        "sha256": "9b6f478d23c97db7384da6953eae08b730501b7400b576449f8e10be5f145be8",
+        "size_bytes": 1301,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "selection_risk/family_selection_frequency.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 21,
+        "schema": {
+          "columns": [
+            "schema_version",
+            "experiment_id",
+            "ticker",
+            "strategy_family",
+            "selected_windows",
+            "total_family_selections",
+            "family_selection_share"
+          ]
+        },
+        "semantic_sha256": "e0ce17a5e8c7d957dcc04009e3ce07a7ac89a35ff5b50e3a2113144fe377378d",
+        "sha256": "eaea12e7343b2390ca59327890c89177f4791f779ad77f836a87aec29664ae65",
+        "size_bytes": 1354,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "selection_risk/family_selection_risk.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 21,
+        "schema": {
+          "columns": [
+            "schema_version",
+            "experiment_id",
+            "ticker",
+            "strategy_family",
+            "configured_candidates",
+            "eligible_candidates",
+            "common_observations",
+            "common_start",
+            "common_end",
+            "observed_best_mean_active_return",
+            "adjusted_p_value",
+            "seed",
+            "simulations",
+            "block_length",
+            "method",
+            "null_hypothesis",
+            "centering"
+          ]
+        },
+        "semantic_sha256": "f039032add9b035e3e91ff3cda29108d10502d4aa2d1c269c136c12b47fe1d82",
+        "sha256": "bfd02c12a42264af9232ce2be27483bcbaaaba6fdb129d45380c76fd39388ea8",
+        "size_bytes": 4670,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "png",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "selection_risk/figures/adjusted_vs_unadjusted_evidence.png",
+        "reproducibility_level": "presentation_only",
+        "required": true,
+        "row_count": null,
+        "schema": null,
+        "semantic_sha256": null,
+        "sha256": null,
+        "size_bytes": 97329,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "png",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "selection_risk/figures/best_candidate_bootstrap_distribution.png",
+        "reproducibility_level": "presentation_only",
+        "required": true,
+        "row_count": null,
+        "schema": null,
+        "semantic_sha256": null,
+        "sha256": null,
+        "size_bytes": 39207,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "png",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "selection_risk/figures/family_corrected_p_values.png",
+        "reproducibility_level": "presentation_only",
+        "required": true,
+        "row_count": null,
+        "schema": null,
+        "semantic_sha256": null,
+        "sha256": null,
+        "size_bytes": 116800,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "png",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "selection_risk/figures/is_oos_degradation.png",
+        "reproducibility_level": "presentation_only",
+        "required": true,
+        "row_count": null,
+        "schema": null,
+        "semantic_sha256": null,
+        "sha256": null,
+        "size_bytes": 88322,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "png",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "selection_risk/figures/is_oos_rank_scatter.png",
+        "reproducibility_level": "presentation_only",
+        "required": true,
+        "row_count": null,
+        "schema": null,
+        "semantic_sha256": null,
+        "sha256": null,
+        "size_bytes": 81877,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "png",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "selection_risk/figures/neighbourhood_sensitivity.png",
+        "reproducibility_level": "presentation_only",
+        "required": true,
+        "row_count": null,
+        "schema": null,
+        "semantic_sha256": null,
+        "sha256": null,
+        "size_bytes": 34795,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "png",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "selection_risk/figures/parameter_selection_frequency.png",
+        "reproducibility_level": "presentation_only",
+        "required": true,
+        "row_count": null,
+        "schema": null,
+        "semantic_sha256": null,
+        "sha256": null,
+        "size_bytes": 170994,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "png",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "selection_risk/figures/selected_candidate_history.png",
+        "reproducibility_level": "presentation_only",
+        "required": true,
+        "row_count": null,
+        "schema": null,
+        "semantic_sha256": null,
+        "sha256": null,
+        "size_bytes": 85737,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "selection_risk/is_oos_degradation.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 202,
+        "schema": {
+          "columns": [
+            "schema_version",
+            "experiment_id",
+            "ticker",
+            "strategy_family",
+            "candidate_id",
+            "mean_is_return",
+            "mean_oos_active_return",
+            "is_to_oos_return_degradation",
+            "mean_is_sharpe",
+            "mean_oos_sharpe",
+            "is_to_oos_sharpe_degradation"
+          ]
+        },
+        "semantic_sha256": "98a084ca57a7df5691696c80b2fa7b8783dc210149d9afefe0d289dcebfac46d",
+        "sha256": "0f3decf9b20055bcbc8e0096c6182f16c749d9f12a7f991829ae35e7de92b27a",
+        "size_bytes": 25581,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "selection_risk/multiple_testing_bootstrap_distribution.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 25001,
+        "schema": {
+          "columns": [
+            "schema_version",
+            "experiment_id",
+            "ticker",
+            "strategy_family",
+            "simulation",
+            "max_centered_mean_active_return",
+            "seed",
+            "block_length",
+            "bootstrap_method"
+          ]
+        },
+        "semantic_sha256": "d5ad1928ba7102d7db7b80d92dc1f378c723b9966a1b04f7a0452086d10c5a41",
+        "sha256": "a553314c1c3676c2238ffea26edfd4bd6f6a32a220a2b429adb50fd29c6061b4",
+        "size_bytes": 2659091,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "selection_risk/multiple_testing_summary.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 21,
+        "schema": {
+          "columns": [
+            "schema_version",
+            "experiment_id",
+            "ticker",
+            "strategy_family",
+            "configured_candidates",
+            "eligible_candidates",
+            "common_observations",
+            "common_start",
+            "common_end",
+            "observed_best_mean_active_return",
+            "adjusted_p_value",
+            "seed",
+            "simulations",
+            "block_length",
+            "method",
+            "null_hypothesis",
+            "centering"
+          ]
+        },
+        "semantic_sha256": "f039032add9b035e3e91ff3cda29108d10502d4aa2d1c269c136c12b47fe1d82",
+        "sha256": "bfd02c12a42264af9232ce2be27483bcbaaaba6fdb129d45380c76fd39388ea8",
+        "size_bytes": 4670,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "selection_risk/neighbourhood_sensitivity.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 169,
+        "schema": {
+          "columns": [
+            "schema_version",
+            "experiment_id",
+            "ticker",
+            "strategy_family",
+            "window_id",
+            "selected_candidate_id",
+            "neighbour_candidate_id",
+            "neighbour_definition",
+            "oos_active_return_difference",
+            "oos_sharpe_difference",
+            "oos_drawdown_difference",
+            "training_rank_difference",
+            "isolated_optimum"
+          ]
+        },
+        "semantic_sha256": "71caaf7fb1401ad9f020c62ae433a05fbb68c4bb7297ebe3c7bb0afea4f28b47",
+        "sha256": "7444155cfe9cd4e21f3b880f133c8ca0112397a2598ae45d4549c4a90c4c80cf",
+        "size_bytes": 26255,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "json",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "selection_risk/parallel_execution_metadata.json",
+        "reproducibility_level": "environment_only",
+        "required": true,
+        "row_count": null,
+        "schema": {
+          "root_type": "dict"
+        },
+        "semantic_sha256": null,
+        "sha256": null,
+        "size_bytes": 168,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "selection_risk/parameter_transition_matrix.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 55,
+        "schema": {
+          "columns": [
+            "schema_version",
+            "experiment_id",
+            "ticker",
+            "strategy_family",
+            "from_candidate_id",
+            "to_candidate_id",
+            "transition_count"
+          ]
+        },
+        "semantic_sha256": "78734ea2b16c57120149c427cd3a4680b1009944f7edfde1266330eb9c4d4201",
+        "sha256": "29d73bca0800c1c6ec1b86b119497805bf6cd898a8e9a5d3d720d4e1818e841c",
+        "size_bytes": 5055,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "selection_risk/parameter_value_frequency.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 181,
+        "schema": {
+          "columns": [
+            "schema_version",
+            "experiment_id",
+            "ticker",
+            "strategy_family",
+            "parameter_name",
+            "parameter_value",
+            "eligible_windows",
+            "selected_windows",
+            "selection_frequency"
+          ]
+        },
+        "semantic_sha256": "d0c1ee72077d48f2dbfeff6168dd6a2793e9014d543cc5bf36be9dfabe696030",
+        "sha256": "40faa7f63ada6a6a7a0e086003e6b5a661419e1ab768220dd949d45cdea7bd10",
+        "size_bytes": 12944,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "selection_risk/performance_counters.csv",
+        "reproducibility_level": "environment_only",
+        "required": true,
+        "row_count": 6,
+        "schema": {
+          "columns": [
+            "stage",
+            "milliseconds"
+          ]
+        },
+        "semantic_sha256": null,
+        "sha256": null,
+        "size_bytes": 180,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "selection_risk/regime_selection_risk.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 121,
+        "schema": {
+          "columns": [
+            "schema_version",
+            "experiment_id",
+            "ticker",
+            "strategy_family",
+            "regime",
+            "eligible_candidates",
+            "common_observations",
+            "observed_best_mean_active_return",
+            "adjusted_p_value",
+            "seed",
+            "simulations",
+            "block_length",
+            "method"
+          ]
+        },
+        "semantic_sha256": "31bfe5da2d3a2de09d14a3a52ac057e4b390801105ad9efc52806ba689767504",
+        "sha256": "e8250217e5a203680037a581b426cde86969d903cf34c7fdd6a3717e8ddd8dcd",
+        "size_bytes": 17155,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "selection_risk/selected_deployable_oos_returns.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 13549,
+        "schema": {
+          "columns": [
+            "schema_version",
+            "experiment_id",
+            "ticker",
+            "strategy_family",
+            "window_id",
+            "date",
+            "candidate_id",
+            "parameter_serialization",
+            "portfolio_value",
+            "daily_return",
+            "cumulative_oos_return",
+            "continuity_type",
+            "history_type"
+          ]
+        },
+        "semantic_sha256": "bf72c49e9bba3a4b2c653686f7e0f4cbfd74123df6b936268b3972dc9d24e888",
+        "sha256": "4369b5a7411cba225455ee3146e63daa0224581ebfa75799a55e959e8f733342",
+        "size_bytes": 2441116,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "json",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "selection_risk/selection_risk_manifest.json",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": null,
+        "schema": {
+          "root_type": "dict"
+        },
+        "semantic_sha256": "92f7d45de9321330ec2a85d5298efc10d0b60a55b0b579ca95fd82c52eafbeda",
+        "sha256": "1a25fe4ac781aaca69e4a0ba5077b445cbd65799fbc54e0c37d06cc5aad294b0",
+        "size_bytes": 893,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "md",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "selection_risk/selection_risk_report.md",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": null,
+        "schema": null,
+        "semantic_sha256": "b6cb86be5aa4f17a2ffd76ffa0dfcc4acd63da5b097802673c43a1ebd9595691",
+        "sha256": "b6cb86be5aa4f17a2ffd76ffa0dfcc4acd63da5b097802673c43a1ebd9595691",
+        "size_bytes": 2717,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "selection_risk/selection_risk_warnings.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 2,
+        "schema": {
+          "columns": [
+            "schema_version",
+            "experiment_id",
+            "severity",
+            "warning"
+          ]
+        },
+        "semantic_sha256": "b6c01bb1ca79888818086859e85bc6d2995fd791f1c8ee83daab62214e0a8d50",
+        "sha256": "c08bfb368c31fbb1e6fc3711c572357366c4401665611e64dfc0bc0cf4e30f99",
+        "size_bytes": 168,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      }
+    ],
+    "forbid_extra": true,
+    "root_policy": "caller_selected_isolated_directory"
+  },
+  "package_type": "selection_risk",
+  "randomness": {
+    "seed": 55,
+    "seed_derivation": "existing deterministic experiment seed; independent of worker scheduling",
+    "simulation_count": 1000
+  },
+  "reports": [
+    {
+      "name": "selection_figures",
+      "required": true
+    },
+    {
+      "name": "selection_report",
+      "required": true
+    }
+  ],
+  "repository": "https://github.com/MrithunjoyB/cpp-event-driven-backtester",
+  "reproducibility_level": "canonical_semantic",
+  "runtime_environment": {
+    "dependency_lock": "requirements-validation.txt",
+    "locale": "C",
+    "platform_policy": "semantic_cross_platform",
+    "python": "3.9.6",
+    "timezone": "UTC"
+  },
+  "source_commit": "ba31b17bfa6b3cafdd0228d0ea7ae1c7481b70cf",
+  "source_tree_policy": "exact_or_explicit_compatible_descendant",
+  "validators": [
+    {
+      "name": "validate_selection_risk",
+      "required": true
+    },
+    {
+      "name": "selection_reference",
+      "required": true
+    }
+  ]
+}

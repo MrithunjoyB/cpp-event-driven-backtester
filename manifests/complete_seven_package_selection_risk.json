@@ -1,0 +1,40 @@
+{
+  "children": [
+    {
+      "id": "selection_risk_ma",
+      "manifest": "manifests/selection_risk_ma.json"
+    },
+    {
+      "id": "selection_risk_rsi",
+      "manifest": "manifests/selection_risk_rsi.json"
+    },
+    {
+      "id": "selection_risk_macd",
+      "manifest": "manifests/selection_risk_macd.json"
+    },
+    {
+      "id": "selection_risk_volatility_breakout",
+      "manifest": "manifests/selection_risk_volatility_breakout.json"
+    },
+    {
+      "id": "selection_risk_combined",
+      "manifest": "manifests/selection_risk_combined.json"
+    },
+    {
+      "id": "selection_risk_combined_zero_cost",
+      "manifest": "manifests/selection_risk_combined_zero_cost.json"
+    },
+    {
+      "id": "selection_risk_combined_high_cost",
+      "manifest": "manifests/selection_risk_combined_high_cost.json"
+    }
+  ],
+  "default_execution_mode": "serial",
+  "default_threads": 1,
+  "description": "Complete seven-package selection-risk reconstruction plan",
+  "manifest_schema_version": 1,
+  "package_type": "suite",
+  "source_commit": "ba31b17bfa6b3cafdd0228d0ea7ae1c7481b70cf",
+  "suite_id": "complete_seven_package_selection_risk",
+  "suite_id_hash": "sha256:614fcb4864bd7a5c8729b317f8603948bfe0deb7a91822cbad42be750f2a33fd"
+}
