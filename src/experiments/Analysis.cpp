@@ -5,6 +5,8 @@
 #include "quant/io/ResultExporter.h"
 #include "quant/config/ConfigLoader.h"
 #include "quant/experiments/BootstrapAnalyzer.h"
+#include "quant/experiments/SelectionRisk.h"
+#include "quant/domain/Errors.h"
 
 #include <algorithm>
 #include <chrono>
@@ -607,6 +609,11 @@ void Analysis::run_research_experiment(const ExperimentConfig& experiment) {
     quant::io::JsonManifestExporter::write_resolved_config(
         experiment.output.results_dir + "/resolved_config.json", experiment);
 
+    if (experiment.strategy == "All_Strategies" || experiment.name.rfind("selection_risk_", 0) == 0) {
+        quant::experiments::SelectionRiskAnalyzer::run_experiment(experiment);
+        return;
+    }
+
     BacktestConfig base;
     base.starting_capital = experiment.execution.starting_capital;
     base.transaction_cost_rate = experiment.execution.commission_bps / 10000.0;
@@ -758,6 +765,7 @@ void Analysis::run_research_experiment(const ExperimentConfig& experiment) {
 
     run_transaction_cost_sensitivity(base, experiment.tickers);
     run_regime_evaluation(base, experiment.tickers);
+    quant::experiments::SelectionRiskAnalyzer::run_experiment(experiment);
 }
 
 void Analysis::run_bootstrap_research(const ExperimentConfig& experiment) {
@@ -767,6 +775,9 @@ void Analysis::run_bootstrap_research(const ExperimentConfig& experiment) {
     base.slippage_rate = experiment.execution.slippage_bps / 10000.0;
     base.ticker = experiment.tickers.empty() ? "AAPL" : experiment.tickers.front();
     auto specs = grid_strategy_specs(experiment.strategy);
+    if (specs.empty()) {
+        throw quant::ConfigurationError("Bootstrap research requires a non-empty single-family strategy grid");
+    }
     BacktestResult result = Backtester(base).run_detailed(*specs.front().instance);
     const auto bootstrap = quant::experiments::BootstrapAnalyzer::run(
         result, experiment.bootstrap, experiment.execution.starting_capital);

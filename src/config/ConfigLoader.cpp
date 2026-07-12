@@ -285,7 +285,8 @@ void ConfigLoader::validate(const ExperimentConfig& config) {
     if (config.name.empty()) throw ConfigurationError("Configuration field 'experiment_name' cannot be empty");
     if (config.tickers.empty()) throw ConfigurationError("Configuration field 'ticker_universe' cannot be empty");
     if (config.strategy != "MA_Cross" && config.strategy != "RSI_Mean_Reversion" &&
-        config.strategy != "MACD_Momentum" && config.strategy != "Volatility_Breakout") {
+        config.strategy != "MACD_Momentum" && config.strategy != "Volatility_Breakout" &&
+        config.strategy != "All_Strategies") {
         throw ConfigurationError("Unknown strategy '" + config.strategy + "'");
     }
     require_positive(config.execution.starting_capital, "starting_capital");

@@ -38,6 +38,7 @@ struct StatisticalResult {
 struct MultipleTestingResult {
     std::string method{"centered_moving_block_reality_check"}; int candidate_count{0}; int eligible_count{0};
     double observed_best_mean{0.0}; double p_value{1.0}; unsigned int seed{0}; int simulations{0}; int block_length{0};
+    std::vector<double> bootstrap_max_statistics;
 };
 
 class StatisticalAnalyzer {

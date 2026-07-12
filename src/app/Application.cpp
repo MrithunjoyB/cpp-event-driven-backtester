@@ -174,7 +174,9 @@ int Application::run_config(const std::string& config_path, bool dry_run) {
         return 0;
     }
     Analysis::run_research_experiment(experiment);
-    Analysis::run_bootstrap_research(experiment);
+    if (experiment.name.rfind("selection_risk_", 0) != 0) {
+        Analysis::run_bootstrap_research(experiment);
+    }
     write_run_metadata(experiment.output.results_dir, "research_config", experiment.benchmark.ticker);
     std::cout << "Research experiment written to " << experiment.output.results_dir << '\n';
     return 0;

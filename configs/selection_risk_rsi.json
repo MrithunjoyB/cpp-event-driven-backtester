@@ -1,0 +1,21 @@
+{
+  "experiment_name": "selection_risk_rsi",
+  "ticker_universe": ["AAPL", "MSFT", "SPY", "TSLA", "BTC-USD"],
+  "strategy": "RSI_Mean_Reversion",
+  "starting_capital": 100000,
+  "commission_bps": 10,
+  "slippage_bps": 5,
+  "window_mode": "calendar_duration",
+  "train_years": 3,
+  "test_months": 6,
+  "step_months": 6,
+  "oos_continuity_policy": "continuous_capital",
+  "boundary_position_policy": "liquidate_at_test_end_close",
+  "benchmark": "SPY",
+  "parameter_selection_objective": "sharpe_min_trades",
+  "minimum_trade_requirement": 3,
+  "regime_classification_method": "trend_200_sma_60_return_vol_20_expanding_median",
+  "random_seed": 52,
+  "output_directory": "results/research_v3/selection_risk/rsi",
+  "result_schema_version": 2
+}
