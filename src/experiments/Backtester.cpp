@@ -7,11 +7,10 @@
 
 namespace {
 bool in_window(const Bar& bar, const BacktestConfig& config) {
-    const quant::Date bar_date = quant::Date::parse(bar.date);
-    if (!config.start_date.empty() && bar_date < quant::Date::parse(config.start_date)) {
+    if (!config.start_date.empty() && bar.date < config.start_date) {
         return false;
     }
-    if (!config.end_date.empty() && bar_date > quant::Date::parse(config.end_date)) {
+    if (!config.end_date.empty() && bar.date > config.end_date) {
         return false;
     }
     return true;
@@ -25,16 +24,23 @@ PerformanceSummary Backtester::run(const Strategy& strategy_template) {
 }
 
 BacktestResult Backtester::run_detailed(const Strategy& strategy_template) {
-    MarketData market_data;
-    std::string filepath = config_.data_dir + "/" + config_.ticker + ".csv";
-    if (!market_data.load_csv(config_.ticker, filepath)) {
-        throw std::runtime_error("Could not load data for " + config_.ticker + " from " + filepath);
+    if (!config_.start_date.empty()) (void)quant::Date::parse(config_.start_date);
+    if (!config_.end_date.empty()) (void)quant::Date::parse(config_.end_date);
+    std::shared_ptr<const MarketData> shared_data = config_.immutable_market_data;
+    MarketData owned_data;
+    if (!shared_data) {
+        std::string filepath = config_.data_dir + "/" + config_.ticker + ".csv";
+        if (!owned_data.load_csv(config_.ticker, filepath)) {
+            throw std::runtime_error("Could not load data for " + config_.ticker + " from " + filepath);
+        }
+        shared_data = std::make_shared<const MarketData>(std::move(owned_data));
     }
+    if (!shared_data->has_ticker(config_.ticker)) throw std::runtime_error("Immutable market data does not contain " + config_.ticker);
 
     auto strategy = strategy_template.clone();
     Portfolio portfolio(config_.starting_capital);
     ExecutionHandler execution(config_.transaction_cost_rate, config_.slippage_rate);
-    const auto& history = market_data.bars(config_.ticker);
+    const auto& history = shared_data->bars(config_.ticker);
 
     std::optional<OrderEvent> pending_order;
     std::size_t first_index = std::numeric_limits<std::size_t>::max();
@@ -52,7 +58,7 @@ BacktestResult Backtester::run_detailed(const Strategy& strategy_template) {
         if (!in_window(history[i], config_)) {
             continue;
         }
-        MarketEvent market_event = market_data.market_event(config_.ticker, i);
+        MarketEvent market_event = shared_data->market_event(config_.ticker, i);
 
         if (pending_order && pending_order->quantity > 0) {
             pending_order->date = market_event.date;
@@ -76,9 +82,10 @@ BacktestResult Backtester::run_detailed(const Strategy& strategy_template) {
         portfolio.mark_to_market(market_event.date, market_event.close);
     }
 
-    BenchmarkResult bench = first_index == std::numeric_limits<std::size_t>::max()
-        ? BenchmarkResult{}
-        : benchmark_return(history[first_index].date, history[last_index].date);
+    BenchmarkResult bench = config_.benchmark_override ? *config_.benchmark_override :
+        (first_index == std::numeric_limits<std::size_t>::max()
+            ? BenchmarkResult{}
+            : benchmark_return(history[first_index].date, history[last_index].date));
 
     PerformanceSummary summary = Metrics::calculate(
         config_.ticker,
@@ -101,13 +108,17 @@ BenchmarkResult Backtester::benchmark_return(const std::string& start_date, cons
     if (ticker.empty()) {
         throw std::runtime_error("Benchmark must be 'same_asset' or a ticker symbol");
     }
-    MarketData benchmark_data;
-    const std::string path = config_.data_dir + "/" + ticker + ".csv";
-    if (!benchmark_data.load_csv(ticker, path)) {
-        throw std::runtime_error("Could not load configured benchmark " + ticker + " from " + path);
+    std::shared_ptr<const MarketData> shared_data = config_.immutable_market_data;
+    MarketData owned_data;
+    if (!shared_data || !shared_data->has_ticker(ticker)) {
+        const std::string path = config_.data_dir + "/" + ticker + ".csv";
+        if (!owned_data.load_csv(ticker, path)) {
+            throw std::runtime_error("Could not load configured benchmark " + ticker + " from " + path);
+        }
+        shared_data = std::make_shared<const MarketData>(std::move(owned_data));
     }
     std::vector<Bar> bars;
-    for (const auto& bar : benchmark_data.bars(ticker)) {
+    for (const auto& bar : shared_data->bars(ticker)) {
         if (bar.date >= start_date && bar.date <= end_date) {
             bars.push_back(bar);
         }

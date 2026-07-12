@@ -4,15 +4,18 @@
 #include "Backtester.h"
 #include "ResearchMethodology.h"
 #include "quant/domain/Errors.h"
+#include "quant/performance/DeterministicExecutor.h"
 
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <chrono>
 #include <cstdio>
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
+#include <iterator>
 #include <limits>
 #include <map>
 #include <numeric>
@@ -22,6 +25,8 @@
 
 namespace quant::experiments {
 namespace {
+
+using Clock = std::chrono::steady_clock;
 
 constexpr int kSchemaVersion = 3;
 constexpr int kSimulations = 1000;
@@ -208,17 +213,27 @@ analytics::MultipleTestingResult SelectionRiskAnalyzer::reality_check(
 }
 
 void SelectionRiskAnalyzer::run_experiment(const config::ExperimentConfig& experiment) {
+    const auto performance_start = Clock::now();
     const std::string directory = experiment.output.results_dir + "/selection_risk";
     std::filesystem::create_directories(directory);
     std::vector<CandidateDefinition> definitions;
     std::vector<CandidateWindowResult> windows;
     std::vector<CandidateObservation> observations;
 
+    auto mutable_market_data = std::make_shared<MarketData>();
+    std::set<std::string> required_tickers(experiment.tickers.begin(), experiment.tickers.end());
+    if (experiment.benchmark.ticker != "same_asset") required_tickers.insert(experiment.benchmark.ticker);
+    for (const auto& ticker : required_tickers) {
+        if (!mutable_market_data->load_csv(ticker, experiment.portfolio.data_dir + "/" + ticker + ".csv"))
+            throw DataError("Unable to load immutable market data for " + ticker);
+    }
+    std::shared_ptr<const MarketData> immutable_market_data = mutable_market_data;
+    const auto data_load_complete = Clock::now();
+    const quant::performance::DeterministicExecutor executor(
+        experiment.execution_control.mode, experiment.execution_control.threads);
+
     for (const auto& ticker : experiment.tickers) {
-        MarketData market;
-        if (!market.load_csv(ticker, experiment.portfolio.data_dir + "/" + ticker + ".csv"))
-            throw DataError("Unable to load candidate market data for " + ticker);
-        const auto& ticker_bars = market.bars(ticker);
+        const auto& ticker_bars = immutable_market_data->bars(ticker);
         auto specs = specs_for(experiment.strategy);
         std::vector<CandidateDefinition> ticker_definitions;
         for (const auto& spec : specs) {
@@ -244,8 +259,26 @@ void SelectionRiskAnalyzer::run_experiment(const config::ExperimentConfig& exper
         int window_id = 0;
         for (const auto& window : calendar_windows) {
             struct Ranked { std::size_t index; BacktestResult result; double score; };
-            std::vector<Ranked> ranked;
-            for (std::size_t i = 0; i < specs.size(); ++i) {
+            auto make_benchmark = [&](const std::string& start, const std::string& end, bool liquidate) {
+                BacktestConfig config;
+                config.ticker = experiment.benchmark.ticker == "same_asset" ? ticker : experiment.benchmark.ticker;
+                config.data_dir = experiment.portfolio.data_dir; config.start_date = start; config.end_date = end;
+                config.starting_capital = experiment.execution.starting_capital;
+                config.transaction_cost_rate = experiment.execution.commission_bps / 10000.0;
+                config.slippage_rate = experiment.execution.slippage_bps / 10000.0;
+                config.benchmark_ticker = config.ticker; config.liquidate_at_end = liquidate;
+                config.immutable_market_data = immutable_market_data;
+                BuyAndHoldStrategy strategy;
+                return Backtester(config).run_detailed(strategy);
+            };
+            const auto training_benchmark_path = make_benchmark(window.train_start, window.train_end, false);
+            auto training_benchmark = std::make_shared<const BenchmarkResult>(BenchmarkResult{
+                training_benchmark_path.summary.benchmark_gross_return,
+                training_benchmark_path.summary.total_return,
+                training_benchmark_path.summary.ticker,
+                training_benchmark_path.summary.benchmark_execution_policy,
+                training_benchmark_path.summary.benchmark_cost_policy});
+            auto ranked = executor.map(specs.size(), [&](std::size_t i) {
                 BacktestConfig config;
                 config.ticker = ticker;
                 config.data_dir = experiment.portfolio.data_dir;
@@ -255,15 +288,25 @@ void SelectionRiskAnalyzer::run_experiment(const config::ExperimentConfig& exper
                 config.transaction_cost_rate = experiment.execution.commission_bps / 10000.0;
                 config.slippage_rate = experiment.execution.slippage_bps / 10000.0;
                 config.benchmark_ticker = experiment.benchmark.ticker;
+                config.immutable_market_data = immutable_market_data;
+                config.benchmark_override = training_benchmark;
                 auto result = Backtester(config).run_detailed(*specs[i].instance);
-                ranked.push_back({i, std::move(result), 0.0});
-                ranked.back().score = objective(ranked.back().result.summary, experiment.parameter_selection);
-            }
+                const double score = objective(result.summary, experiment.parameter_selection);
+                return Ranked{i, std::move(result), score};
+            });
             std::stable_sort(ranked.begin(), ranked.end(), [](const Ranked& a, const Ranked& b) {
                 if (a.score != b.score) return a.score > b.score;
                 return a.index < b.index;
             });
-            for (std::size_t rank = 0; rank < ranked.size(); ++rank) {
+            const auto benchmark = make_benchmark(window.test_start, window.test_end, true);
+            auto test_benchmark = std::make_shared<const BenchmarkResult>(BenchmarkResult{
+                benchmark.summary.benchmark_gross_return, benchmark.summary.total_return, benchmark.summary.ticker,
+                benchmark.summary.benchmark_execution_policy, benchmark.summary.benchmark_cost_policy});
+            const auto benchmark_returns = returns_from_equity(benchmark.equity_curve);
+            std::map<std::string, double> benchmark_by_date;
+            for (const auto& value : benchmark_returns) benchmark_by_date.emplace(value.first, value.second);
+            struct CandidateEvaluation { CandidateWindowResult row; std::vector<CandidateObservation> observations; };
+            auto evaluations = executor.map(ranked.size(), [&](std::size_t rank) {
                 const auto& train = ranked[rank];
                 const bool eligible = std::isfinite(train.score);
                 const std::string& family = ticker_definitions[train.index].family;
@@ -288,6 +331,7 @@ void SelectionRiskAnalyzer::run_experiment(const config::ExperimentConfig& exper
                 row.training_sharpe = train.result.summary.sharpe;
                 row.training_rank = family_rank;
                 row.selected = selected;
+                std::vector<CandidateObservation> evaluation_observations;
                 if (eligible) {
                     BacktestConfig test;
                     test.ticker = ticker; test.data_dir = experiment.portfolio.data_dir;
@@ -296,23 +340,17 @@ void SelectionRiskAnalyzer::run_experiment(const config::ExperimentConfig& exper
                     test.transaction_cost_rate = experiment.execution.commission_bps / 10000.0;
                     test.slippage_rate = experiment.execution.slippage_bps / 10000.0;
                     test.benchmark_ticker = experiment.benchmark.ticker; test.liquidate_at_end = true;
+                    test.immutable_market_data = immutable_market_data;
+                    test.benchmark_override = test_benchmark;
                     auto strategy = specs[train.index].instance->clone();
                     const auto result = Backtester(test).run_detailed(*strategy);
-                    BacktestConfig benchmark_config = test;
-                    benchmark_config.ticker = experiment.benchmark.ticker == "same_asset" ? ticker : experiment.benchmark.ticker;
-                    benchmark_config.benchmark_ticker = benchmark_config.ticker;
-                    BuyAndHoldStrategy benchmark_strategy;
-                    const auto benchmark = Backtester(benchmark_config).run_detailed(benchmark_strategy);
                     const auto candidate_returns = returns_from_equity(result.equity_curve);
-                    const auto benchmark_returns = returns_from_equity(benchmark.equity_curve);
-                    std::map<std::string, double> benchmark_by_date;
-                    for (const auto& value : benchmark_returns) benchmark_by_date.emplace(value.first, value.second);
                     double diagnostic_value = 1.0;
                     for (const auto& value : candidate_returns) {
                         const auto match = benchmark_by_date.find(value.first);
                         if (match == benchmark_by_date.end()) continue;
                         diagnostic_value *= 1.0 + value.second;
-                        observations.push_back({window_id, value.first, row.candidate.candidate_id,
+                        evaluation_observations.push_back({window_id, value.first, row.candidate.candidate_id,
                             row.candidate.family, ticker, diagnostic_value, value.second, match->second,
                             value.second - match->second, selected});
                     }
@@ -327,11 +365,18 @@ void SelectionRiskAnalyzer::run_experiment(const config::ExperimentConfig& exper
                         if (trade.date == window.test_end && trade.action == "SELL")
                             row.liquidation_costs += trade.cost + trade.slippage;
                 }
-                windows.push_back(std::move(row));
+                return CandidateEvaluation{std::move(row), std::move(evaluation_observations)};
+            });
+            for (auto& evaluation : evaluations) {
+                windows.push_back(std::move(evaluation.row));
+                observations.insert(observations.end(),
+                    std::make_move_iterator(evaluation.observations.begin()),
+                    std::make_move_iterator(evaluation.observations.end()));
             }
             ++window_id;
         }
     }
+    const auto candidate_evaluation_complete = Clock::now();
 
     analytics::StatisticalConfig regime_statistical;
     regime_statistical.method = analytics::BootstrapMethod::MovingBlock;
@@ -342,10 +387,8 @@ void SelectionRiskAnalyzer::run_experiment(const config::ExperimentConfig& exper
     auto regime_out = std::ofstream(directory + "/regime_selection_risk.csv");
     regime_out << "schema_version,experiment_id,ticker,strategy_family,regime,eligible_candidates,common_observations,observed_best_mean_active_return,adjusted_p_value,seed,simulations,block_length,method\n";
     for (const auto& ticker : experiment.tickers) {
-        MarketData market;
-        if (!market.load_csv(ticker, experiment.portfolio.data_dir + "/" + ticker + ".csv")) continue;
         std::map<std::string, std::string> regime_by_date;
-        for (const auto& point : classify_causal_regimes(market.bars(ticker))) if (point.available) regime_by_date[point.date] = point.regime;
+        for (const auto& point : classify_causal_regimes(immutable_market_data->bars(ticker))) if (point.available) regime_by_date[point.date] = point.regime;
         std::set<std::string> families;
         for (const auto& definition : definitions) if (definition.ticker == ticker) families.insert(definition.family);
         for (const auto& family : families) {
@@ -369,6 +412,7 @@ void SelectionRiskAnalyzer::run_experiment(const config::ExperimentConfig& exper
             }
         }
     }
+    const auto regime_analysis_complete = Clock::now();
 
     for (auto& row : windows) {
         if (!row.eligible) continue;
@@ -402,6 +446,7 @@ void SelectionRiskAnalyzer::run_experiment(const config::ExperimentConfig& exper
                 test.starting_capital = capital; test.transaction_cost_rate = experiment.execution.commission_bps / 10000.0;
                 test.slippage_rate = experiment.execution.slippage_bps / 10000.0;
                 test.benchmark_ticker = experiment.benchmark.ticker; test.liquidate_at_end = true;
+                test.immutable_market_data = immutable_market_data;
                 const auto result = Backtester(test).run_detailed(*spec->instance);
                 for (std::size_t i = 1; i < result.equity_curve.size(); ++i) {
                     const auto& previous = result.equity_curve[i - 1]; const auto& current = result.equity_curve[i];
@@ -573,6 +618,22 @@ void SelectionRiskAnalyzer::run_experiment(const config::ExperimentConfig& exper
     auto warnings = std::ofstream(directory + "/selection_risk_warnings.csv");
     warnings << "schema_version,experiment_id,severity,warning\n" << kSchemaVersion << ',' << experiment.name << ",warning,regime_subsets_with_fewer_than_30_common_observations_are_reported_as_insufficient\n";
     write_manifest(experiment, directory, definitions.size(), observations.size(), manifest_block);
+    std::ofstream execution_metadata(directory + "/parallel_execution_metadata.json");
+    execution_metadata << "{\n  \"execution_mode\": \"" << executor.mode() << "\",\n"
+                       << "  \"effective_threads\": " << executor.threads() << ",\n"
+                       << "  \"parallel_scope\": \"independent_candidate_training_and_oos_simulation\",\n"
+                       << "  \"deterministic_collection\": true\n}\n";
+    const auto performance_end = Clock::now();
+    const auto milliseconds = [](Clock::time_point begin, Clock::time_point end) {
+        return std::chrono::duration<double, std::milli>(end - begin).count();
+    };
+    std::ofstream counters(directory + "/performance_counters.csv");
+    counters << "stage,milliseconds\n"
+             << "data_loading," << milliseconds(performance_start, data_load_complete) << '\n'
+             << "candidate_and_benchmark_evaluation," << milliseconds(data_load_complete, candidate_evaluation_complete) << '\n'
+             << "regime_analysis," << milliseconds(candidate_evaluation_complete, regime_analysis_complete) << '\n'
+             << "alignment_bootstrap_export_and_selected_continuity," << milliseconds(regime_analysis_complete, performance_end) << '\n'
+             << "total," << milliseconds(performance_start, performance_end) << '\n';
 }
 
 }  // namespace quant::experiments

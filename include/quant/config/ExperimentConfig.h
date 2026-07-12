@@ -74,6 +74,11 @@ struct ParameterSelectionConfig {
     int minimum_trades{3};
 };
 
+struct ExecutionControlConfig {
+    std::string mode{"serial"};
+    int threads{1};
+};
+
 struct ExperimentConfig {
     std::string name{"default_research"};
     std::vector<std::string> tickers{"AAPL", "MSFT", "SPY", "TSLA", "BTC-USD"};
@@ -88,6 +93,7 @@ struct ExperimentConfig {
     AdjustmentConfig adjustment;
     OutputConfig output;
     ParameterSelectionConfig parameter_selection;
+    ExecutionControlConfig execution_control;
     int result_schema_version{2};
 };
 

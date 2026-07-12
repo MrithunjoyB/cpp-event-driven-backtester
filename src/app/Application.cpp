@@ -89,8 +89,11 @@ void write_run_metadata(const std::string& directory, const std::string& mode, c
 
 }
 
-int Application::run_config(const std::string& config_path, bool dry_run) {
-    const auto experiment = quant::config::ConfigLoader::load_file(config_path);
+int Application::run_config(const std::string& config_path, bool dry_run, const std::string& execution_mode, int threads) {
+    auto experiment = quant::config::ConfigLoader::load_file(config_path);
+    if (!execution_mode.empty()) experiment.execution_control.mode = execution_mode;
+    if (threads != 0) experiment.execution_control.threads = threads;
+    quant::config::ConfigLoader::validate(experiment);
     if (dry_run) {
         std::cout << quant::config::ConfigLoader::to_json(experiment);
         return 0;

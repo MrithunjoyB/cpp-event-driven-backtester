@@ -18,7 +18,8 @@ struct LegacyRunRequest {
 
 class Application {
 public:
-    static int run_config(const std::string& config_path, bool dry_run);
+    static int run_config(const std::string& config_path, bool dry_run,
+                          const std::string& execution_mode = {}, int threads = 0);
     static int run_legacy(const LegacyRunRequest& request);
 };
 

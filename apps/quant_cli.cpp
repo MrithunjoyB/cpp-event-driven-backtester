@@ -4,6 +4,7 @@
 
 #include <cstdlib>
 #include <iostream>
+#include <limits>
 #include <map>
 #include <set>
 #include <string>
@@ -13,7 +14,7 @@ void print_help() {
     std::cout
         << "quant_cli " << QUANT_PROJECT_VERSION << "\n\n"
         << "Commands:\n"
-        << "  run --config <file> [--dry-run]\n"
+        << "  run --config <file> [--dry-run] [--execution-mode serial|parallel] [--threads N]\n"
         << "  validate-config --config <file>\n"
         << "  print-resolved-config --config <file>\n"
         << "  list-strategies\n"
@@ -59,6 +60,23 @@ double number_option(const std::map<std::string, std::string>& options, const st
     if (consumed != it->second.size()) throw quant::CliError("Invalid numeric value for '" + key + "'");
     return value;
 }
+
+int integer_option(const std::map<std::string, std::string>& options, const std::string& key, int fallback) {
+    auto it = options.find(key);
+    if (it == options.end()) return fallback;
+    std::size_t consumed = 0;
+    long long value = 0;
+    try {
+        value = std::stoll(it->second, &consumed);
+    } catch (const std::exception&) {
+        throw quant::CliError("Option '" + key + "' must be an integer");
+    }
+    if (consumed != it->second.size() || value < std::numeric_limits<int>::min() ||
+        value > std::numeric_limits<int>::max()) {
+        throw quant::CliError("Option '" + key + "' must be an integer");
+    }
+    return static_cast<int>(value);
+}
 }
 
 int main(int argc, char** argv) {
@@ -81,8 +99,10 @@ int main(int argc, char** argv) {
             return 0;
         }
         if (command == "run") {
-            const auto options = parse_options(argc, argv, 2, {"--config"}, {"--dry-run"});
-            return quant::app::Application::run_config(require_config(options), options.count("--dry-run") != 0);
+            const auto options = parse_options(argc, argv, 2, {"--config", "--execution-mode", "--threads"}, {"--dry-run"});
+            const std::string mode = options.count("--execution-mode") ? options.at("--execution-mode") : "";
+            return quant::app::Application::run_config(require_config(options), options.count("--dry-run") != 0,
+                mode, integer_option(options, "--threads", 0));
         }
         if (command == "validate-config") {
             const auto options = parse_options(argc, argv, 2, {"--config"}, {});

@@ -93,6 +93,7 @@ if(BUILD_TESTING AND QUANT_ENABLE_TESTS)
     quant_add_test(attribution_tests tests/refactor/test_attribution.cpp)
     quant_add_test(statistical_tests tests/refactor/test_statistics.cpp)
     quant_add_test(selection_risk_tests tests/refactor/test_selection_risk.cpp)
+    quant_add_test(performance_tests tests/refactor/test_performance.cpp)
 
     add_test(NAME cli_help COMMAND quant_cli help)
     add_test(NAME cli_version COMMAND quant_cli version)

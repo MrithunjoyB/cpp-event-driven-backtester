@@ -218,7 +218,7 @@ ExperimentConfig ConfigLoader::load_file(const std::string& filepath) {
         "parameter_selection_objective", "minimum_trade_requirement", "regime_classification_method", "random_seed",
         "output_directory", "allocation_policy", "rebalance_frequency", "max_weight", "cash_buffer",
         "min_trade_value", "volatility_lookback", "momentum_lookback", "top_n",
-        "portfolio_output_directory", "data_directory", "result_schema_version"};
+        "portfolio_output_directory", "data_directory", "result_schema_version", "execution_mode", "threads"};
     const std::set<std::string> calendar_fields = {
         "calendar_valuation_mode", "stale_mark_policy", "max_stale_calendar_days", "missing_bar_policy",
         "rebalance_closed_asset_policy", "annualization_method", "configured_periods_per_year",
@@ -266,6 +266,8 @@ ExperimentConfig ConfigLoader::load_file(const std::string& filepath) {
     config.portfolio.top_n = integer_or(values, "top_n", config.portfolio.top_n);
     config.output.portfolio_results_dir = get_or<std::string>(values, "portfolio_output_directory", config.output.portfolio_results_dir);
     config.result_schema_version = integer_or(values, "result_schema_version", config.result_schema_version);
+    config.execution_control.mode = get_or<std::string>(values, "execution_mode", config.execution_control.mode);
+    config.execution_control.threads = integer_or(values, "threads", config.execution_control.threads);
     config.calendar.valuation_mode = get_or<std::string>(values, "calendar_valuation_mode", config.calendar.valuation_mode);
     config.calendar.stale_mark_policy = get_or<std::string>(values, "stale_mark_policy", config.calendar.stale_mark_policy);
     config.calendar.max_stale_calendar_days = integer_or(values, "max_stale_calendar_days", config.calendar.max_stale_calendar_days);
@@ -345,6 +347,12 @@ void ConfigLoader::validate(const ExperimentConfig& config) {
     if (config.output.results_dir.empty()) throw ConfigurationError("output_directory cannot be empty");
     if (config.portfolio.data_dir.empty()) throw ConfigurationError("data_directory cannot be empty");
     if (config.output.portfolio_results_dir.empty()) throw ConfigurationError("portfolio_output_directory cannot be empty");
+    if (config.execution_control.mode != "serial" && config.execution_control.mode != "parallel")
+        throw ConfigurationError("execution_mode must be serial or parallel");
+    if (config.execution_control.threads <= 0 || config.execution_control.threads > 64)
+        throw ConfigurationError("threads must be in [1, 64]");
+    if (config.execution_control.mode == "serial" && config.execution_control.threads != 1)
+        throw ConfigurationError("serial execution requires threads=1");
 }
 
 std::string ConfigLoader::to_json(const ExperimentConfig& config) {
@@ -362,6 +370,8 @@ std::string ConfigLoader::to_json(const ExperimentConfig& config) {
            << "  \"starting_capital\": " << config.execution.starting_capital << ",\n"
            << "  \"commission_bps\": " << config.execution.commission_bps << ",\n"
            << "  \"slippage_bps\": " << config.execution.slippage_bps << ",\n"
+           << "  \"execution_mode\": \"" << config.execution_control.mode << "\",\n"
+           << "  \"threads\": " << config.execution_control.threads << ",\n"
            << "  \"train_window_days\": " << config.walk_forward.train_days << ",\n"
            << "  \"test_window_days\": " << config.walk_forward.test_days << ",\n"
            << "  \"step_days\": " << config.walk_forward.step_days << ",\n"
