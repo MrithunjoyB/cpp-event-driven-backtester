@@ -28,6 +28,7 @@ quant_cli -> application -> experiments/portfolio -> strategy + execution + mark
 - `config`: strict typed JSON loading, validation, and resolved configuration.
 - `io`: schema-v2 CSV and JSON manifest output with checked writes.
 - `performance`: bounded deterministic indexed execution for independent candidate simulations.
+- `reproducibility`: Python orchestration for manifest validation, SHA-256 provenance, semantic hashing, isolated staging, validator/report execution, and atomic publication. It invokes `quant_cli`; it does not implement financial methodology.
 
 Selection-risk experiments load each required dataset once into immutable shared ownership. Training and test benchmark paths are constructed once per ticker/window and reused only within the exact matching capital, date, cost, and liquidation context. No global mutable cache is used.
 

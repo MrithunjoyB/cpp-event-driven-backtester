@@ -47,3 +47,5 @@ Single-backtest and shared-portfolio paths do not use the selection-risk reuse/e
 The seven selection-risk packages were byte-identical across serial, 2, 4, and 8 threads for all canonical files. Only `parallel_execution_metadata.json` and `performance_counters.csv` are excluded because they intentionally describe execution and timing. Task completion order does not control ranking, candidate IDs, seeds, rows, or file publication. Randomized inference remains serial with the existing fixed seed behavior.
 
 Release, ASan, UBSan, and TSan test matrices cover the executor and unchanged research paths. Generated machine-specific artifacts are written to `results/performance/` and remain untracked; `scripts/validate_performance_results.py` rejects missing, empty, non-finite, or failed equivalence evidence.
+
+Performance timing artifacts are classified as environment-only in reproducibility manifests. Their presence and schema are verified, but machine-specific timing values are not included in canonical semantic identity.

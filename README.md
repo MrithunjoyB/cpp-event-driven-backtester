@@ -21,7 +21,7 @@ The portfolio research path additionally handles mixed equity and cryptocurrency
 | Corporate Actions | Raw-price, split-adjusted, and total-return-adjusted policies; stock and reverse splits; cash dividends; dividend double-count prevention |
 | Attribution | Trade-aware asset, cash, cost, corporate-action, rebalance, benchmark-relative, drawdown, volatility, regime, and calendar-year attribution; exact reconciliation with residual rejection |
 | Statistical Inference | Circular moving-block bootstrap by default; IID comparison mode; empirical confidence intervals; centered max-mean reality checks over MA, RSI, MACD, Volatility Breakout, and combined candidate grids; parameter stability and neighbourhood diagnostics |
-| Engineering | Reusable `quant_core` C++17 library; thin `quant_cli`; typed JSON configuration; validated civil dates; categorized errors; schema-versioned export; deterministic bounded candidate execution; immutable per-run data reuse; deterministic C++/Python tests; strict warnings; Linux/macOS CI; ASan, UBSan, and TSan |
+| Engineering | Reusable `quant_core` C++17 library; thin `quant_cli`; typed JSON configuration; versioned reproducibility manifests; hash-verified inputs and outputs; deterministic bounded candidate execution; immutable per-run data reuse; deterministic C++/Python tests; strict warnings; Linux/macOS CI; ASan, UBSan, and TSan |
 
 ## Methodological Design
 
@@ -77,6 +77,13 @@ python3 scripts/download_data.py
 ./build/quant_cli run --config configs/selection_risk_all.json --execution-mode parallel --threads 4
 python3 scripts/validate_results.py results
 python3 scripts/visualize_results.py
+```
+
+Reconstruct the complete canonical research suite, including validators and reports, with:
+
+```bash
+python3 scripts/reproduce.py --manifest manifests/canonical_research_suite.json \
+  --output-directory results/reproduced/canonical-suite --allow-compatible-environment
 ```
 
 ## Verified Research Findings
@@ -150,6 +157,7 @@ Reproducibility mechanisms include typed configurations, deterministic random se
 - [Result Schema](docs/RESULT_SCHEMA.md)
 - [Testing](docs/TESTING.md)
 - [Performance](docs/PERFORMANCE.md)
+- [Reproducibility](docs/REPRODUCIBILITY.md)
 
 ## Limitations
 
@@ -167,10 +175,10 @@ Reproducibility mechanisms include typed configurations, deterministic random se
 
 ### Near-Term Roadmap
 
-1. Add versioned experiment manifests and reproducibility commands.
+1. Conduct a final independent methodology and engineering audit.
 2. Produce publication-quality benchmark methodology and reports.
-3. Curate tracked artifacts and prepare `v1.0.0`.
-4. Conduct a final independent methodology and engineering audit.
+3. Regenerate manifests at the final audited implementation commit.
+4. Curate tracked artifacts and prepare `v1.0.0`.
 5. Optionally integrate authoritative exchange calendars.
 
 ### Longer-Term Extensions

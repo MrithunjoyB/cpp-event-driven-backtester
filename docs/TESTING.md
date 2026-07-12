@@ -8,7 +8,7 @@ cmake --build build --parallel
 ctest --test-dir build --output-on-failure
 ```
 
-The current commit registers 17 targets covering the preserved regression suite, typed date/config behavior, causal methodology, exporters, deterministic bootstrap analysis, bounded execution, and CLI smoke checks. Fixtures in `tests/fixtures` are local and deterministic; tests never download live data.
+The current commit registers 18 targets covering the preserved regression suite, typed date/config behavior, causal methodology, exporters, deterministic bootstrap analysis, bounded execution, reproducibility, and CLI smoke checks. Fixtures in `tests/fixtures` are local and deterministic; tests never download live data.
 
 `calendar_tests`, `union_portfolio_tests`, and `corporate_action_tests` cover union/intersection timelines, stale marks, weekend risk, closed-market execution prevention, civil schedules, causal deferral, splits, reverse splits, dividends, adjusted-mode double-count prevention, and invalid actions. Run `python3 scripts/test_download_data.py` for deterministic downloader normalization.
 
@@ -40,6 +40,15 @@ cmake --build build-tsan --parallel && ctest --test-dir build-tsan --output-on-f
 python3 scripts/test_parallel_equivalence.py --build build --threads 1,2,4,8
 python3 scripts/benchmark_performance.py --build build --baseline baseline.json
 python3 scripts/validate_performance_results.py results/performance
+```
+
+`reproducibility_tests` contains 46 deterministic cases covering schema/identity validation, hashes, canonicalization, input/config corruption, inventory completeness, lineage, suite composition, tolerance rejection, and provenance policies. End-to-end checks use:
+
+```bash
+python3 scripts/validate_reproducibility.py manifests --verify-inputs
+python3 scripts/reproduce.py --manifest manifests/single_aapl_ma.json --verify-only --allow-compatible-environment
+python3 scripts/reproduce.py --manifest manifests/canonical_research_suite.json \
+  --output-directory results/reproduced/canonical-suite --allow-compatible-environment
 ```
 
 The dedicated `selection_risk_tests` target checks stable candidate identity, strict common-date panel construction, duplicate/non-finite rejection, minimum samples, deterministic moving-block resampling, max-statistic calculation, null fixtures, and bootstrap metadata. Production exports are independently checked with:

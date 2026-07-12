@@ -22,6 +22,9 @@ jobs:
       - run: ./build/quant_cli --mode single --ticker AAPL --strategy ma_cross
       - run: python3 scripts/validate_results.py results
       - run: python3 -m pip install -r requirements.txt
+      - run: python3 scripts/validate_reproducibility.py manifests --verify-inputs
+      - run: python3 scripts/reproduce.py --manifest manifests/single_aapl_ma.json --output-directory ${{ runner.temp }}/reproduced-single --build-directory build --no-build --allow-compatible-environment --json-report ${{ runner.temp }}/reconstruction-report.json
+      - run: python3 scripts/validate_reproducibility.py manifests/single_aapl_ma.json --verify-inputs --report ${{ runner.temp }}/reconstruction-report.json
       - run: python3 scripts/test_download_data.py
       - run: ./build/quant_cli run --config configs/fixtures/mixed_union.json
       - run: python3 scripts/validate_results.py test_results/schema_v3
