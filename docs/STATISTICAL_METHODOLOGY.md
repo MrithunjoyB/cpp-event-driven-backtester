@@ -15,3 +15,7 @@ The bootstrap centers each candidate by its sample mean, resamples common panel 
 Regime-conditioned tests use the existing causal classifier and reject subsets with fewer than 30 common observations. They are exploratory because the primary correction does not additionally adjust across regime slices. Portfolio-policy reality checks remain one-policy diagnostics and must not be confused with strategy-grid correction. Probabilistic and Deflated Sharpe Ratios remain deliberately unclaimed.
 
 Statistical confidence is conditional historical evidence and does not imply future profitability.
+
+## Release Portability Gate
+
+The final audit found that `std::uniform_int_distribution` produces different index mappings across libc++ and libstdc++. Fixed seeds therefore repeat within one standard-library implementation but do not define one portable stochastic path. TSLA MACD and zero-cost adjusted p-values are close enough to 0.05 that current Monte Carlo and platform-mapping variation can change an inferential band. The existing outputs remain historical methodology-v3 evidence, but they are not an acceptable v1.0.0 stochastic baseline. Release requires the platform-stable sampler and methodology migration specified in [Final Audit](FINAL_AUDIT.md).

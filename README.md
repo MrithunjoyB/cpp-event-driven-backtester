@@ -100,7 +100,7 @@ Using 1,000 circular moving-block bootstrap simulations over 2,190 return observ
 
 Inverse Volatility currently has the strongest statistical evidence, while Equal Weight also shows comparatively strong evidence. Momentum Top-N remains inconclusive. These are historical findings, not forecasts; portfolio performance is materially concentrated in BTC-USD and TSLA.
 
-The strategy-grid reality check retains 41 configured candidates per ticker across the four families. No family/ticker or combined cross-family panel rejects the no-superior-candidate null at 5% after correction. TSLA MACD is the closest family result (`p` approximately 0.057 at base costs); its adjusted value moves from approximately 0.052 at zero cost to 0.071 under the high-cost configuration. Cross-family adjusted values range from approximately 0.322 to 0.996. Median IS-to-OOS degradation is negative in every family, so the corrected evidence remains inconclusive.
+The current macOS canonical strategy-grid baseline retains 41 configured candidates per ticker and contains no family/ticker or combined rejection at 5%. TSLA MACD is close to the boundary (`p` approximately 0.057 at base costs and 0.052 at zero cost). The final audit found that these margins are not stable enough for release across standard-library index mappings and Monte Carlo variation. A platform-stable RNG migration and regenerated stochastic baselines are required before these values can support a v1.0.0 inference claim. See [Final Audit](docs/FINAL_AUDIT.md).
 
 Full generated reports are written locally to `results/research_v3/portfolio_equal_weight/attribution/attribution_report.md`, `results/research_v3/portfolio_equal_weight/statistics/statistical_report.md`, and `results/research_v3/selection_risk/all_families/selection_risk/selection_risk_report.md`. Generated research artifacts are intentionally not tracked.
 
@@ -130,7 +130,7 @@ On the measured Apple M1 Release workload, immutable data and benchmark reuse re
 
 ## Validation
 
-The current tree has 17 CTest targets covering deterministic regression, domain/configuration, methodology, export, bootstrap, calendar, corporate actions, union-calendar portfolios, attribution, statistics, candidate selection risk, performance/concurrency, and CLI behavior. The statistical and selection-risk targets each contain 27 deterministic cases, and the regression snapshot check matches 8/8 tracked scenarios.
+The current tree has 21 CTest targets covering deterministic regression, domain/configuration, methodology, export, bootstrap, calendar, corporate actions, union-calendar portfolios, attribution, statistics, candidate selection risk, performance/concurrency, reproducibility, final-audit gates, and CLI behavior. The regression snapshot check matches 8/8 tracked scenarios.
 
 Validation also includes strict compiler warnings, ASan, UBSan, TSan, Linux and macOS Release CI, schema/result validation, dedicated attribution and statistical corruption tests, parallel package equivalence, and Python reference cross-checks. See [Testing](docs/TESTING.md) for commands and test boundaries.
 
@@ -142,7 +142,7 @@ See [Result Schema](docs/RESULT_SCHEMA.md) for output filenames, columns, units,
 
 ## Reproducibility
 
-Reproducibility mechanisms include typed configurations, deterministic random seeds, explicit bootstrap method and block metadata, schema versions, Git commit metadata, experiment and data metadata where implemented, deterministic fixtures, regression snapshots, Python reference calculations, and CI verification. These controls support exact checks of the tracked scenarios, but the repository does not yet provide complete versioned experiment manifests or a single-command reconstruction of every research artifact.
+Reproducibility mechanisms include versioned manifests, hash-verified tracked inputs, resolved configurations, deterministic seeds, schema/build/dependency provenance, atomic reconstruction, regression snapshots, Python references, and CI. Deterministic financial artifacts reconstruct semantically across platforms; stochastic inference remains release-blocked pending a platform-stable bounded sampler.
 
 ## Documentation
 
@@ -158,6 +158,7 @@ Reproducibility mechanisms include typed configurations, deterministic random se
 - [Testing](docs/TESTING.md)
 - [Performance](docs/PERFORMANCE.md)
 - [Reproducibility](docs/REPRODUCIBILITY.md)
+- [Final Audit](docs/FINAL_AUDIT.md)
 
 ## Limitations
 
@@ -175,11 +176,11 @@ Reproducibility mechanisms include typed configurations, deterministic random se
 
 ### Near-Term Roadmap
 
-1. Conduct a final independent methodology and engineering audit.
-2. Produce publication-quality benchmark methodology and reports.
-3. Regenerate manifests at the final audited implementation commit.
-4. Curate tracked artifacts and prepare `v1.0.0`.
-5. Optionally integrate authoritative exchange calendars.
+1. Migrate stochastic index sampling to a versioned repository-owned stable bounded sampler.
+2. Increment the statistical methodology version and regenerate all stochastic baselines.
+3. Prove threshold stability and exact stochastic reconstruction across libc++ and libstdc++.
+4. Regenerate strict manifests at the final audited commit.
+5. Complete release acceptance checks before preparing `v1.0.0`.
 
 ### Longer-Term Extensions
 

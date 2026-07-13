@@ -34,7 +34,7 @@ The implementation source commit recorded by the current manifests is `ba31b17..
 
 Manifests record compiler, CMake, C++ standard, build type, strict-warning mode, OS, architecture, Python, CLI version, binary SHA-256, locale, timezone, and dependency lock. Validation/report dependencies are pinned in `requirements-validation.txt`; acquisition dependencies are separated in `requirements-acquisition.txt`. `requirements.txt` is the exact union used by CI.
 
-Compiler and standard-library identities are recorded but are not part of semantic identity because current Linux/macOS evidence supports semantic equivalence. Locale is forced to `C`, timezone to `UTC`, and Matplotlib uses an isolated cache. Platform-specific figures are generated and validated for presence, not byte identity.
+Compiler and standard-library identities are recorded but are not part of deterministic financial semantic identity. Linux/macOS evidence does not establish threshold-stable stochastic equivalence; current Level 3 tolerances are historical compatibility diagnostics and are release-blocked by the [Final Audit](FINAL_AUDIT.md). Locale is forced to `C`, timezone to `UTC`, and Matplotlib uses an isolated cache. Platform-specific figures are generated and validated for presence, not byte identity.
 
 ## One-Command Reconstruction
 
@@ -96,4 +96,4 @@ No existing build or result directory is required. Generated outputs, caches, fa
 
 ## Limitations
 
-The manifests cannot repair incomplete upstream corporate-action provenance or grant redistribution rights. Exact compiler-level bootstrap variate portability is not asserted; Linux and macOS must satisfy the declared mixed semantic/methodological artifact policies without changing validated conclusions. Figure appearance can vary with platform rendering. The compatible-descendant commit policy is explicit but weaker than a manifest regenerated at a final release commit, so it remains a release acceptance item.
+The manifests cannot repair incomplete upstream corporate-action provenance or grant redistribution rights. Exact compiler-level bootstrap variate portability is not asserted, and the audit found current inferential tolerances insufficient for release-sensitive thresholds. Figure appearance can vary with platform rendering. The compatible-descendant commit policy is explicit but weaker than a manifest regenerated at a final release commit. Both stochastic migration and final-commit manifest regeneration are release blockers.

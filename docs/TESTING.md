@@ -8,7 +8,7 @@ cmake --build build --parallel
 ctest --test-dir build --output-on-failure
 ```
 
-The current commit registers 18 targets covering the preserved regression suite, typed date/config behavior, causal methodology, exporters, deterministic bootstrap analysis, bounded execution, reproducibility, and CLI smoke checks. Fixtures in `tests/fixtures` are local and deterministic; tests never download live data.
+The current commit registers 21 targets covering the preserved regression suite, typed date/config behavior, causal methodology, exporters, deterministic bootstrap analysis, bounded execution, reproducibility, final-audit release gates, and CLI smoke checks. Fixtures in `tests/fixtures` are local and deterministic; tests never download live data.
 
 `calendar_tests`, `union_portfolio_tests`, and `corporate_action_tests` cover union/intersection timelines, stale marks, weekend risk, closed-market execution prevention, civil schedules, causal deferral, splits, reverse splits, dividends, adjusted-mode double-count prevention, and invalid actions. Run `python3 scripts/test_download_data.py` for deterministic downloader normalization.
 
@@ -58,3 +58,5 @@ python3 scripts/validate_selection_risk.py results/research_v3/selection_risk/ma
 python3 scripts/test_selection_risk_reference.py results/research_v3/selection_risk/ma/selection_risk
 python3 scripts/test_selection_risk_validator.py
 ```
+
+`final_audit_tests` adds 15 independent threshold, Monte Carlo-error, tolerance-overlap, engine/mapping, migration, and blocker fixtures. `final_audit_validator` rejects missing or altered audit artifacts, absent High blockers, false release decisions, and audit reports without threshold-crossing evidence.
