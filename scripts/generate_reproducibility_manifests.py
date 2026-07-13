@@ -152,6 +152,29 @@ def apply_cross_platform_statistical_policy(manifest, capture):
                 artifact["expected_rows"] = list(csv.DictReader(handle))
 
 
+def apply_cross_platform_selection_policy(manifest, capture):
+    policies = {
+        "selection_risk/multiple_testing_bootstrap_distribution.csv": ("shape_only", None),
+        "selection_risk/family_selection_risk.csv": ("numeric_field_tolerance", {"adjusted_p_value": 0.05}),
+        "selection_risk/cross_family_selection_risk.csv": ("numeric_field_tolerance", {"adjusted_p_value": 0.05}),
+        "selection_risk/multiple_testing_summary.csv": ("numeric_field_tolerance", {"adjusted_p_value": 0.05}),
+        "selection_risk/regime_selection_risk.csv": ("numeric_field_tolerance", {"adjusted_p_value": 0.05}),
+        "selection_risk/selection_risk_report.md": ("presence_only", None),
+    }
+    for artifact in manifest["outputs"]["artifacts"]:
+        if artifact["path"] not in policies:
+            continue
+        policy, tolerance = policies[artifact["path"]]
+        artifact["reproducibility_level"] = "methodological"
+        artifact["comparison_policy"] = policy
+        artifact["tolerance"] = tolerance
+        artifact["sha256"] = None
+        artifact["semantic_sha256"] = None
+        if policy == "numeric_field_tolerance":
+            with (capture / artifact["path"]).open(newline="") as handle:
+                artifact["expected_rows"] = list(csv.DictReader(handle))
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--build", default="build-reproduce-capture")
@@ -171,6 +194,7 @@ def main():
         reconstruct(ROOT, manifest, args.capture_directory / identifier, build, "serial", 1,
                     allow_compatible_environment=True, allow_dirty=True, build=False, capture_expected=True)
         apply_cross_platform_statistical_policy(manifest, args.capture_directory / identifier)
+        apply_cross_platform_selection_policy(manifest, args.capture_directory / identifier)
         path = args.output / f"{identifier}.json"
         path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
         children.append({"id": identifier, "manifest": str(path.relative_to(ROOT))})
