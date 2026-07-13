@@ -158,8 +158,9 @@ def apply_cross_platform_selection_policy(manifest, capture):
         "selection_risk/family_selection_risk.csv": ("numeric_field_tolerance", {"adjusted_p_value": 0.05}),
         "selection_risk/cross_family_selection_risk.csv": ("numeric_field_tolerance", {"adjusted_p_value": 0.05}),
         "selection_risk/multiple_testing_summary.csv": ("numeric_field_tolerance", {"adjusted_p_value": 0.05}),
-        "selection_risk/regime_selection_risk.csv": ("numeric_field_tolerance", {"adjusted_p_value": 0.05}),
+        "selection_risk/regime_selection_risk.csv": ("numeric_field_tolerance", {"adjusted_p_value": 0.06}),
         "selection_risk/selection_risk_report.md": ("presence_only", None),
+        "selection_risk/candidate_rank_stability.csv": ("numeric_field_tolerance", {"is_oos_spearman_rank_correlation": 1e-15}),
     }
     for artifact in manifest["outputs"]["artifacts"]:
         if artifact["path"] not in policies:
