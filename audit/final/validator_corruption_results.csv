@@ -1,0 +1,15 @@
+case,result
+missing_manifest,rejected
+unsupported_schema,rejected
+altered_input_hash,rejected
+missing_output,rejected
+extra_output,rejected
+failed_command,rejected
+failed_validator,rejected
+dirty_tree,rejected
+wrong_commit,rejected
+false_success_report,rejected
+p_value_out_of_bounds,rejected
+diagnostic_deployable_confusion,covered_by_labels_and_tests
+threshold_crossing_within_tolerance,accepted_currently_release_blocker
+malformed_audit_report,rejected_by_audit_validator

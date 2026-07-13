@@ -1,0 +1,8 @@
+artifact_family,mac_linux_result,difference_source,release_status
+financial_simulation,zero_tolerance_match,none observed,pass
+portfolio_attribution,zero_tolerance_match,none observed,pass
+bootstrap_raw_paths,different,uniform integer mapping,blocked
+bootstrap_summaries,bounded differences,different sampled paths,blocked near thresholds
+selection_risk_p_values,bounded differences,different max-statistic samples,blocked near 0.05
+rank_correlation,1.83e-17 difference,floating-point rounding,acceptable diagnostic tolerance
+figures,not byte-compared,rendering stack,presentation-only

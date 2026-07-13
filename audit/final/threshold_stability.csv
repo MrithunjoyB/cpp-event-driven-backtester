@@ -1,0 +1,8 @@
+result,scope,macos_value,linux_value,threshold,macos_band,linux_band,band_crossing,binomial_standard_error,margin_to_threshold,margin_less_than_one_se,release_relevant,audit_status
+tsla_macd_family,family_adjusted_p_value,0.0649351,0.0589411,0.05,do_not_reject,do_not_reject,0,0.007792210,0.014935100,0,1,observed_pair_only
+tsla_macd_combined,family_adjusted_p_value,0.0569431,0.0559441,0.05,do_not_reject,do_not_reject,0,0.007328068,0.006943100,1,1,unstable
+tsla_macd_zero_cost,family_adjusted_p_value,0.0519481,,0.05,do_not_reject,unavailable,0,0.007017798,0.001948100,1,1,unstable
+tsla_regime_bull_low_volatility,exploratory_regime_p_value,0.0389610,0.0519481,0.05,reject,do_not_reject,1,0.006119072,0.011039000,0,0,observed_pair_only
+momentum_probability_positive_active,portfolio_probability,0.4780000,0.5080000,0.50,inconclusive,inconclusive,0,0.015796075,0.022000000,0,1,observed_pair_only
+momentum_probability_sharpe_positive,portfolio_probability,0.9230000,0.9490000,0.95,inconclusive,inconclusive,0,0.008430362,0.027000000,0,1,observed_pair_only
+equal_weight_probability_sharpe_exceeds_benchmark,portfolio_probability,0.9450000,0.9490000,0.95,inconclusive,inconclusive,0,0.007209369,0.005000000,1,1,unstable

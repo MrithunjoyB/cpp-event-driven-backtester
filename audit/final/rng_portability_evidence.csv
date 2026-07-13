@@ -1,0 +1,6 @@
+evidence_id,component,observation,classification,release_impact
+RNG-1,engine,std::mt19937 is seeded explicitly,portable_engine_sequence,none alone
+RNG-2,mapping,std::uniform_int_distribution<size_t> mapping is not standardized,platform_mapping_variation,raw sampled indices differ
+RNG-3,threads,bootstrap remains serial and candidate task collection is indexed,not_thread_scheduling,thread count does not explain stochastic difference
+RNG-4,floating_point,Spearman diagnostic differs by about 1.83e-17,separate_compiler_roundoff,non-inferential
+RNG-5,serialization,stable ordering and formatting verified independently,not_serialization,none

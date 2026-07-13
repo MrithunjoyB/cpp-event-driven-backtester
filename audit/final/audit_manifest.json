@@ -1,0 +1,68 @@
+{
+  "audit_id": "final_audit_rng_gate_v1",
+  "audit_schema_version": 1,
+  "baseline_commit": "7275f2c4445dc5a6c875d071c9a75c21f5e0c171",
+  "decision": "C. FAIL \u2014 RNG MIGRATION REQUIRED",
+  "files": [
+    {
+      "path": "audit_claim_inventory.csv",
+      "sha256": "8f19ac87763947a46282f34a876951c51d1ba97235223c4676e86af2abb7c5f3",
+      "size_bytes": 6197
+    },
+    {
+      "path": "audit_findings.csv",
+      "sha256": "07bddf9f7550af341e2ea5d5b9795ff9287c8df6df1a8da594348316f1f3f234",
+      "size_bytes": 2367
+    },
+    {
+      "path": "cross_platform_comparison.csv",
+      "sha256": "bbcf6688aac16e75de6242da8e1f7dd8f6a91701663bac9b05727f00f292fbda",
+      "size_bytes": 594
+    },
+    {
+      "path": "final_audit_report.md",
+      "sha256": "5c0b6187774ad5f01094448eae4e2f5771e3f125bf58ba2406ad333bf225b11d",
+      "size_bytes": 5558
+    },
+    {
+      "path": "release_acceptance_criteria.md",
+      "sha256": "d40aa548f557b5dbfe882855ac4203b69b21580b30ea319a9897c8c261177f66",
+      "size_bytes": 1397
+    },
+    {
+      "path": "release_blockers.md",
+      "sha256": "957c2f56971434c4db51a452be349fb8db95a09e0ca3d6f0acb7be746d59d393",
+      "size_bytes": 632
+    },
+    {
+      "path": "rng_migration_decision.md",
+      "sha256": "f3841eb05850c44bec9546c276af29019faf4127def60d4752fbe18a104dd002",
+      "size_bytes": 1919
+    },
+    {
+      "path": "rng_portability_evidence.csv",
+      "sha256": "a67cbb2ccd6b893f714edf0787f21076920bb5f7df805774d79c5fed6c8486d2",
+      "size_bytes": 648
+    },
+    {
+      "path": "test_quality_review.csv",
+      "sha256": "8ea1ee7b07564e1288b3c6fb0e2d6a4266281e0f0b4566befb5d35531b4a5ede",
+      "size_bytes": 610
+    },
+    {
+      "path": "threshold_stability.csv",
+      "sha256": "7de352dea3dbd6cf5434d3c1ed2ee017ff64af58d3507b684c65d73d52250f0c",
+      "size_bytes": 1226
+    },
+    {
+      "path": "tolerance_review.csv",
+      "sha256": "7b89bd32cd77b925050ae95fb7a1545459e9958a34adc269e6f71e684705dc2c",
+      "size_bytes": 991
+    },
+    {
+      "path": "validator_corruption_results.csv",
+      "sha256": "5bb934485c840f0a7bb4b98479da3c4b1effb961b6fd984868b3b0de37b69371",
+      "size_bytes": 490
+    }
+  ]
+}

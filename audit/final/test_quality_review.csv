@@ -1,0 +1,7 @@
+surface,assessment,evidence
+C++ deterministic fixtures,strong,Broad causality/accounting/calendar coverage
+Python statistical reference,moderate,Formula-independent but does not solve cross-library mapping
+Regression snapshots,moderate,Useful change detector; not proof of correctness
+Reproducibility tests,moderate,Strong corruption coverage; tolerance tests did not enforce conclusion bands
+Cross-platform CI,strong detector,Exposed platform differences but policy converted inferential fields to broad tolerances
+Threshold tests before audit,weak,No release gate for tolerance-over-threshold overlap
