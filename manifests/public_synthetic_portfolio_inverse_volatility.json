@@ -359,7 +359,7 @@
       "reports"
     ]
   },
-  "manifest_id": "sha256:714785d9c7ec01f185be3e54dfe985be25d47801dd4d3b66792755d445691ada",
+  "manifest_id": "sha256:c175b3d9a87dd099891a97c4825447ee6ae7458e2e6f8a809e350125e65b64c2",
   "manifest_schema_version": 1,
   "methodology": {
     "adjustment_policy": "raw_price",
@@ -1396,7 +1396,7 @@
           "root_type": "dict"
         },
         "semantic_sha256": "c7639d12f7dcbe962d818265cd9fd2789e3c59a6891d545b521f4d89048b258b",
-        "sha256": "8c79beb23c4de97dab94f67faf92ecc8a71baf94a752287497c2fb0080ccf0f2",
+        "sha256": "5929bafb5a9ef9596a06c77cb18098dde4bbf5b564037f87de7e4f921d23c0d3",
         "size_bytes": 493,
         "tolerance": null,
         "validator": "reproducibility_validator"
@@ -2106,7 +2106,7 @@
     "python": "3.9.6",
     "timezone": "UTC"
   },
-  "source_commit": "01198f25aaae9ad9051994de5bbaf8e4c8ab4b55",
+  "source_commit": "622669517e3328692e31f7997ec0023a72342a95",
   "source_tree_policy": "exact_commit",
   "validators": [
     {

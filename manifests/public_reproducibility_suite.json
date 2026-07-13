@@ -58,7 +58,7 @@
   "description": "Complete offline public synthetic canonical reconstruction plan",
   "manifest_schema_version": 1,
   "package_type": "suite",
-  "source_commit": "01198f25aaae9ad9051994de5bbaf8e4c8ab4b55",
+  "source_commit": "622669517e3328692e31f7997ec0023a72342a95",
   "suite_id": "public_reproducibility_suite",
-  "suite_id_hash": "sha256:1608e66a7cf25486a6c5b06df9d5ebed6f3cd5ccf931405da1bab1513565f59e"
+  "suite_id_hash": "sha256:eb532a84f084c9c26465440fbd2fb5e8cd9c6fa136fe8176344ed5a268d4a455"
 }

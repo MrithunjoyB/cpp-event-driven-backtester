@@ -34,7 +34,7 @@
   "description": "Public synthetic seven-package selection-risk reconstruction plan",
   "manifest_schema_version": 1,
   "package_type": "suite",
-  "source_commit": "01198f25aaae9ad9051994de5bbaf8e4c8ab4b55",
+  "source_commit": "622669517e3328692e31f7997ec0023a72342a95",
   "suite_id": "public_synthetic_selection_risk_suite",
-  "suite_id_hash": "sha256:5f4bf20fdbaaf0b0d4d4454e0845e91a734a5bd2b36fb00b97e79da06ca8d0eb"
+  "suite_id_hash": "sha256:a0b60bd093a9b5df929388ecc9fbf02f765624dcbec4aa34e19fd54632bb8f7a"
 }
