@@ -1,5 +1,5 @@
 {
-  "experiment_name": "public_synthetic_selection_risk_volatility_breakout",
+"experiment_name": "selection_risk_public_synthetic_volatility_breakout",
   "ticker_universe": ["SYN_EQ_A", "SYN_EQ_B", "SYN_BENCH", "SYN_EQ_C", "SYN_CRYPTO"],
   "data_directory": "data/synthetic",
   "strategy": "Volatility_Breakout",

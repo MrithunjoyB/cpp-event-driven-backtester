@@ -112,7 +112,17 @@ def _generate_rows(asset: str) -> list[list[str]]:
         mean_reversion = 0
         if (index // 280) % 6 == 2:
             mean_reversion = max(-5_000, min(5_000, (anchor - base_raw) * 14_000 // max(anchor, 1)))
-        return_ppm = max(-180_000, min(180_000, drift + noise + mean_reversion))
+        pulse_phase = index % 120
+        stress_pulse = 0
+        if pulse_phase < 12:
+            stress_pulse = -22_000
+        elif pulse_phase < 24:
+            stress_pulse = 24_000
+        elif 50 <= pulse_phase < 56:
+            stress_pulse = 48_000
+        elif 80 <= pulse_phase < 86:
+            stress_pulse = -46_000
+        return_ppm = max(-180_000, min(180_000, drift + noise + mean_reversion + stress_pulse))
 
         state = _lcg(state)
         gap_ppm = (((state >> 9) % 1201) - 600) * vol_multiplier // 100

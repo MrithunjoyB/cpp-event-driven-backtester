@@ -25,7 +25,7 @@
         "2024-08-14"
       ],
       "row_count": 1804,
-      "sha256": "3e695b4289ffb8c6a7258bd2830c6d1bd69e2222b1345888ab1525914d3b0395"
+      "sha256": "48b0b12cb9feab6649348db415ff54198eb9f7097861a7f666af0bf9385a4350"
     },
     {
       "asset": "SYN_EQ_B",
@@ -51,7 +51,7 @@
         "2023-10-19"
       ],
       "row_count": 1804,
-      "sha256": "f89cdd138c852697f37f7b960bdc0bbaa1ce319c35abba93689f4076a47a6d22"
+      "sha256": "f8ec8d1d916800a8d3449f9e53864de8085db4ac9c7f93b1435c5fea3c56e001"
     },
     {
       "asset": "SYN_EQ_C",
@@ -75,7 +75,7 @@
         "2025-05-06"
       ],
       "row_count": 1804,
-      "sha256": "5d2a4b881c092452f1f4f811372de16c7aae63728e0c62bf95efd93e628d7452"
+      "sha256": "e89bbf0097270c993200f04e7bd73b84ad767dc708aedc8d0706017239848289"
     },
     {
       "asset": "SYN_BENCH",
@@ -98,7 +98,7 @@
         "2020-09-09"
       ],
       "row_count": 1805,
-      "sha256": "add612475353bcd5f64e72dff08cde0d3fce5327a7d4e550b9e5273687464f28"
+      "sha256": "610e8c2f379716990b5df7a252e460679c838e6c33733c628774840260f9c773"
     },
     {
       "asset": "SYN_CRYPTO",
@@ -117,7 +117,7 @@
         "2022-11-13"
       ],
       "row_count": 2556,
-      "sha256": "59438fc86bf9f788f278a52deb70f78003eac10eef8f9a68c68faabb59639a9c"
+      "sha256": "3b208726cfc0a10370ceaff5c741e95ae75c05922a2caf872f5969983f18c85b"
     }
   ],
   "classification": "synthetic",

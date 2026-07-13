@@ -726,14 +726,14 @@ int main() {
         BacktestConfig config;
         config.ticker = "SYN_EQ_A";
         auto result = Backtester(config).run_detailed(MovingAverageCrossoverStrategy(20, 50));
-        require(nearly_equal(result.summary.total_return, 0.204491, 1e-6), "synthetic single-asset golden changed");
-        require(result.summary.num_trades == 30, "synthetic single-asset trade-count golden changed");
+        require(nearly_equal(result.summary.total_return, -0.559576446351, 1e-9), "synthetic single-asset golden changed");
+        require(result.summary.num_trades == 32, "synthetic single-asset trade-count golden changed");
     });
     run_case("golden_shared_cash_regression", [&] {
         PortfolioBacktestConfig config;
         config.tickers = {"SYN_EQ_A", "SYN_EQ_B", "SYN_BENCH", "SYN_EQ_C", "SYN_CRYPTO"};
         auto result = PortfolioBacktester(config).run();
-        require(nearly_equal(result.summary.total_return, 0.152017, 1e-6),
+        require(nearly_equal(result.summary.total_return, 1.713391, 1e-6),
                 "synthetic shared-cash golden changed: " + std::to_string(result.summary.total_return));
         require(result.summary.number_of_rebalances == 84,
                 "synthetic shared-cash rebalance golden changed: " + std::to_string(result.summary.number_of_rebalances));
@@ -756,7 +756,7 @@ int main() {
                 best_parameters = summary.parameter_set;
             }
         }
-        require(best_parameters == "short=20;long=50", "synthetic walk-forward selection golden changed");
+        require(best_parameters == "short=5;long=50", "synthetic walk-forward selection golden changed");
     });
     run_case("simulation_result_requires_no_filesystem_output", [&] {
         const std::string output_dir = "test_results/simulation_no_write";
