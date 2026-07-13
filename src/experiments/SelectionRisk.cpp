@@ -136,6 +136,9 @@ void write_manifest(const config::ExperimentConfig& experiment, const std::strin
         << "  \"candidate_count\": " << definitions << ",\n"
         << "  \"observation_rows\": " << observations << ",\n"
         << "  \"bootstrap_method\": \"moving_block_circular\",\n"
+        << "  \"rng_engine\": \"mt19937\",\n"
+        << "  \"rng_mapping\": \"portable_bounded_v1\",\n"
+        << "  \"stochastic_methodology_version\": 2,\n"
         << "  \"centering\": \"candidate_sample_mean\",\n"
         << "  \"null_hypothesis\": \"no_candidate_has_positive_expected_active_return\",\n"
         << "  \"seed\": " << experiment.bootstrap.random_seed << ",\n"
@@ -385,7 +388,7 @@ void SelectionRiskAnalyzer::run_experiment(const config::ExperimentConfig& exper
     regime_statistical.minimum_observations = 30;
     regime_statistical.annualization_factor = kAnnualization;
     auto regime_out = std::ofstream(directory + "/regime_selection_risk.csv");
-    regime_out << "schema_version,experiment_id,ticker,strategy_family,regime,eligible_candidates,common_observations,observed_best_mean_active_return,adjusted_p_value,seed,simulations,block_length,method\n";
+    regime_out << "schema_version,experiment_id,ticker,strategy_family,regime,eligible_candidates,common_observations,observed_best_mean_active_return,adjusted_p_value,seed,simulations,block_length,method,rng_engine,rng_mapping,stochastic_methodology_version\n";
     for (const auto& ticker : experiment.tickers) {
         std::map<std::string, std::string> regime_by_date;
         for (const auto& point : classify_causal_regimes(immutable_market_data->bars(ticker))) if (point.available) regime_by_date[point.date] = point.regime;
@@ -405,9 +408,9 @@ void SelectionRiskAnalyzer::run_experiment(const config::ExperimentConfig& exper
                 try {
                     const auto panel = align_common_dates(eligible, filtered, 30);
                     const auto result = reality_check(panel, regime_statistical);
-                    regime_out << kSchemaVersion << ',' << experiment.name << ',' << ticker << ',' << family << ',' << regime << ',' << eligible.size() << ',' << panel.dates.size() << ',' << result.observed_best_mean << ',' << result.p_value << ',' << result.seed << ',' << result.simulations << ',' << result.block_length << ',' << result.method << '\n';
+                    regime_out << kSchemaVersion << ',' << experiment.name << ',' << ticker << ',' << family << ',' << regime << ',' << eligible.size() << ',' << panel.dates.size() << ',' << result.observed_best_mean << ',' << result.p_value << ',' << result.seed << ',' << result.simulations << ',' << result.block_length << ',' << result.method << ',' << result.rng_engine << ',' << result.rng_mapping << ',' << result.stochastic_methodology_version << '\n';
                 } catch (const MethodologyError&) {
-                    regime_out << kSchemaVersion << ',' << experiment.name << ',' << ticker << ',' << family << ',' << regime << ',' << eligible.size() << ",0,0,1," << regime_statistical.seed << ',' << regime_statistical.simulations << ",0,insufficient_common_observations\n";
+                    regime_out << kSchemaVersion << ',' << experiment.name << ',' << ticker << ',' << family << ',' << regime << ',' << eligible.size() << ",0,0,1," << regime_statistical.seed << ',' << regime_statistical.simulations << ",0,insufficient_common_observations,mt19937,portable_bounded_v1,2\n";
                 }
             }
         }
@@ -487,9 +490,9 @@ void SelectionRiskAnalyzer::run_experiment(const config::ExperimentConfig& exper
     auto cross_out = std::ofstream(directory + "/cross_family_selection_risk.csv");
     auto bootstrap_out = std::ofstream(directory + "/multiple_testing_bootstrap_distribution.csv");
     auto multiple_out = std::ofstream(directory + "/multiple_testing_summary.csv");
-    const std::string risk_header = "schema_version,experiment_id,ticker,strategy_family,configured_candidates,eligible_candidates,common_observations,common_start,common_end,observed_best_mean_active_return,adjusted_p_value,seed,simulations,block_length,method,null_hypothesis,centering\n";
+    const std::string risk_header = "schema_version,experiment_id,ticker,strategy_family,configured_candidates,eligible_candidates,common_observations,common_start,common_end,observed_best_mean_active_return,adjusted_p_value,seed,simulations,block_length,method,rng_engine,rng_mapping,stochastic_methodology_version,null_hypothesis,centering\n";
     family_out << risk_header; cross_out << risk_header; multiple_out << risk_header;
-    bootstrap_out << "schema_version,experiment_id,ticker,strategy_family,simulation,max_centered_mean_active_return,seed,block_length,bootstrap_method\n";
+    bootstrap_out << "schema_version,experiment_id,ticker,strategy_family,simulation,max_centered_mean_active_return,seed,block_length,bootstrap_method,rng_engine,rng_mapping,stochastic_methodology_version\n";
     int manifest_block = 0;
     for (const auto& ticker : experiment.tickers) {
         std::set<std::string> families;
@@ -504,10 +507,10 @@ void SelectionRiskAnalyzer::run_experiment(const config::ExperimentConfig& exper
             const auto panel = align_common_dates(eligible, observations, 30);
             const auto result = reality_check(panel, statistical);
             manifest_block = result.block_length;
-            family_out << kSchemaVersion << ',' << experiment.name << ',' << ticker << ',' << family << ',' << specs_for(family).size() << ',' << eligible.size() << ',' << panel.dates.size() << ',' << panel.dates.front() << ',' << panel.dates.back() << ',' << result.observed_best_mean << ',' << result.p_value << ',' << result.seed << ',' << result.simulations << ',' << result.block_length << ',' << result.method << ",no_candidate_has_positive_expected_active_return,candidate_sample_mean\n";
-            multiple_out << kSchemaVersion << ',' << experiment.name << ',' << ticker << ',' << family << ',' << specs_for(family).size() << ',' << eligible.size() << ',' << panel.dates.size() << ',' << panel.dates.front() << ',' << panel.dates.back() << ',' << result.observed_best_mean << ',' << result.p_value << ',' << result.seed << ',' << result.simulations << ',' << result.block_length << ',' << result.method << ",no_candidate_has_positive_expected_active_return,candidate_sample_mean\n";
+            family_out << kSchemaVersion << ',' << experiment.name << ',' << ticker << ',' << family << ',' << specs_for(family).size() << ',' << eligible.size() << ',' << panel.dates.size() << ',' << panel.dates.front() << ',' << panel.dates.back() << ',' << result.observed_best_mean << ',' << result.p_value << ',' << result.seed << ',' << result.simulations << ',' << result.block_length << ',' << result.method << ',' << result.rng_engine << ',' << result.rng_mapping << ',' << result.stochastic_methodology_version << ",no_candidate_has_positive_expected_active_return,candidate_sample_mean\n";
+            multiple_out << kSchemaVersion << ',' << experiment.name << ',' << ticker << ',' << family << ',' << specs_for(family).size() << ',' << eligible.size() << ',' << panel.dates.size() << ',' << panel.dates.front() << ',' << panel.dates.back() << ',' << result.observed_best_mean << ',' << result.p_value << ',' << result.seed << ',' << result.simulations << ',' << result.block_length << ',' << result.method << ',' << result.rng_engine << ',' << result.rng_mapping << ',' << result.stochastic_methodology_version << ",no_candidate_has_positive_expected_active_return,candidate_sample_mean\n";
             for (std::size_t simulation = 0; simulation < result.bootstrap_max_statistics.size(); ++simulation)
-                bootstrap_out << kSchemaVersion << ',' << experiment.name << ',' << ticker << ',' << family << ',' << simulation << ',' << result.bootstrap_max_statistics[simulation] << ',' << result.seed << ',' << result.block_length << ',' << result.method << '\n';
+                bootstrap_out << kSchemaVersion << ',' << experiment.name << ',' << ticker << ',' << family << ',' << simulation << ',' << result.bootstrap_max_statistics[simulation] << ',' << result.seed << ',' << result.block_length << ',' << result.method << ',' << result.rng_engine << ',' << result.rng_mapping << ',' << result.stochastic_methodology_version << '\n';
         }
         if (families.size() > 1) {
             std::vector<CandidateDefinition> eligible;
@@ -519,9 +522,9 @@ void SelectionRiskAnalyzer::run_experiment(const config::ExperimentConfig& exper
             const auto result = reality_check(panel, statistical);
             const auto configured = static_cast<std::size_t>(std::count_if(definitions.begin(), definitions.end(),
                 [&](const CandidateDefinition& definition) { return definition.ticker == ticker; }));
-            cross_out << kSchemaVersion << ',' << experiment.name << ',' << ticker << ",all," << configured << ',' << eligible.size() << ',' << panel.dates.size() << ',' << panel.dates.front() << ',' << panel.dates.back() << ',' << result.observed_best_mean << ',' << result.p_value << ',' << result.seed << ',' << result.simulations << ',' << result.block_length << ',' << result.method << ",no_candidate_has_positive_expected_active_return,candidate_sample_mean\n";
+            cross_out << kSchemaVersion << ',' << experiment.name << ',' << ticker << ",all," << configured << ',' << eligible.size() << ',' << panel.dates.size() << ',' << panel.dates.front() << ',' << panel.dates.back() << ',' << result.observed_best_mean << ',' << result.p_value << ',' << result.seed << ',' << result.simulations << ',' << result.block_length << ',' << result.method << ',' << result.rng_engine << ',' << result.rng_mapping << ',' << result.stochastic_methodology_version << ",no_candidate_has_positive_expected_active_return,candidate_sample_mean\n";
             for (std::size_t simulation = 0; simulation < result.bootstrap_max_statistics.size(); ++simulation)
-                bootstrap_out << kSchemaVersion << ',' << experiment.name << ',' << ticker << ",all," << simulation << ',' << result.bootstrap_max_statistics[simulation] << ',' << result.seed << ',' << result.block_length << ',' << result.method << '\n';
+                bootstrap_out << kSchemaVersion << ',' << experiment.name << ',' << ticker << ",all," << simulation << ',' << result.bootstrap_max_statistics[simulation] << ',' << result.seed << ',' << result.block_length << ',' << result.method << ',' << result.rng_engine << ',' << result.rng_mapping << ',' << result.stochastic_methodology_version << '\n';
         }
     }
     if (family_name(experiment.strategy) != "all") {

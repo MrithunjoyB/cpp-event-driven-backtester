@@ -1,9 +1,11 @@
 #include "quant/analytics/StatisticalAnalysis.h"
 #include "quant/domain/Errors.h"
+#include "quant/random/StableRng.h"
 
 #include <algorithm>
 #include <cmath>
 #include <numeric>
+#include <limits>
 #include <random>
 #include <set>
 
@@ -19,9 +21,10 @@ void validate(const std::vector<DatedReturn>& x,const StatisticalConfig& c){
  std::set<std::string>d; for(auto&r:x){if(!std::isfinite(r.value))throw DataError("Non-finite statistical return"); if(!d.insert(r.date).second)throw DataError("Duplicate statistical date: "+r.date);}
 }
 std::vector<std::size_t> sample_indices(std::size_t n,int block,BootstrapMethod method,std::mt19937& rng){
- std::uniform_int_distribution<std::size_t> pick(0,n-1); std::vector<std::size_t> out; out.reserve(n);
- if(method==BootstrapMethod::Iid){while(out.size()<n)out.push_back(pick(rng));return out;}
- while(out.size()<n){auto start=pick(rng); for(int j=0;j<block && out.size()<n;++j)out.push_back((start+static_cast<std::size_t>(j))%n);} return out;
+ if(n==0 || n>std::numeric_limits<std::uint32_t>::max())throw ConfigurationError("Stable bootstrap bound exceeds uint32 domain");
+ const auto bound=static_cast<std::uint32_t>(n);std::vector<std::size_t> out; out.reserve(n);
+ if(method==BootstrapMethod::Iid){while(out.size()<n)out.push_back(random::StableRng::bounded_index(rng,bound));return out;}
+ while(out.size()<n){auto start=random::StableRng::bounded_index(rng,bound); for(int j=0;j<block && out.size()<n;++j)out.push_back((static_cast<std::size_t>(start)+static_cast<std::size_t>(j))%n);} return out;
 }
 BootstrapMetricRow metrics(int id,const std::vector<double>& r,const std::vector<double>& active,double ann){
  double wealth=1,peak=1,mdd=0; std::vector<double> down; for(double v:r){wealth*=1+v;peak=std::max(peak,wealth);mdd=std::min(mdd,wealth/peak-1);if(v<0)down.push_back(v);}
@@ -39,6 +42,7 @@ StatisticalResult StatisticalAnalyzer::bootstrap(const std::string& id,const std
  if(input.find("normalized_window")!=std::string::npos)throw MethodologyError("Normalized-window OOS cannot be used as deployable history");
  if(input.find("full_sample")!=std::string::npos && !diagnostic)throw MethodologyError("Full-sample input requires explicit diagnostic labelling");
  StatisticalResult out; out.experiment_id=id;out.input_series=input;out.start_date=returns.front().date;out.end_date=returns.back().date;out.benchmark=benchmark_name;
+ out.rng_engine=std::string(random::kRngEngine);out.rng_mapping=std::string(random::kRngMapping);out.stochastic_methodology_version=random::kStochasticMethodologyVersion;
  out.method=to_string(config.method);out.seed=config.seed;out.simulations=config.simulations;out.block_length=config.block_length>0?config.block_length:suggested_block_length(returns.size());
  out.confidence_level=config.confidence_level;out.observation_count=static_cast<int>(returns.size());out.annualization_method="source_result_factor="+std::to_string(config.annualization_factor);
  out.assumptions="empirical returns; circular moving blocks preserve within-block chronology; heuristic block length is not optimal";out.input_returns=returns;out.benchmark_returns=benchmark;
@@ -53,6 +57,7 @@ MultipleTestingResult StatisticalAnalyzer::reality_check(const std::vector<std::
  if(c.empty())throw MethodologyError("Reality check requires candidates");std::size_t n=c.front().size();if(static_cast<int>(n)<config.minimum_observations)throw MethodologyError("Reality check sample too small");for(auto&x:c)if(x.size()!=n)throw MethodologyError("Candidate return lengths differ");
  double observed=-1e300;for(auto&x:c)observed=std::max(observed,mean(x));int block=config.block_length>0?config.block_length:suggested_block_length(n);if(block<=0||block>static_cast<int>(n))throw ConfigurationError("Invalid reality-check block length");
  std::mt19937 rng(config.seed);int exceed=0;std::vector<double> distribution;distribution.reserve(static_cast<std::size_t>(config.simulations));for(int s=0;s<config.simulations;++s){auto idx=sample_indices(n,block,BootstrapMethod::MovingBlock,rng);double best=-1e300;for(auto&x:c){double m=mean(x),v=0;for(auto i:idx)v+=x[i]-m;best=std::max(best,v/static_cast<double>(n));}distribution.push_back(best);exceed+=best>=observed;}
- return {"centered_moving_block_reality_check",static_cast<int>(c.size()),static_cast<int>(c.size()),observed,(1.0+exceed)/(config.simulations+1.0),config.seed,config.simulations,block,std::move(distribution)};
+ MultipleTestingResult result{"centered_moving_block_reality_check",static_cast<int>(c.size()),static_cast<int>(c.size()),observed,(1.0+exceed)/(config.simulations+1.0),config.seed,config.simulations,block,std::move(distribution)};
+ result.rng_engine=std::string(random::kRngEngine);result.rng_mapping=std::string(random::kRngMapping);result.stochastic_methodology_version=random::kStochasticMethodologyVersion;return result;
 }
 } // namespace quant::analytics

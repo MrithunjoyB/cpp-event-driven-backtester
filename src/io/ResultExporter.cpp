@@ -366,8 +366,8 @@ void CsvResultExporter::write_attribution(
 void CsvResultExporter::write_statistics(const quant::analytics::StatisticalResult& r,
     const quant::analytics::MultipleTestingResult& mt, const std::string& directory) {
     std::error_code ec; std::filesystem::create_directories(directory,ec); if(ec)throw std::runtime_error("Could not create statistics directory: "+ec.message());
-    std::ostringstream m;m<<r.schema_version<<','<<r.experiment_id<<','<<r.method<<','<<r.seed<<','<<r.simulations<<','<<r.block_length<<','<<r.input_series<<','<<r.benchmark<<','<<r.confidence_level<<','<<r.candidate_count<<','<<r.observation_count<<','<<r.annualization_method;
-    const std::string meta=m.str(),p="schema_version,experiment_id,method,seed,simulation_count,block_length,input_series,benchmark,confidence_level,candidate_count,observation_count,annualization_method,";
+    std::ostringstream m;m<<r.schema_version<<','<<r.experiment_id<<','<<r.method<<','<<r.rng_engine<<','<<r.rng_mapping<<','<<r.stochastic_methodology_version<<','<<r.seed<<','<<r.simulations<<','<<r.block_length<<','<<r.input_series<<','<<r.benchmark<<','<<r.confidence_level<<','<<r.candidate_count<<','<<r.observation_count<<','<<r.annualization_method;
+    const std::string meta=m.str(),p="schema_version,experiment_id,method,rng_engine,rng_mapping,stochastic_methodology_version,seed,simulation_count,block_length,input_series,benchmark,confidence_level,candidate_count,observation_count,annualization_method,";
     auto summary=open_output(directory+"/bootstrap_summary.csv");summary<<p<<"metric,mean,median,standard_deviation,lower_bound,upper_bound,probability\n";
     auto ci=[&](const char*n,const quant::analytics::ConfidenceInterval&c,double pr){summary<<meta<<','<<n<<','<<c.mean<<','<<c.median<<','<<c.standard_deviation<<','<<c.lower<<','<<c.upper<<','<<pr<<'\n';};
     ci("cumulative_return",r.cumulative_return_ci,r.probability_loss);ci("sharpe",r.sharpe_ci,r.probability_sharpe_positive);
@@ -384,7 +384,7 @@ void CsvResultExporter::write_statistics(const quant::analytics::StatisticalResu
     auto policy=open_output(directory+"/portfolio_policy_robustness.csv");policy<<p<<"policy,return_lower,return_upper,sharpe_lower,sharpe_upper,probability_positive_active,probability_loss\n"<<meta<<','<<r.experiment_id<<','<<r.cumulative_return_ci.lower<<','<<r.cumulative_return_ci.upper<<','<<r.sharpe_ci.lower<<','<<r.sharpe_ci.upper<<','<<r.probability_positive_active<<','<<r.probability_loss<<'\n';
     auto attr=open_output(directory+"/attribution_robustness.csv");attr<<p<<"component,estimate,status\n"<<meta<<",joint_asset_concentration,0,requires_joint_contribution_series_bootstrap\n";
     auto warnings=open_output(directory+"/statistical_warnings.csv");warnings<<p<<"warning\n";if(r.warnings.empty())warnings<<meta<<",none\n";else for(auto&w:r.warnings)warnings<<meta<<','<<w<<'\n';
-    std::ostringstream manifest;manifest<<"{\n  \"schema_version\": 3,\n  \"experiment_id\": \""<<r.experiment_id<<"\",\n  \"method\": \""<<r.method<<"\",\n  \"seed\": "<<r.seed<<",\n  \"simulation_count\": "<<r.simulations<<",\n  \"block_length\": "<<r.block_length<<",\n  \"input_series\": \""<<r.input_series<<"\",\n  \"observation_count\": "<<r.observation_count<<",\n  \"assumptions\": \""<<r.assumptions<<"\"\n}\n";
+    std::ostringstream manifest;manifest<<"{\n  \"schema_version\": 3,\n  \"experiment_id\": \""<<r.experiment_id<<"\",\n  \"method\": \""<<r.method<<"\",\n  \"rng_engine\": \""<<r.rng_engine<<"\",\n  \"rng_mapping\": \""<<r.rng_mapping<<"\",\n  \"stochastic_methodology_version\": "<<r.stochastic_methodology_version<<",\n  \"seed\": "<<r.seed<<",\n  \"simulation_count\": "<<r.simulations<<",\n  \"block_length\": "<<r.block_length<<",\n  \"input_series\": \""<<r.input_series<<"\",\n  \"observation_count\": "<<r.observation_count<<",\n  \"assumptions\": \""<<r.assumptions<<"\"\n}\n";
     JsonManifestExporter::write_text(directory+"/statistical_manifest.json",manifest.str());
 }
 
@@ -430,6 +430,9 @@ void JsonManifestExporter::write_resolved_config(
          << "  \"parameter_selection_objective\": \"" << config.parameter_selection.objective << "\",\n"
          << "  \"minimum_trade_requirement\": " << config.parameter_selection.minimum_trades << ",\n"
          << "  \"random_seed\": " << config.bootstrap.random_seed << ",\n"
+         << "  \"rng_engine\": \"mt19937\",\n"
+         << "  \"rng_mapping\": \"portable_bounded_v1\",\n"
+         << "  \"stochastic_methodology_version\": 2,\n"
          << "  \"calendar_mode\": \"" << config.calendar.valuation_mode << "\",\n"
          << "  \"stale_mark_policy\": \"" << config.calendar.stale_mark_policy << "\",\n"
          << "  \"max_stale_calendar_days\": " << config.calendar.max_stale_calendar_days << ",\n"

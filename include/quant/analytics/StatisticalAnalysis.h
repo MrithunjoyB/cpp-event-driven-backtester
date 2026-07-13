@@ -26,6 +26,7 @@ struct BootstrapMetricRow {
 struct ConfidenceInterval { double mean{0.0}; double median{0.0}; double standard_deviation{0.0}; double lower{0.0}; double upper{0.0}; };
 struct StatisticalResult {
     int schema_version{3}; std::string experiment_id; std::string input_series; std::string start_date; std::string end_date;
+    std::string rng_engine{"mt19937"}; std::string rng_mapping{"portable_bounded_v1"}; int stochastic_methodology_version{2};
     std::string sampling_frequency{"union_calendar"}; std::string benchmark; std::string method; std::string annualization_method;
     unsigned int seed{0}; int simulations{0}; int block_length{0}; double confidence_level{0.95}; int candidate_count{1};
     int observation_count{0}; std::string assumptions; std::vector<std::string> warnings;
@@ -39,6 +40,7 @@ struct MultipleTestingResult {
     std::string method{"centered_moving_block_reality_check"}; int candidate_count{0}; int eligible_count{0};
     double observed_best_mean{0.0}; double p_value{1.0}; unsigned int seed{0}; int simulations{0}; int block_length{0};
     std::vector<double> bootstrap_max_statistics;
+    std::string rng_engine{"mt19937"}; std::string rng_mapping{"portable_bounded_v1"}; int stochastic_methodology_version{2};
 };
 
 class StatisticalAnalyzer {

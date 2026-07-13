@@ -4,6 +4,7 @@
 #include "quant/config/ExperimentConfig.h"
 
 #include <cstddef>
+#include <string>
 #include <vector>
 
 namespace quant::experiments {
@@ -18,6 +19,9 @@ struct BootstrapMetric {
 };
 struct BootstrapResult {
     unsigned int seed{0};
+    std::string rng_engine{"mt19937"};
+    std::string rng_mapping{"portable_bounded_v1"};
+    int stochastic_methodology_version{2};
     int path_count{0};
     double terminal_wealth_p05{0.0};
     double terminal_wealth_p50{0.0};

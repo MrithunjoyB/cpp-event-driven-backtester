@@ -28,6 +28,7 @@ set(QUANT_CORE_SOURCES
     src/io/ResultExporter.cpp
     src/domain/Date.cpp
     src/config/ConfigLoader.cpp
+    src/random/StableRng.cpp
     src/app/Application.cpp
 )
 
@@ -95,6 +96,7 @@ if(BUILD_TESTING AND QUANT_ENABLE_TESTS)
     quant_add_test(statistical_tests tests/refactor/test_statistics.cpp)
     quant_add_test(selection_risk_tests tests/refactor/test_selection_risk.cpp)
     quant_add_test(performance_tests tests/refactor/test_performance.cpp)
+    quant_add_test(stable_rng_tests tests/refactor/test_stable_rng.cpp)
     add_test(NAME reproducibility_tests COMMAND ${Python3_EXECUTABLE} tests/test_reproducibility.py)
     set_tests_properties(reproducibility_tests PROPERTIES WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
     add_test(NAME reproducibility_integration_tests COMMAND ${Python3_EXECUTABLE} tests/test_reproducibility_integration.py)
@@ -103,6 +105,8 @@ if(BUILD_TESTING AND QUANT_ENABLE_TESTS)
     set_tests_properties(final_audit_tests PROPERTIES WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
     add_test(NAME final_audit_validator COMMAND ${Python3_EXECUTABLE} scripts/validate_final_audit.py audit/final)
     set_tests_properties(final_audit_validator PROPERTIES WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+    add_test(NAME stable_rng_python_reference COMMAND ${Python3_EXECUTABLE} scripts/reference_stable_rng.py)
+    set_tests_properties(stable_rng_python_reference PROPERTIES WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
     add_test(NAME cli_help COMMAND quant_cli help)
     add_test(NAME cli_version COMMAND quant_cli version)

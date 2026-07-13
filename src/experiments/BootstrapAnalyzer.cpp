@@ -1,10 +1,12 @@
 #include "quant/experiments/BootstrapAnalyzer.h"
 
 #include "quant/domain/Errors.h"
+#include "quant/random/StableRng.h"
 
 #include <algorithm>
 #include <cmath>
 #include <numeric>
+#include <limits>
 #include <random>
 
 namespace quant::experiments {
@@ -44,13 +46,18 @@ BootstrapResult BootstrapAnalyzer::run(const BacktestResult& source, const confi
 
     BootstrapResult result;
     result.seed = config.random_seed;
+    result.rng_engine = std::string(random::kRngEngine);
+    result.rng_mapping = std::string(random::kRngMapping);
+    result.stochastic_methodology_version = random::kStochasticMethodologyVersion;
     result.path_count = path_count;
     result.metrics.reserve(static_cast<std::size_t>(path_count));
     result.sampled_paths.reserve(static_cast<std::size_t>(std::min(path_count, retained_path_count)) * returns.size());
     std::vector<double> terminal;
     terminal.reserve(static_cast<std::size_t>(path_count));
     std::mt19937 rng(config.random_seed);
-    std::uniform_int_distribution<std::size_t> pick(0, returns.size() - 1);
+    if (returns.size() > std::numeric_limits<std::uint32_t>::max())
+        throw ConfigurationError("Stable bootstrap bound exceeds uint32 domain");
+    const auto bound = static_cast<std::uint32_t>(returns.size());
     for (int path = 0; path < path_count; ++path) {
         double equity = starting_capital;
         double peak = equity;
@@ -58,7 +65,7 @@ BootstrapResult BootstrapAnalyzer::run(const BacktestResult& source, const confi
         std::vector<double> sampled;
         sampled.reserve(returns.size());
         for (std::size_t step = 0; step < returns.size(); ++step) {
-            const double daily_return = returns[pick(rng)];
+            const double daily_return = returns[random::StableRng::bounded_index(rng, bound)];
             sampled.push_back(daily_return);
             equity *= 1.0 + daily_return;
             peak = std::max(peak, equity);
