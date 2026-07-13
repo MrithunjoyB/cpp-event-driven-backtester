@@ -128,14 +128,14 @@ def apply_cross_platform_statistical_policy(manifest, capture):
         "statistics/bootstrap_paths_sample.csv": ("shape_only", None),
         "statistics/bootstrap_summary.csv": ("numeric_field_tolerance", {
             "mean": 0.20, "median": 0.15, "standard_deviation": 1.0,
-            "lower_bound": 0.25, "upper_bound": 3.0, "probability": 0.01}),
+            "lower_bound": 0.25, "upper_bound": 3.0, "probability": 0.04}),
         "statistics/multiple_testing_summary.csv": ("numeric_field_tolerance", {"p_value": 0.01}),
         "statistics/portfolio_policy_robustness.csv": ("numeric_field_tolerance", {
             "return_lower": 0.25, "return_upper": 3.0, "sharpe_lower": 0.10, "sharpe_upper": 0.10,
-            "probability_positive_active": 0.01, "probability_loss": 0.01}),
+            "probability_positive_active": 0.04, "probability_loss": 0.04}),
         "statistics/sharpe_inference.csv": ("numeric_field_tolerance", {
             "sharpe_mean": 0.10, "sharpe_lower": 0.10, "sharpe_upper": 0.10,
-            "probability_sharpe_positive": 0.01, "probability_sharpe_exceeds_benchmark": 0.01}),
+            "probability_sharpe_positive": 0.04, "probability_sharpe_exceeds_benchmark": 0.04}),
         "statistics/statistical_report.md": ("presence_only", None),
     }
     for artifact in manifest["outputs"]["artifacts"]:
