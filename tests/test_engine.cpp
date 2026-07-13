@@ -338,7 +338,7 @@ int main() {
     });
     run_case("Experiment config parsing", [&] {
         ExperimentConfig config = Analysis::load_experiment_config("configs/ma_walk_forward.json");
-        require(config.name == "ma_walk_forward", "bad experiment name");
+        require(config.name == "public_synthetic_ma_walk_forward", "bad experiment name");
         require(config.tickers.size() == 5, "bad ticker universe");
         require(config.strategy == "MA_Cross", "bad strategy");
         require(config.parameter_selection.minimum_trades == 3, "bad minimum trades");
@@ -347,17 +347,17 @@ int main() {
         auto specs = Analysis::grid_strategy_specs();
         require(specs.size() == 41, "unexpected full grid size");
     });
-    run_case("Default tickers include BTC-USD", [&] {
+    run_case("Default tickers include SYN_CRYPTO", [&] {
         auto tickers = Analysis::default_tickers();
         bool found = false;
         for (const auto& ticker : tickers) {
-            found = found || ticker == "BTC-USD";
+            found = found || ticker == "SYN_CRYPTO";
         }
-        require(found, "BTC-USD missing from default universe");
+        require(found, "SYN_CRYPTO missing from default universe");
     });
     run_case("Shared cash portfolio starts correctly", [&] {
         PortfolioBacktestConfig config;
-        config.tickers = {"AAPL", "MSFT", "SPY"};
+        config.tickers = {"SYN_EQ_A", "SYN_EQ_B", "SYN_BENCH"};
         config.starting_capital = 50000.0;
         config.results_dir = "test_results/portfolio_start";
         auto result = PortfolioBacktester(config).run();
@@ -421,7 +421,7 @@ int main() {
     });
     run_case("Minimum trade threshold suppresses tiny orders", [&] {
         PortfolioBacktestConfig config;
-        config.tickers = {"AAPL", "MSFT", "SPY"};
+        config.tickers = {"SYN_EQ_A", "SYN_EQ_B", "SYN_BENCH"};
         config.starting_capital = 100000.0;
         config.results_dir = "test_results/portfolio_threshold";
         config.allocation.min_trade_value = 1e12;
@@ -440,7 +440,7 @@ int main() {
     });
     run_case("Portfolio transaction costs reduce cash", [&] {
         PortfolioBacktestConfig config;
-        config.tickers = {"AAPL", "MSFT", "SPY"};
+        config.tickers = {"SYN_EQ_A", "SYN_EQ_B", "SYN_BENCH"};
         config.starting_capital = 50000.0;
         config.transaction_cost_rate = 0.01;
         config.results_dir = "test_results/portfolio_costs";
@@ -449,7 +449,7 @@ int main() {
     });
     run_case("Portfolio slippage produces fill costs", [&] {
         PortfolioBacktestConfig config;
-        config.tickers = {"AAPL", "MSFT", "SPY"};
+        config.tickers = {"SYN_EQ_A", "SYN_EQ_B", "SYN_BENCH"};
         config.starting_capital = 50000.0;
         config.slippage_rate = 0.01;
         config.results_dir = "test_results/portfolio_slippage";
@@ -462,7 +462,7 @@ int main() {
     });
     run_case("Portfolio no negative holdings", [&] {
         PortfolioBacktestConfig config;
-        config.tickers = {"AAPL", "MSFT", "SPY"};
+        config.tickers = {"SYN_EQ_A", "SYN_EQ_B", "SYN_BENCH"};
         config.results_dir = "test_results/portfolio_holdings";
         auto result = PortfolioBacktester(config).run();
         for (const auto& position : result.positions) {
@@ -471,7 +471,7 @@ int main() {
     });
     run_case("Portfolio no unintended leverage", [&] {
         PortfolioBacktestConfig config;
-        config.tickers = {"AAPL", "MSFT", "SPY"};
+        config.tickers = {"SYN_EQ_A", "SYN_EQ_B", "SYN_BENCH"};
         config.results_dir = "test_results/portfolio_leverage";
         auto result = PortfolioBacktester(config).run();
         for (const auto& point : result.equity_curve) {
@@ -480,7 +480,7 @@ int main() {
     });
     run_case("Portfolio value reconciles to cash plus holdings", [&] {
         PortfolioBacktestConfig config;
-        config.tickers = {"AAPL", "MSFT", "SPY"};
+        config.tickers = {"SYN_EQ_A", "SYN_EQ_B", "SYN_BENCH"};
         config.results_dir = "test_results/portfolio_reconcile";
         auto result = PortfolioBacktester(config).run();
         for (const auto& point : result.equity_curve) {
@@ -494,14 +494,14 @@ int main() {
     });
     run_case("Portfolio benchmark calculation finite", [&] {
         PortfolioBacktestConfig config;
-        config.tickers = {"AAPL", "MSFT", "SPY"};
+        config.tickers = {"SYN_EQ_A", "SYN_EQ_B", "SYN_BENCH"};
         config.results_dir = "test_results/portfolio_benchmark";
         auto result = PortfolioBacktester(config).run();
         require(std::isfinite(result.summary.equal_weight_benchmark_return), "non-finite benchmark");
     });
     run_case("Portfolio drawdown non-positive", [&] {
         PortfolioBacktestConfig config;
-        config.tickers = {"AAPL", "MSFT", "SPY"};
+        config.tickers = {"SYN_EQ_A", "SYN_EQ_B", "SYN_BENCH"};
         config.results_dir = "test_results/portfolio_drawdown";
         auto result = PortfolioBacktester(config).run();
         for (const auto& point : result.equity_curve) {
@@ -515,7 +515,7 @@ int main() {
     });
     run_case("Portfolio buys scaled when cash is insufficient", [&] {
         PortfolioBacktestConfig config;
-        config.tickers = {"AAPL", "MSFT", "SPY", "TSLA", "BTC-USD"};
+        config.tickers = {"SYN_EQ_A", "SYN_EQ_B", "SYN_BENCH", "SYN_EQ_C", "SYN_CRYPTO"};
         config.starting_capital = 1000.0;
         config.results_dir = "test_results/portfolio_scale";
         config.allocation.cash_buffer = 0.0;
@@ -527,7 +527,7 @@ int main() {
     });
     run_case("Portfolio fills are sell-before-buy within rebalance", [&] {
         PortfolioBacktestConfig config;
-        config.tickers = {"AAPL", "MSFT", "SPY"};
+        config.tickers = {"SYN_EQ_A", "SYN_EQ_B", "SYN_BENCH"};
         config.results_dir = "test_results/portfolio_sell_first";
         config.rebalance_frequency = RebalanceFrequency::Weekly;
         auto result = PortfolioBacktester(config).run();
@@ -543,7 +543,7 @@ int main() {
     });
     run_case("Portfolio actual weights within bounds", [&] {
         PortfolioBacktestConfig config;
-        config.tickers = {"AAPL", "MSFT", "SPY"};
+        config.tickers = {"SYN_EQ_A", "SYN_EQ_B", "SYN_BENCH"};
         config.results_dir = "test_results/portfolio_weights";
         auto result = PortfolioBacktester(config).run();
         for (const auto& position : result.positions) {
@@ -635,14 +635,14 @@ int main() {
     });
     run_case("continuous_oos_capital_reconciliation", [&] {
         MarketData data;
-        require(data.load_csv("AAPL", "data/AAPL.csv"), "could not load AAPL continuity fixture");
-        auto windows = build_calendar_windows(data.bars("AAPL"), 3, 6, 6);
-        require(windows.size() >= 2, "insufficient AAPL continuity windows");
+        require(data.load_csv("SYN_EQ_A", "data/synthetic/SYN_EQ_A.csv"), "could not load SYN_EQ_A continuity fixture");
+        auto windows = build_calendar_windows(data.bars("SYN_EQ_A"), 3, 6, 6);
+        require(windows.size() >= 2, "insufficient SYN_EQ_A continuity windows");
         double capital_value = 100000.0;
         for (std::size_t i = 0; i < 2; ++i) {
             const double starting = capital_value;
             BacktestConfig config;
-            config.ticker = "AAPL";
+            config.ticker = "SYN_EQ_A";
             config.start_date = windows[i].test_start;
             config.end_date = windows[i].test_end;
             config.starting_capital = starting;
@@ -655,11 +655,11 @@ int main() {
     });
     run_case("continuous_oos_no_duplicate_dates", [&] {
         MarketData data;
-        require(data.load_csv("AAPL", "data/AAPL.csv"), "could not load AAPL date fixture");
-        auto windows = build_calendar_windows(data.bars("AAPL"), 3, 6, 6);
+        require(data.load_csv("SYN_EQ_A", "data/synthetic/SYN_EQ_A.csv"), "could not load SYN_EQ_A date fixture");
+        auto windows = build_calendar_windows(data.bars("SYN_EQ_A"), 3, 6, 6);
         std::set<std::string> dates;
         for (const auto& window : windows) {
-            for (const auto& bar : data.bars("AAPL")) {
+            for (const auto& bar : data.bars("SYN_EQ_A")) {
                 if (bar.date >= window.test_start && bar.date <= window.test_end) {
                     require(dates.insert(bar.date).second, "duplicate OOS date");
                 }
@@ -688,16 +688,16 @@ int main() {
     });
     run_case("configured_benchmark_propagation", [&] {
         BacktestConfig same;
-        same.ticker = "AAPL";
+        same.ticker = "SYN_EQ_A";
         same.start_date = "2023-01-03";
         same.end_date = "2023-06-30";
         same.benchmark_ticker = "same_asset";
         auto same_result = Backtester(same).run_detailed(MovingAverageCrossoverStrategy(5, 50));
         BacktestConfig spy = same;
-        spy.benchmark_ticker = "SPY";
+        spy.benchmark_ticker = "SYN_BENCH";
         auto spy_result = Backtester(spy).run_detailed(MovingAverageCrossoverStrategy(5, 50));
-        require(same_result.summary.benchmark_ticker == "AAPL", "same_asset did not resolve to traded ticker");
-        require(spy_result.summary.benchmark_ticker == "SPY", "configured SPY benchmark not propagated");
+        require(same_result.summary.benchmark_ticker == "SYN_EQ_A", "same_asset did not resolve to traded ticker");
+        require(spy_result.summary.benchmark_ticker == "SYN_BENCH", "configured SYN_BENCH benchmark not propagated");
         require(!nearly_equal(same_result.summary.benchmark_net_return, spy_result.summary.benchmark_net_return), "changing benchmark did not change output");
     });
     run_case("malformed_benchmark_configuration_rejected", [&] {
@@ -724,27 +724,29 @@ int main() {
     });
     run_case("golden_single_asset_regression", [&] {
         BacktestConfig config;
-        config.ticker = "AAPL";
+        config.ticker = "SYN_EQ_A";
         auto result = Backtester(config).run_detailed(MovingAverageCrossoverStrategy(20, 50));
-        require(nearly_equal(result.summary.total_return, 1.099404, 1e-6), "single-asset golden changed");
-        require(result.summary.num_trades == 33, "single-asset trade-count golden changed");
+        require(nearly_equal(result.summary.total_return, 0.204491, 1e-6), "synthetic single-asset golden changed");
+        require(result.summary.num_trades == 30, "synthetic single-asset trade-count golden changed");
     });
     run_case("golden_shared_cash_regression", [&] {
         PortfolioBacktestConfig config;
-        config.tickers = {"AAPL", "MSFT", "SPY", "TSLA", "BTC-USD"};
+        config.tickers = {"SYN_EQ_A", "SYN_EQ_B", "SYN_BENCH", "SYN_EQ_C", "SYN_CRYPTO"};
         auto result = PortfolioBacktester(config).run();
-        require(nearly_equal(result.summary.total_return, 5.858289, 1e-6), "shared-cash golden changed");
-        require(result.summary.number_of_rebalances == 72, "shared-cash rebalance golden changed");
+        require(nearly_equal(result.summary.total_return, 0.152017, 1e-6),
+                "synthetic shared-cash golden changed: " + std::to_string(result.summary.total_return));
+        require(result.summary.number_of_rebalances == 84,
+                "synthetic shared-cash rebalance golden changed: " + std::to_string(result.summary.number_of_rebalances));
     });
     run_case("golden_walk_forward_selection_regression", [&] {
         MarketData data;
-        require(data.load_csv("AAPL", "data/AAPL.csv"), "could not load walk-forward golden data");
-        auto windows = build_calendar_windows(data.bars("AAPL"), 3, 6, 6);
+        require(data.load_csv("SYN_EQ_A", "data/synthetic/SYN_EQ_A.csv"), "could not load walk-forward golden data");
+        auto windows = build_calendar_windows(data.bars("SYN_EQ_A"), 3, 6, 6);
         std::string best_parameters;
         double best_score = -1e18;
         for (const auto& spec : Analysis::grid_strategy_specs("MA_Cross")) {
             BacktestConfig config;
-            config.ticker = "AAPL";
+            config.ticker = "SYN_EQ_A";
             config.start_date = windows.front().train_start;
             config.end_date = windows.front().train_end;
             auto summary = Backtester(config).run_detailed(*spec.instance).summary;
@@ -754,7 +756,7 @@ int main() {
                 best_parameters = summary.parameter_set;
             }
         }
-        require(best_parameters == "short=5;long=50", "walk-forward selection golden changed");
+        require(best_parameters == "short=20;long=50", "synthetic walk-forward selection golden changed");
     });
     run_case("simulation_result_requires_no_filesystem_output", [&] {
         const std::string output_dir = "test_results/simulation_no_write";
@@ -814,7 +816,7 @@ int main() {
     });
     run_case("strict_config_rejects_unknown_and_wrong_type_fields", [&] {
         std::ofstream unknown("test_results/unknown_config.json");
-        unknown << "{\"experiment_name\":\"bad\",\"ticker_universe\":[\"AAPL\"],\"strategy\":\"MA_Cross\",\"typo_field\":1}\n";
+        unknown << "{\"experiment_name\":\"bad\",\"ticker_universe\":[\"SYN_EQ_A\"],\"strategy\":\"MA_Cross\",\"typo_field\":1}\n";
         unknown.close();
         bool unknown_rejected = false;
         try { (void)quant::config::ConfigLoader::load_file("test_results/unknown_config.json"); }
@@ -822,7 +824,7 @@ int main() {
         require(unknown_rejected, "unknown configuration field accepted");
 
         std::ofstream wrong_type("test_results/wrong_type_config.json");
-        wrong_type << "{\"experiment_name\":3,\"ticker_universe\":[\"AAPL\"],\"strategy\":\"MA_Cross\"}\n";
+        wrong_type << "{\"experiment_name\":3,\"ticker_universe\":[\"SYN_EQ_A\"],\"strategy\":\"MA_Cross\"}\n";
         wrong_type.close();
         bool type_rejected = false;
         try { (void)quant::config::ConfigLoader::load_file("test_results/wrong_type_config.json"); }
@@ -831,7 +833,7 @@ int main() {
     });
     run_case("typed_config_rejects_negative_values", [&] {
         std::ofstream negative("test_results/negative_config.json");
-        negative << "{\"experiment_name\":\"bad\",\"ticker_universe\":[\"AAPL\"],\"strategy\":\"MA_Cross\",\"starting_capital\":-1}\n";
+        negative << "{\"experiment_name\":\"bad\",\"ticker_universe\":[\"SYN_EQ_A\"],\"strategy\":\"MA_Cross\",\"starting_capital\":-1}\n";
         negative.close();
         bool rejected = false;
         try { (void)quant::config::ConfigLoader::load_file("test_results/negative_config.json"); }

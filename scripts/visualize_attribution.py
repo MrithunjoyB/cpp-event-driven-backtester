@@ -88,11 +88,13 @@ def main() -> int:
     ax.tick_params(axis="x", rotation=45)
     save(fig, figures / "rebalance_holding_period_contribution.png")
 
-    concentration = summary.set_index("component")["percentage_of_net_profit"].reindex(["BTC-USD", "TSLA"], fill_value=0.0)
+    asset_concentration = summary[summary["component"].isin(assets)].copy()
+    asset_concentration["absolute_share"] = asset_concentration["percentage_of_net_profit"].abs()
+    concentration = asset_concentration.nlargest(2, "absolute_share").set_index("component")["percentage_of_net_profit"]
     fig, ax = plt.subplots(figsize=(6.5, 4.5))
     concentration.plot.bar(ax=ax, color=["#e68310", "#008695"])
-    ax.set(title="BTC and TSLA Profit Concentration", ylabel="Share of net profit", xlabel="")
-    save(fig, figures / "btc_tsla_concentration.png")
+    ax.set(title="Largest Synthetic Asset Contributions", ylabel="Share of net profit", xlabel="")
+    save(fig, figures / "largest_asset_concentration.png")
     print(f"Saved attribution figures to {figures.resolve()}")
     return 0
 

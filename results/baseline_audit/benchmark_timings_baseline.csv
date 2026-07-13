@@ -1,5 +1,0 @@
-benchmark,milliseconds,observations
-naive_rolling_sma,7.247708,376750
-optimized_rolling_sma,0.826958,376750
-single_backtest,28.799875,15070
-full_parameter_sweep_AAPL,92.758042,22

@@ -12,7 +12,7 @@ int main() {
         try { (void)quant::Date::parse("2023-02-29"); } catch (const quant::DataError&) { rejected = true; }
         if (!rejected) return 1;
         const auto config = quant::config::ConfigLoader::load_file("configs/ma_walk_forward.json");
-        if (config.walk_forward.window_mode != "calendar_duration" || config.benchmark.ticker != "SPY") return 1;
+        if (config.walk_forward.window_mode != "calendar_duration" || config.benchmark.ticker != "SYN_BENCH") return 1;
         if (config.execution_control.mode != "serial" || config.execution_control.threads != 1) return 1;
         if (quant::config::ConfigLoader::to_json(config).find("\"result_schema_version\": 2") == std::string::npos) return 1;
         auto invalid = config;

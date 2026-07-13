@@ -24,10 +24,13 @@ def main() -> int:
     commission = sum(float(row["commission"]) for row in costs)
     slippage = sum(float(row["slippage_cost"]) for row in costs)
     cash_drag = sum(float(row["uninvested_cash_drag"]) for row in cash)
-    text = ["# Portfolio Attribution Report", "", "Attribution is historical accounting description, not economic causality.", "",
+    assets = sorted((row for key, row in summary.items() if key not in {"CASH", "TRANSACTION_COSTS", "CORPORATE_ACTIONS", "BENCHMARK_RETURN", "ACTIVE_RETURN", "RESIDUAL", "TOTAL"}),
+                    key=lambda row: abs(float(row.get("percentage_of_net_profit", 0))), reverse=True)
+    leaders = assets[:2]
+    text = ["# Public Synthetic Portfolio Attribution Report", "", "These synthetic-fixture results validate accounting and reproducibility; they are not empirical market evidence or profitability claims.", "",
+            "Attribution is accounting description, not economic causality.", "",
             "## Return Attribution", "",
-            f"- BTC-USD contribution: {float(summary.get('BTC-USD', {}).get('contribution_return', 0)):.2%} of starting capital; {float(summary.get('BTC-USD', {}).get('percentage_of_net_profit', 0)):.2%} of net profit.",
-            f"- TSLA contribution: {float(summary.get('TSLA', {}).get('contribution_return', 0)):.2%} of starting capital; {float(summary.get('TSLA', {}).get('percentage_of_net_profit', 0)):.2%} of net profit.",
+            *[f"- {row['component']} contribution: {float(row.get('contribution_return', 0)):.2%} of starting capital; {float(row.get('percentage_of_net_profit', 0)):.2%} of net profit." for row in leaders],
             f"- Active return versus configured benchmark: {float(summary.get('ACTIVE_RETURN', {}).get('contribution_return', 0)):.2%}.",
             f"- Commission: {commission:.2f}; slippage: {slippage:.2f}; modelled spread cost: 0.00.",
             f"- Descriptive uninvested-cash drag: {cash_drag:.2f}; modelled cash interest: 0.00.",

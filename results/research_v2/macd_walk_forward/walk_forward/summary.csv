@@ -1,6 +1,0 @@
-schema_version,window_mode,continuity_policy,boundary_position_policy,ticker,strategy,windows,positive_oos_excess_rate,benchmark_win_rate,parameter_changes,worst_oos_return,initial_capital,final_capital,cumulative_oos_return,benchmark_ticker
-2,calendar_duration,continuous_capital,liquidate_at_test_end_close,AAPL,MACD_Momentum,5,0.200000,0.200000,2,-0.152991,100000.000000,107209.414499,0.072094,SPY
-2,calendar_duration,continuous_capital,liquidate_at_test_end_close,MSFT,MACD_Momentum,5,0.000000,0.000000,0,-0.023756,100000.000000,121473.585260,0.214736,SPY
-2,calendar_duration,continuous_capital,liquidate_at_test_end_close,SPY,MACD_Momentum,5,0.000000,0.000000,1,-0.033566,100000.000000,105804.869802,0.058049,SPY
-2,calendar_duration,continuous_capital,liquidate_at_test_end_close,TSLA,MACD_Momentum,5,0.600000,0.600000,1,-0.326287,100000.000000,209897.452703,1.098975,SPY
-2,calendar_duration,continuous_capital,liquidate_at_test_end_close,BTC-USD,MACD_Momentum,5,0.800000,0.800000,1,-0.179606,100000.000000,190891.890057,0.908919,SPY

@@ -24,7 +24,7 @@ struct WalkForwardConfig {
 };
 
 struct BenchmarkConfig {
-    std::string ticker{"SPY"};
+    std::string ticker{"SYN_BENCH"};
 };
 
 struct RegimeConfig {
@@ -36,7 +36,7 @@ struct BootstrapConfig {
 };
 
 struct PortfolioConfig {
-    std::string data_dir{"data"};
+    std::string data_dir{"data/synthetic"};
     std::string allocation_policy;
     std::string rebalance_frequency{"monthly"};
     double max_weight{0.40};
@@ -81,7 +81,7 @@ struct ExecutionControlConfig {
 
 struct ExperimentConfig {
     std::string name{"default_research"};
-    std::vector<std::string> tickers{"AAPL", "MSFT", "SPY", "TSLA", "BTC-USD"};
+    std::vector<std::string> tickers{"SYN_EQ_A", "SYN_EQ_B", "SYN_BENCH", "SYN_EQ_C", "SYN_CRYPTO"};
     std::string strategy{"MA_Cross"};
     ExecutionConfig execution;
     WalkForwardConfig walk_forward;

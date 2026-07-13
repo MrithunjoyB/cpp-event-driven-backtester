@@ -15,16 +15,16 @@ int main() {
         if (!condition) { std::cerr << "FAILED: " << message << '\n'; std::exit(1); }
     };
 
-    CandidateDefinition a{"fixture", "MA_Cross", "AAPL", "short=5;long=50", {}, "benchmark=SPY|cost=15bps|window=3y_6m"};
+    CandidateDefinition a{"fixture", "MA_Cross", "SYN_EQ_A", "short=5;long=50", {}, "benchmark=SYN_BENCH|cost=15bps|window=3y_6m"};
     a.candidate_id = SelectionRiskAnalyzer::canonical_candidate_id(a);
     CandidateDefinition repeated = a;
     repeated.candidate_id.clear();
     repeated.candidate_id = SelectionRiskAnalyzer::canonical_candidate_id(repeated);
     check(a.candidate_id == repeated.candidate_id, "candidate IDs are stable");
-    CandidateDefinition b{"fixture", "MA_Cross", "AAPL", "short=10;long=50", {}, "benchmark=SPY|cost=15bps|window=3y_6m"};
+    CandidateDefinition b{"fixture", "MA_Cross", "SYN_EQ_A", "short=10;long=50", {}, "benchmark=SYN_BENCH|cost=15bps|window=3y_6m"};
     b.candidate_id = SelectionRiskAnalyzer::canonical_candidate_id(b);
     check(a.candidate_id != b.candidate_id, "parameters produce unique candidate IDs");
-    CandidateDefinition other_ticker = a; other_ticker.ticker = "MSFT"; other_ticker.candidate_id.clear();
+    CandidateDefinition other_ticker = a; other_ticker.ticker = "SYN_EQ_B"; other_ticker.candidate_id.clear();
     other_ticker.candidate_id = SelectionRiskAnalyzer::canonical_candidate_id(other_ticker);
     check(a.candidate_id != other_ticker.candidate_id, "ticker is part of candidate identity");
     CandidateDefinition other_experiment = a; other_experiment.experiment_id = "other"; other_experiment.candidate_id.clear();
@@ -101,7 +101,7 @@ int main() {
     check(Analysis::grid_strategy_specs("invalid").empty(), "invalid family rejected by enumeration");
 
     CandidateDefinition changed_context = a;
-    changed_context.identity_context = "benchmark=SPY|cost=45bps|window=3y_6m";
+    changed_context.identity_context = "benchmark=SYN_BENCH|cost=45bps|window=3y_6m";
     changed_context.candidate_id.clear(); changed_context.candidate_id = SelectionRiskAnalyzer::canonical_candidate_id(changed_context);
     check(changed_context.candidate_id != a.candidate_id, "cost context changes candidate ID");
     CandidateDefinition changed_family = a;

@@ -19,11 +19,11 @@ struct BenchmarkResult {
 };
 
 struct BacktestConfig {
-    std::string ticker{"AAPL"};
+    std::string ticker{"SYN_EQ_A"};
     double starting_capital{100000.0};
     double transaction_cost_rate{0.001};
     double slippage_rate{0.0005};
-    std::string data_dir{"data"};
+    std::string data_dir{"data/synthetic"};
     std::string results_dir{"results"};
     std::string start_date;
     std::string end_date;

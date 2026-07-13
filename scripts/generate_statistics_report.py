@@ -4,9 +4,9 @@ from pathlib import Path
 def main():
  p=argparse.ArgumentParser();p.add_argument("--directory",default="results/research_v3/portfolio_equal_weight/statistics");a=p.parse_args();root=Path(a.directory)
  s={r["metric"]:r for r in csv.DictReader((root/"bootstrap_summary.csv").open())};sh=list(csv.DictReader((root/"sharpe_inference.csv").open()))[0];mt=list(csv.DictReader((root/"multiple_testing_summary.csv").open()))[0]
- text=f"""# Statistical Robustness Report
+ text=f"""# Public Synthetic Statistical Robustness Report
 
-Statistical evidence is conditional on historical data and assumptions; it does not guarantee future profitability.
+These synthetic-fixture results validate inference and reproducibility code paths. They are not empirical market evidence and do not imply profitability.
 
 - Default method: {sh['method']} with block length {sh['block_length']}, seed {sh['seed']}, and {sh['simulation_count']} simulations.
 - Cumulative-return {float(sh['confidence_level']):.0%} interval: [{float(s['cumulative_return']['lower_bound']):.4f}, {float(s['cumulative_return']['upper_bound']):.4f}].

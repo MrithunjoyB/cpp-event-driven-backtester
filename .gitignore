@@ -1,5 +1,8 @@
 build/
 build-*/
+/data/local/
+/data/*.csv
+/results/
 build_backtester
 backtester_tests
 *.o

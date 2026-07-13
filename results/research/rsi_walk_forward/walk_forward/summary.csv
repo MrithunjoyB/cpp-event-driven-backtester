@@ -1,6 +1,0 @@
-ticker,strategy,windows,positive_oos_excess_rate,benchmark_win_rate,parameter_changes,worst_oos_return
-AAPL,RSI_Mean_Reversion,5,0.600000,0.600000,1,0.021551
-MSFT,RSI_Mean_Reversion,5,0.200000,0.200000,3,-0.029726
-SPY,RSI_Mean_Reversion,5,0.000000,0.000000,2,-0.059298
-TSLA,RSI_Mean_Reversion,5,0.400000,0.400000,3,-0.211472
-BTC-USD,RSI_Mean_Reversion,11,0.454545,0.454545,6,-0.011534

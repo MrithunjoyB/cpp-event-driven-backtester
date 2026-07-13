@@ -63,8 +63,8 @@ def main():
     args.output.mkdir(parents=True, exist_ok=True)
     cli=str(ROOT/args.build/"quant_cli")
     workloads={
-      "single_aapl":[cli,"--mode","single","--ticker","AAPL","--strategy","ma_cross"],
-      "parameter_grid_aapl":[cli,"--mode","grid","--ticker","AAPL"],
+      "single_syn_eq_a":[cli,"--mode","single","--ticker","SYN_EQ_A","--strategy","ma_cross"],
+      "parameter_grid_syn_eq_a":[cli,"--mode","grid","--ticker","SYN_EQ_A"],
       "walk_forward_ma":[cli,"run","--config","configs/ma_walk_forward.json"],
       "portfolio_equal_attribution_statistics":[cli,"run","--config","configs/portfolio_equal_weight.json"],
       "ma_selection_risk":[cli,"run","--config","configs/selection_risk_ma.json"],
@@ -74,7 +74,7 @@ def main():
     }
     rows=[]
     for name,command in workloads.items():
-        result=measure(command,args.repetitions,1 if name=="single_aapl" else 0)
+        result=measure(command,args.repetitions,1 if name=="single_syn_eq_a" else 0)
         rows.append({"workload":name,"mode":"serial","threads":1,"repetitions":args.repetitions,
                      "median_seconds":result["median"],"min_seconds":result["minimum"],"max_seconds":result["maximum"],
                      "p10_seconds":result["p10"],"p90_seconds":result["p90"]})
@@ -104,7 +104,7 @@ def main():
     baseline=json.loads(args.baseline.read_text()) if args.baseline and args.baseline.exists() else {}
     comparisons=[]
     current={row["workload"]:row for row in rows}
-    mapping={"single_aapl":"single_aapl","ma_selection":"ma_selection_risk","combined_selection":"combined_selection_risk",
+    mapping={"single_syn_eq_a":"single_syn_eq_a","ma_selection":"ma_selection_risk","combined_selection":"combined_selection_risk",
              "portfolio_equal":"portfolio_equal_attribution_statistics","walk_forward":"walk_forward_ma"}
     for old,new in mapping.items():
         if old in baseline:

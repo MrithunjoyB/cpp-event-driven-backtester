@@ -1,0 +1,165 @@
+{
+  "assets": [
+    {
+      "asset": "SYN_EQ_A",
+      "calendar": "synthetic_weekday",
+      "classification": "synthetic",
+      "corporate_actions": {
+        "dividends": {
+          "2020-03-16": 0.18,
+          "2021-06-15": 0.22,
+          "2023-03-15": 0.14,
+          "2025-06-16": 0.17
+        },
+        "splits": {
+          "2022-06-15": 2.0
+        }
+      },
+      "date_range": {
+        "end": "2025-12-31",
+        "start": "2019-01-01"
+      },
+      "filename": "SYN_EQ_A.csv",
+      "missing_dates": [
+        "2021-03-17",
+        "2024-08-14"
+      ],
+      "row_count": 1804,
+      "sha256": "3e695b4289ffb8c6a7258bd2830c6d1bd69e2222b1345888ab1525914d3b0395"
+    },
+    {
+      "asset": "SYN_EQ_B",
+      "calendar": "synthetic_weekday",
+      "classification": "synthetic",
+      "corporate_actions": {
+        "dividends": {
+          "2019-09-16": 0.24,
+          "2022-09-15": 0.28,
+          "2024-09-16": 0.12
+        },
+        "splits": {
+          "2024-04-01": 3.0
+        }
+      },
+      "date_range": {
+        "end": "2025-12-31",
+        "start": "2019-01-01"
+      },
+      "filename": "SYN_EQ_B.csv",
+      "missing_dates": [
+        "2020-06-11",
+        "2023-10-19"
+      ],
+      "row_count": 1804,
+      "sha256": "f89cdd138c852697f37f7b960bdc0bbaa1ce319c35abba93689f4076a47a6d22"
+    },
+    {
+      "asset": "SYN_EQ_C",
+      "calendar": "synthetic_weekday",
+      "classification": "synthetic",
+      "corporate_actions": {
+        "dividends": {
+          "2021-12-15": 0.08
+        },
+        "splits": {
+          "2023-09-12": 0.5
+        }
+      },
+      "date_range": {
+        "end": "2025-12-31",
+        "start": "2019-01-01"
+      },
+      "filename": "SYN_EQ_C.csv",
+      "missing_dates": [
+        "2022-02-08",
+        "2025-05-06"
+      ],
+      "row_count": 1804,
+      "sha256": "5d2a4b881c092452f1f4f811372de16c7aae63728e0c62bf95efd93e628d7452"
+    },
+    {
+      "asset": "SYN_BENCH",
+      "calendar": "synthetic_weekday",
+      "classification": "synthetic",
+      "corporate_actions": {
+        "dividends": {
+          "2020-12-15": 0.35,
+          "2022-12-15": 0.4,
+          "2024-12-16": 0.45
+        },
+        "splits": {}
+      },
+      "date_range": {
+        "end": "2025-12-31",
+        "start": "2019-01-01"
+      },
+      "filename": "SYN_BENCH.csv",
+      "missing_dates": [
+        "2020-09-09"
+      ],
+      "row_count": 1805,
+      "sha256": "add612475353bcd5f64e72dff08cde0d3fce5327a7d4e550b9e5273687464f28"
+    },
+    {
+      "asset": "SYN_CRYPTO",
+      "calendar": "synthetic_seven_day",
+      "classification": "synthetic",
+      "corporate_actions": {
+        "dividends": {},
+        "splits": {}
+      },
+      "date_range": {
+        "end": "2025-12-31",
+        "start": "2019-01-01"
+      },
+      "filename": "SYN_CRYPTO.csv",
+      "missing_dates": [
+        "2022-11-13"
+      ],
+      "row_count": 2556,
+      "sha256": "59438fc86bf9f788f278a52deb70f78003eac10eef8f9a68c68faabb59639a9c"
+    }
+  ],
+  "classification": "synthetic",
+  "copyright": "Copyright 2026 Mrithunjoy Basumatary",
+  "description": "Independent deterministic fixtures; no provider data or real return path is used.",
+  "fixture_seed": 20260713,
+  "generator_id": "synthetic_market_data_v1",
+  "generator_version": 1,
+  "license": "Apache-2.0",
+  "network_required": false,
+  "schema": [
+    "Date",
+    "Open",
+    "High",
+    "Low",
+    "Close",
+    "Volume",
+    "AdjustedClose",
+    "Dividends",
+    "StockSplits"
+  ],
+  "synthetic_closures": [
+    "2019-01-21",
+    "2019-07-04",
+    "2019-12-25",
+    "2020-01-20",
+    "2020-07-03",
+    "2020-12-25",
+    "2021-01-18",
+    "2021-07-05",
+    "2021-12-24",
+    "2022-01-17",
+    "2022-07-04",
+    "2022-12-26",
+    "2023-01-16",
+    "2023-07-04",
+    "2023-12-25",
+    "2024-01-15",
+    "2024-07-04",
+    "2024-12-25",
+    "2025-01-20",
+    "2025-07-04",
+    "2025-12-25"
+  ]
+}

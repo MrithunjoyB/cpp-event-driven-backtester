@@ -1,6 +1,7 @@
 {
-  "experiment_name": "portfolio_inverse_volatility",
-  "ticker_universe": ["AAPL", "MSFT", "SPY", "TSLA", "BTC-USD"],
+  "experiment_name": "public_synthetic_portfolio_inverse_volatility",
+  "ticker_universe": ["SYN_EQ_A", "SYN_EQ_B", "SYN_BENCH", "SYN_EQ_C", "SYN_CRYPTO"],
+  "data_directory": "data/synthetic",
   "strategy": "MA_Cross",
   "starting_capital": 100000,
   "commission_bps": 10,
@@ -14,7 +15,7 @@
   "step_months": 6,
   "oos_continuity_policy": "continuous_capital",
   "boundary_position_policy": "liquidate_at_test_end_close",
-  "benchmark": "SPY",
+  "benchmark": "SYN_BENCH",
   "parameter_selection_objective": "sharpe_min_trades",
   "minimum_trade_requirement": 3,
   "regime_classification_method": "trend_200_sma_60_return_vol_20_expanding_median",
@@ -34,7 +35,7 @@
   "volatility_lookback": 60,
   "momentum_lookback": 126,
   "top_n": 3,
-  "output_directory": "results/research/portfolio_inverse_volatility",
-  "portfolio_output_directory": "results/research_v3/portfolio_inverse_volatility",
+  "output_directory": "results/public_synthetic/legacy/portfolio_inverse_volatility",
+  "portfolio_output_directory": "results/public_synthetic/portfolio_inverse_volatility",
   "result_schema_version": 3
 }

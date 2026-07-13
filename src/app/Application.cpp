@@ -198,7 +198,7 @@ int Application::run_legacy(const LegacyRunRequest& request) {
 
     if (request.mode == "single" || (!request.ticker.empty() && !request.strategy.empty())) {
         BacktestConfig config = base;
-        config.ticker = request.ticker.empty() ? "AAPL" : request.ticker;
+        config.ticker = request.ticker.empty() ? "SYN_EQ_A" : request.ticker;
         auto strategy = make_strategy(request.strategy.empty() ? "ma_cross" : request.strategy);
         const auto result = Backtester(config).run_detailed(*strategy);
         quant::io::CsvResultExporter::write_backtest(result, config.results_dir);

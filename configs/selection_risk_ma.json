@@ -1,6 +1,7 @@
 {
-  "experiment_name": "selection_risk_ma",
-  "ticker_universe": ["AAPL", "MSFT", "SPY", "TSLA", "BTC-USD"],
+  "experiment_name": "public_synthetic_selection_risk_ma",
+  "ticker_universe": ["SYN_EQ_A", "SYN_EQ_B", "SYN_BENCH", "SYN_EQ_C", "SYN_CRYPTO"],
+  "data_directory": "data/synthetic",
   "strategy": "MA_Cross",
   "starting_capital": 100000,
   "commission_bps": 10,
@@ -11,11 +12,11 @@
   "step_months": 6,
   "oos_continuity_policy": "continuous_capital",
   "boundary_position_policy": "liquidate_at_test_end_close",
-  "benchmark": "SPY",
+  "benchmark": "SYN_BENCH",
   "parameter_selection_objective": "sharpe_min_trades",
   "minimum_trade_requirement": 3,
   "regime_classification_method": "trend_200_sma_60_return_vol_20_expanding_median",
   "random_seed": 51,
-  "output_directory": "results/research_v3/selection_risk/ma",
+  "output_directory": "results/public_synthetic/selection_risk/ma",
   "result_schema_version": 2
 }

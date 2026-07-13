@@ -1,6 +1,0 @@
-ticker,strategy,windows,positive_oos_excess_rate,benchmark_win_rate,parameter_changes,worst_oos_return
-AAPL,MA_Cross,5,0.200000,0.200000,2,-0.078269
-MSFT,MA_Cross,5,0.000000,0.000000,2,-0.128948
-SPY,MA_Cross,5,0.200000,0.200000,1,0.000000
-TSLA,MA_Cross,5,0.400000,0.400000,0,-0.233826
-BTC-USD,MA_Cross,11,0.181818,0.181818,4,-0.180834

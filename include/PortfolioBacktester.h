@@ -20,11 +20,11 @@ struct PortfolioBacktestConfig {
     double starting_capital{100000.0};
     double transaction_cost_rate{0.001};
     double slippage_rate{0.0005};
-    std::string data_dir{"data"};
+    std::string data_dir{"data/synthetic"};
     std::string results_dir{"results/portfolio"};
     RebalanceFrequency rebalance_frequency{RebalanceFrequency::Monthly};
     AllocationPolicyConfig allocation;
-    std::string benchmark_ticker{"SPY"};
+    std::string benchmark_ticker{"SYN_BENCH"};
     quant::market_data::CalendarPolicy calendar{
         quant::market_data::CalendarMode::LegacyIntersection,
         quant::market_data::StaleMarkPolicy::LastKnown,

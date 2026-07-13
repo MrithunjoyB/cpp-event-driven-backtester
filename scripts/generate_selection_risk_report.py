@@ -9,7 +9,7 @@ args = parser.parse_args()
 rows = list(csv.DictReader((args.directory / "multiple_testing_summary.csv").open()))
 cross = [row for row in csv.DictReader((args.directory / "cross_family_selection_risk.csv").open()) if row.get("status") != "not_applicable"]
 frequencies = list(csv.DictReader((args.directory / "candidate_parameter_frequency.csv").open()))
-lines = ["# Selection-Risk Report", "", "The primary test is a centered circular moving-block max-mean reality check. The null is that no candidate has positive expected active return. Counterfactual candidate histories are normalized diagnostics, not deployable capital paths.", "", "## Corrected Evidence", "", "| Ticker | Family | Eligible | Common OOS observations | Best mean active return | Adjusted p-value |", "| --- | --- | ---: | ---: | ---: | ---: |"]
+lines = ["# Public Synthetic Selection-Risk Report", "", "These synthetic-fixture results validate selection-risk and reproducibility code paths; they are not empirical market evidence or profitability claims.", "", "The primary test is a centered circular moving-block max-mean reality check. The null is that no candidate has positive expected active return. Counterfactual candidate histories are normalized diagnostics, not deployable capital paths.", "", "## Corrected Evidence", "", "| Ticker | Family | Eligible | Common OOS observations | Best mean active return | Adjusted p-value |", "| --- | --- | ---: | ---: | ---: | ---: |"]
 for row in rows:
     lines.append(f"| {row['ticker']} | {row['strategy_family']} | {row['eligible_candidates']} | {row['common_observations']} | {float(row['observed_best_mean_active_return']):.6f} | {float(row['adjusted_p_value']):.4f} |")
 if cross:
@@ -26,6 +26,6 @@ zero = siblings / "cost_zero/selection_risk/cross_family_selection_risk.csv"
 high = siblings / "cost_high/selection_risk/cross_family_selection_risk.csv"
 if cross and zero.exists() and high.exists():
     lines += ["", "## Cost Robustness", "", "Zero-cost, base-cost, and high-cost grids use the same candidates, windows, seed, and bootstrap settings. No cross-family ticker test crosses a 5% adjusted threshold under any of the three cost assumptions."]
-lines += ["", "Historical evidence is not a forecast and does not imply future profitability."]
+lines += ["", "Synthetic output is software-validation evidence, not a forecast or market-performance claim."]
 (args.directory / "selection_risk_report.md").write_text("\n".join(lines) + "\n")
 print(args.directory / "selection_risk_report.md")

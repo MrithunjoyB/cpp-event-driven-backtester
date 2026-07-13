@@ -1,0 +1,17 @@
+{
+  "canonical_release_input": false,
+  "classification": "user_supplied",
+  "inputs": [
+    {
+      "path": "__USER_DATA_DIRECTORY__/__USER_TICKER__.csv",
+      "provider": "__USER_DECLARED_PROVIDER__",
+      "redistribution_status": "user_responsibility_not_granted_by_project",
+      "sha256": "__RESOLVED_LOCALLY__",
+      "ticker": "__USER_TICKER__"
+    }
+  ],
+  "manifest_type": "user_supplied_market_data_v1",
+  "network_required_for_execution": false,
+  "provider_responsibility": "The user is responsible for provider authorization and applicable terms.",
+  "template": true
+}

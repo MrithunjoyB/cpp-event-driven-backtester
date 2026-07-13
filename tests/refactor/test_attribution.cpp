@@ -77,7 +77,7 @@ int main() {
         check(std::isfinite(mixed.risk.front().beta_contribution), "benchmark beta contribution");
         check(!mixed.calendar_years.empty(), "calendar year aggregation");
         check(mixed.summary.end() != std::find_if(mixed.summary.begin(), mixed.summary.end(), [](const auto& row) { return row.component == "MIXBTC"; }), "BTC contribution");
-        check(mixed.summary.end() == std::find_if(mixed.summary.begin(), mixed.summary.end(), [](const auto& row) { return row.component == "TSLA"; }), "TSLA absent from fixture");
+        check(mixed.summary.end() == std::find_if(mixed.summary.begin(), mixed.summary.end(), [](const auto& row) { return row.component == "SYN_EQ_C"; }), "SYN_EQ_C absent from fixture");
 
         auto action_config = config({"ACT"}, "ACT");
         action_config.data_dir = "tests/fixtures/actions";

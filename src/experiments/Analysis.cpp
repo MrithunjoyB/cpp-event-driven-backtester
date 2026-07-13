@@ -183,7 +183,7 @@ std::vector<double> optimized_rolling_sma(const std::vector<double>& values, int
 }
 
 std::vector<std::string> Analysis::default_tickers() {
-    return {"AAPL", "MSFT", "SPY", "TSLA", "BTC-USD"};
+    return {"SYN_EQ_A", "SYN_EQ_B", "SYN_BENCH", "SYN_EQ_C", "SYN_CRYPTO"};
 }
 
 std::vector<StrategySpec> Analysis::default_strategy_specs() {
@@ -533,8 +533,8 @@ void Analysis::run_regime_evaluation(const BacktestConfig& base_config, const st
 
 std::vector<BenchmarkTiming> Analysis::run_performance_benchmarks(const BacktestConfig& base_config) {
     std::vector<BenchmarkTiming> timings;
-    MarketData data = load_market_data(base_config, "AAPL");
-    const auto& bars = data.bars("AAPL");
+    MarketData data = load_market_data(base_config, "SYN_EQ_A");
+    const auto& bars = data.bars("SYN_EQ_A");
     const auto closes = closes_from(bars);
 
     auto measure = [&](const std::string& name, auto fn) {
@@ -568,7 +568,7 @@ std::vector<BenchmarkTiming> Analysis::run_performance_benchmarks(const Backtest
 
     measure("single_backtest", [&]() {
         BacktestConfig config = base_config;
-        config.ticker = "AAPL";
+        config.ticker = "SYN_EQ_A";
         auto strategy = MovingAverageCrossoverStrategy(20, 50);
         for (int repeat = 0; repeat < 10; ++repeat) {
             Backtester(config).run_detailed(strategy);
@@ -576,9 +576,9 @@ std::vector<BenchmarkTiming> Analysis::run_performance_benchmarks(const Backtest
         return bars.size() * 10;
     });
 
-    measure("full_parameter_sweep_AAPL", [&]() {
+    measure("full_parameter_sweep_SYN_EQ_A", [&]() {
         BacktestConfig config = base_config;
-        config.ticker = "AAPL";
+        config.ticker = "SYN_EQ_A";
         std::size_t runs = 0;
         for (const auto& spec : grid_strategy_specs()) {
             Backtester(config).run_detailed(*spec.instance);
@@ -773,7 +773,7 @@ void Analysis::run_bootstrap_research(const ExperimentConfig& experiment) {
     base.starting_capital = experiment.execution.starting_capital;
     base.transaction_cost_rate = experiment.execution.commission_bps / 10000.0;
     base.slippage_rate = experiment.execution.slippage_bps / 10000.0;
-    base.ticker = experiment.tickers.empty() ? "AAPL" : experiment.tickers.front();
+    base.ticker = experiment.tickers.empty() ? "SYN_EQ_A" : experiment.tickers.front();
     auto specs = grid_strategy_specs(experiment.strategy);
     if (specs.empty()) {
         throw quant::ConfigurationError("Bootstrap research requires a non-empty single-family strategy grid");

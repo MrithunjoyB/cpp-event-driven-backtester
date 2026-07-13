@@ -62,6 +62,7 @@ def write_dataset(data: pd.DataFrame, ticker: str, output: Path, start: str, end
     data.to_csv(output, index=False)
     digest = hashlib.sha256(output.read_bytes()).hexdigest()
     metadata = {
+        "classification": "user_supplied_third_party",
         "source_ticker": ticker,
         "data_source": "yfinance",
         "requested_start": start,
@@ -73,6 +74,8 @@ def write_dataset(data: pd.DataFrame, ticker: str, output: Path, start: str, end
         "adjustment_provenance": "Yahoo Finance AdjustedClose; Dividends and StockSplits requested with actions=True",
         "csv_sha256": digest,
         "schema_version": 3,
+        "redistribution_status": "not_granted_by_this_project",
+        "provider_terms_responsibility": "The user is responsible for obtaining and using data under applicable provider terms.",
     }
     output.with_suffix(".metadata.json").write_text(json.dumps(metadata, indent=2) + "\n")
 
@@ -82,9 +85,14 @@ def main() -> None:
     parser.add_argument("--start", default=START)
     parser.add_argument("--end", default=END)
     parser.add_argument("--force", action="store_true")
+    parser.add_argument("--output-directory", type=Path, default=Path("data/local"))
     args = parser.parse_args()
-    data_dir = Path(__file__).resolve().parents[1] / "data"
+    data_dir = args.output_directory
+    if not data_dir.is_absolute():
+        data_dir = Path(__file__).resolve().parents[1] / data_dir
     data_dir.mkdir(parents=True, exist_ok=True)
+    print("Optional acquisition only: downloaded files are local, ignored, and never part of public canonical reconstruction.")
+    print("You are responsible for provider authorization, terms, and redistribution restrictions.")
     for ticker in TICKERS:
         print(f"Downloading {ticker}...")
         frame = yf.download(ticker, start=args.start, end=args.end, auto_adjust=False, actions=True, progress=False)

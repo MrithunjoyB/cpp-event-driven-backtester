@@ -27,16 +27,17 @@ def rejected(function, name):
         return
     raise AssertionError(name)
 
-manifest_path = ROOT / "manifests/single_aapl_ma.json"
+manifest_path = ROOT / "manifests/public_synthetic_single_ma.json"
 manifest = load_manifest(manifest_path)
-suite = json.loads((ROOT / "manifests/canonical_research_suite.json").read_text())
+suite = json.loads((ROOT / "manifests/public_reproducibility_suite.json").read_text())
 
 check(manifest["manifest_schema_version"] == 1, "schema validation")
 bad = copy.deepcopy(manifest); bad["manifest_schema_version"] = 99
 rejected(lambda: validate_manifest(bad), "unsupported schema rejection")
 check(canonical_json({"b": 2, "a": 1}) == '{"a":1,"b":2}', "deterministic serialization")
 check(manifest_identity(manifest) == manifest["manifest_id"], "stable manifest id")
-check(len(sha256_file(ROOT / "data/AAPL.csv")) == 64, "file sha256")
+check(len(sha256_file(ROOT / "data/synthetic/SYN_EQ_A.csv")) == 64, "file sha256")
+check(all(item.get("data_classification") == "synthetic" for item in manifest["inputs"]), "synthetic inputs classified")
 bad = copy.deepcopy(manifest); bad["inputs"][0]["path"] = "data/missing.csv"
 rejected(lambda: verify_inputs(ROOT, bad), "missing input rejection")
 bad = copy.deepcopy(manifest); bad["inputs"][0]["sha256"] = "0" * 64
