@@ -7,7 +7,7 @@ import tempfile
 from pathlib import Path
 
 root = Path(__file__).resolve().parents[1]
-source = root / "results/research_v3/selection_risk/ma/selection_risk"
+source = root / "results/public_synthetic/selection_risk/ma/selection_risk"
 with tempfile.TemporaryDirectory() as temp:
     target = Path(temp) / "selection_risk"
     shutil.copytree(source, target)

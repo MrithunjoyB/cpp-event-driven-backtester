@@ -15,11 +15,6 @@ venv/
 test_next_bar.csv
 NEXT.csv
 test_results/
-results/research_v3/
-results/research_v2/*/selection_risk/
-results/performance/
-results/reproducibility_capture/
-results/reproduced/
 reproduced/
 *.failed/
 .matplotlib-cache/

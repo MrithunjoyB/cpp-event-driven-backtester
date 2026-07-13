@@ -69,8 +69,8 @@ def main():
       "portfolio_equal_attribution_statistics":[cli,"run","--config","configs/portfolio_equal_weight.json"],
       "ma_selection_risk":[cli,"run","--config","configs/selection_risk_ma.json"],
       "combined_selection_risk":[cli,"run","--config","configs/selection_risk_all.json"],
-      "selection_report_generation":[sys.executable,"scripts/generate_selection_risk_report.py","--directory","results/research_v3/selection_risk/all_families/selection_risk"],
-      "selection_figure_generation":[sys.executable,"scripts/visualize_selection_risk.py","--directory","results/research_v3/selection_risk/all_families/selection_risk"],
+      "selection_report_generation":[sys.executable,"scripts/generate_selection_risk_report.py","--directory","results/public_synthetic/selection_risk/all_families/selection_risk"],
+      "selection_figure_generation":[sys.executable,"scripts/visualize_selection_risk.py","--directory","results/public_synthetic/selection_risk/all_families/selection_risk"],
     }
     rows=[]
     for name,command in workloads.items():
@@ -84,7 +84,7 @@ def main():
         result=measure([cli,"run","--config","configs/selection_risk_all.json","--execution-mode",mode,"--threads",str(threads)],args.repetitions)
         scaling.append({"threads":threads,"mode":mode,"repetitions":args.repetitions,"median_seconds":result["median"],
                         "min_seconds":result["minimum"],"max_seconds":result["maximum"],
-                        "canonical_output_hash":tree_hash(ROOT/"results/research_v3/selection_risk/all_families/selection_risk")})
+                        "canonical_output_hash":tree_hash(ROOT/"results/public_synthetic/selection_risk/all_families/selection_risk")})
     serial=scaling[0]["median_seconds"]
     for row in scaling:
         row["speedup"]=serial/row["median_seconds"]
@@ -113,8 +113,8 @@ def main():
     if "seven_package" in baseline:
         before=float(baseline["seven_package"]["median"]); after=float(seven_rows[0]["median_seconds"])
         comparisons.append({"workload":"seven_package_selection_risk","baseline_seconds":before,"optimized_serial_seconds":after,"speedup":before/after})
-    input_hash=hashlib.sha256("".join(sha256(path) for path in sorted((ROOT/"data").glob("*.csv"))).encode()).hexdigest()
-    output_dir=ROOT/"results/research_v3/selection_risk/all_families/selection_risk"
+    input_hash=hashlib.sha256("".join(sha256(path) for path in sorted((ROOT/"data/synthetic").glob("*.csv"))).encode()).hexdigest()
+    output_dir=ROOT/"results/public_synthetic/selection_risk/all_families/selection_risk"
     environment={"schema_version":1,"os":platform.platform(),"machine":platform.machine(),"processor":platform.processor(),
                  "logical_cores":os.cpu_count(),"compiler":subprocess.check_output(["c++","--version"],text=True).splitlines()[0],
                  "python":platform.python_version(),"git_commit":subprocess.check_output(["git","rev-parse","HEAD"],cwd=ROOT,text=True).strip(),

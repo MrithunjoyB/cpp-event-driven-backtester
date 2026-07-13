@@ -3,23 +3,28 @@ name: Complete Research Reconstruction
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   canonical-suite:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: "3.12"
           cache: pip
       - run: python3 -m pip install -r requirements-validation.txt
+      - run: python3 scripts/validate_synthetic_market_data.py data/synthetic --regenerate-check
+      - run: python3 scripts/validate_public_data_boundary.py
       - run: python3 scripts/validate_reproducibility.py manifests --verify-inputs
-      - run: python3 scripts/reproduce.py --manifest manifests/canonical_research_suite.json --output-directory ${{ runner.temp }}/canonical-suite --build-directory build-reproduce --execution-mode parallel --threads 4 --allow-compatible-environment --keep-failed-output --json-report ${{ runner.temp }}/canonical-suite-report.json
-      - run: python3 scripts/validate_reproducibility.py manifests --verify-inputs --report ${{ runner.temp }}/canonical-suite-report.json
+      - run: python3 scripts/reproduce.py --manifest manifests/public_reproducibility_suite.json --output-directory ${{ runner.temp }}/public-synthetic-suite --build-directory build-reproduce --execution-mode parallel --threads 4 --allow-compatible-environment --keep-failed-output --json-report ${{ runner.temp }}/public-synthetic-suite-report.json
+      - run: python3 scripts/validate_reproducibility.py manifests --verify-inputs --report ${{ runner.temp }}/public-synthetic-suite-report.json
       - name: Upload failed reconstruction evidence
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: failed-canonical-suite
-          path: ${{ runner.temp }}/canonical-suite.failed
+          path: ${{ runner.temp }}/public-synthetic-suite.failed
           retention-days: 3

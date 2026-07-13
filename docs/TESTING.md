@@ -8,15 +8,17 @@ cmake --build build --parallel
 ctest --test-dir build --output-on-failure
 ```
 
-The current commit registers 23 targets covering the preserved regression suite, typed date/config behavior, causal methodology, exporters, deterministic bootstrap analysis, stable RNG vectors, bounded execution, reproducibility, final-audit release gates, and CLI smoke checks. Fixtures in `tests/fixtures` are local and deterministic; tests never download live data.
+The migration tree registers 27 targets covering the synthetic regression suite, typed date/config behavior, causal methodology, exporters, deterministic bootstrap analysis, stable RNG vectors, bounded execution, reproducibility, final-audit gates, public data boundaries, user inputs, and CLI smoke checks. Tests never download live data.
 
-`calendar_tests`, `union_portfolio_tests`, and `corporate_action_tests` cover union/intersection timelines, stale marks, weekend risk, closed-market execution prevention, civil schedules, causal deferral, splits, reverse splits, dividends, adjusted-mode double-count prevention, and invalid actions. Run `python3 scripts/test_download_data.py` for deterministic downloader normalization.
+`synthetic_data_tests` verifies byte-stable generation, hashes, equity/crypto calendars, schema, OHLC invariants, and corruption rejection. `user_market_data_tests` covers provider-neutral schema validation, local hash manifests, malformed inputs, and missing files. `public_data_boundary_tests` plus `public_data_boundary_validator` reject removed hashes/rows, provider paths, local placeholders, network acquisition, stale manifests, and tracked result artifacts.
+
+`calendar_tests`, `union_portfolio_tests`, and `corporate_action_tests` cover union/intersection timelines, stale marks, weekend risk, closed-market execution prevention, civil schedules, causal deferral, splits, reverse splits, dividends, adjusted-mode double-count prevention, and invalid actions. Downloader normalization remains an optional acquisition-layer test and is not part of canonical reconstruction.
 
 `attribution_tests` covers pure appreciation, multiple assets, actual trade flows, commission/slippage decomposition, cash treatment, stale marks, split neutrality, dividends, drawdown recovery, volatility/beta contribution, year aggregation, schema export, and residual rejection. The Python validator independently recomputes accounting identities and contribution sums.
 
 `statistical_tests` covers fixed-seed IID and moving-block reproducibility, path lengths, block validation, sample sufficiency, empirical intervals, probability bounds, positive/negative and benchmark-identical series, active returns, Sharpe inference, input labelling, and the centered moving-block reality check. Python independently recomputes exported Sharpe and confidence intervals.
 
-Methodology coverage includes next-bar execution, causal regime attribution, calendar walk-forward boundaries, continuous OOS capital, benchmark execution parity, and configured benchmark propagation. `tests/fixtures/regression/stage0_architecture_baseline.csv` records eight numerical snapshots from commit `dc040a9...`; compare generated artifacts with:
+Methodology coverage includes next-bar execution, causal regime attribution, calendar walk-forward boundaries, continuous OOS capital, benchmark execution parity, and configured benchmark propagation. `tests/fixtures/regression/stage0_architecture_baseline.csv` records eight public synthetic snapshots from implementation commit `01198f25...`; the previous empirical snapshot remains only in Git history. Compare generated artifacts with:
 
 ```bash
 python3 scripts/check_regression_snapshots.py
@@ -46,16 +48,16 @@ python3 scripts/validate_performance_results.py results/performance
 
 ```bash
 python3 scripts/validate_reproducibility.py manifests --verify-inputs
-python3 scripts/reproduce.py --manifest manifests/single_aapl_ma.json --verify-only --allow-compatible-environment
-python3 scripts/reproduce.py --manifest manifests/canonical_research_suite.json \
-  --output-directory results/reproduced/canonical-suite --allow-compatible-environment
+python3 scripts/reproduce.py --manifest manifests/public_synthetic_single_ma.json --verify-only --allow-compatible-environment
+python3 scripts/reproduce.py --manifest manifests/public_reproducibility_suite.json \
+  --output-directory results/reproduced/public-synthetic-suite --allow-compatible-environment
 ```
 
 The dedicated `selection_risk_tests` target checks stable candidate identity, strict common-date panel construction, duplicate/non-finite rejection, minimum samples, deterministic moving-block resampling, max-statistic calculation, null fixtures, and bootstrap metadata. Production exports are independently checked with:
 
 ```bash
-python3 scripts/validate_selection_risk.py results/research_v3/selection_risk/ma/selection_risk
-python3 scripts/test_selection_risk_reference.py results/research_v3/selection_risk/ma/selection_risk
+python3 scripts/validate_selection_risk.py results/public_synthetic/selection_risk/ma/selection_risk
+python3 scripts/test_selection_risk_reference.py results/public_synthetic/selection_risk/ma/selection_risk
 python3 scripts/test_selection_risk_validator.py
 ```
 

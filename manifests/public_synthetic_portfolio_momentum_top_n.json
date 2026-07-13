@@ -1,0 +1,2121 @@
+{
+  "build": {
+    "build_type": "Release",
+    "compiler_policy": "recorded_not_identity_bound",
+    "cxx_standard": 17,
+    "required_cli_version": "2.0.0",
+    "sanitizer": "none",
+    "strict_warnings": true,
+    "system": "CMake"
+  },
+  "commands": [
+    {
+      "argv": [
+        "{cli}",
+        "run",
+        "--config",
+        "{config}",
+        "--execution-mode",
+        "{execution_mode}",
+        "--threads",
+        "{threads}"
+      ],
+      "name": "experiment"
+    },
+    {
+      "argv": [
+        "{python}",
+        "scripts/validate_results.py",
+        "{output}"
+      ],
+      "name": "validate_results"
+    },
+    {
+      "argv": [
+        "{python}",
+        "scripts/test_statistics_reference.py",
+        "{output}/statistics"
+      ],
+      "name": "statistics_reference"
+    },
+    {
+      "argv": [
+        "{python}",
+        "scripts/visualize_attribution.py",
+        "--directory",
+        "{output}/attribution"
+      ],
+      "name": "attribution_figures"
+    },
+    {
+      "argv": [
+        "{python}",
+        "scripts/generate_attribution_report.py",
+        "--directory",
+        "{output}/attribution"
+      ],
+      "name": "attribution_report"
+    },
+    {
+      "argv": [
+        "{python}",
+        "scripts/visualize_statistics.py",
+        "--directory",
+        "{output}/statistics"
+      ],
+      "name": "statistics_figures"
+    },
+    {
+      "argv": [
+        "{python}",
+        "scripts/generate_statistics_report.py",
+        "--directory",
+        "{output}/statistics"
+      ],
+      "name": "statistics_report"
+    }
+  ],
+  "configuration": {
+    "defaults_applied": true,
+    "driver": "typed_config",
+    "path": "configs/portfolio_momentum_top_n.json",
+    "resolved": {
+      "adjustment_policy": "raw_price",
+      "allocation_policy": "momentum_top_n",
+      "annualization_method": "inferred_observed_periods",
+      "benchmark": "SYN_BENCH",
+      "boundary_position_policy": "liquidate_at_test_end_close",
+      "calendar_valuation_mode": "union",
+      "cash_buffer": 0.02,
+      "commission_bps": 10.0,
+      "configured_periods_per_year": 252.0,
+      "data_directory": "data/synthetic",
+      "dividend_convention": "ex_date",
+      "execution_mode": "serial",
+      "experiment_name": "public_synthetic_portfolio_momentum_top_n",
+      "fractional_share_policy": "retain_fractional",
+      "max_stale_calendar_days": 7,
+      "max_weight": 0.4,
+      "min_trade_value": 25.0,
+      "minimum_trade_requirement": 3,
+      "missing_bar_policy": "error",
+      "momentum_lookback": 126,
+      "oos_continuity_policy": "continuous_capital",
+      "output_directory": "results/public_synthetic/legacy/portfolio_momentum_top_n",
+      "parameter_selection_objective": "sharpe_min_trades",
+      "pending_order_policy": "cancel",
+      "portfolio_output_directory": "results/public_synthetic/portfolio_momentum_top_n",
+      "random_seed": 47,
+      "rebalance_closed_asset_policy": "partial_rebalance",
+      "rebalance_frequency": "monthly",
+      "regime_classification_method": "trend_200_sma_60_return_vol_20_expanding_median",
+      "result_schema_version": 3,
+      "slippage_bps": 5.0,
+      "stale_mark_policy": "last_known",
+      "starting_capital": 100000.0,
+      "step_days": 126,
+      "step_months": 6,
+      "strategy": "MA_Cross",
+      "test_months": 6,
+      "test_window_days": 126,
+      "threads": 1,
+      "ticker_universe": [
+        "SYN_EQ_A",
+        "SYN_EQ_B",
+        "SYN_BENCH",
+        "SYN_EQ_C",
+        "SYN_CRYPTO"
+      ],
+      "top_n": 3,
+      "train_window_days": 756,
+      "train_years": 3,
+      "volatility_lookback": 60,
+      "window_mode": "calendar_duration"
+    },
+    "sha256": "17816b15321a7a27ed80eda289855031fb0aecb208df8fd511896af4cf0e3c92"
+  },
+  "created_by": "generate_reproducibility_manifests.py/public_synthetic_v1",
+  "description": "Public synthetic canonical reproducibility package for public_synthetic_portfolio_momentum_top_n; not empirical market evidence",
+  "execution": {
+    "default_mode": "serial",
+    "effective_threads": 1,
+    "policy": "close_decision_next_open_fill",
+    "supported_modes": [
+      "serial",
+      "parallel"
+    ],
+    "supported_threads": [
+      1,
+      2,
+      4,
+      8
+    ]
+  },
+  "experiment_id": "public_synthetic_portfolio_momentum_top_n",
+  "inputs": [
+    {
+      "data_classification": "synthetic",
+      "fixture_seed": 20260713,
+      "format": "json",
+      "generator_id": "synthetic_market_data_v1",
+      "generator_version": 1,
+      "logical_name": "synthetic_fixture_metadata",
+      "path": "data/synthetic/metadata.json",
+      "redistribution_status": "project_owned_apache_2_0",
+      "role": "public_canonical_generator_metadata",
+      "sha256": "f0a9f87a8a3047b36ccc9f32a685f0d1bf7a140066f1febd765f16efe1a009bb",
+      "size_bytes": 3905
+    },
+    {
+      "acquisition_date": null,
+      "acquisition_method": "offline deterministic generation",
+      "adjustment_policy": "manifest_configuration",
+      "corporate_action_availability": "deterministic synthetic dividends and splits declared in metadata.json",
+      "data_classification": "synthetic",
+      "date_range": {
+        "end": "2025-12-31",
+        "start": "2019-01-01"
+      },
+      "fixture_seed": 20260713,
+      "format": "csv",
+      "generator_id": "synthetic_market_data_v1",
+      "generator_version": 1,
+      "license_or_redistribution_constraint": "Apache-2.0 project-owned synthetic fixture",
+      "logical_name": "synthetic_ohlcv_SYN_EQ_A",
+      "mutability": "regenerable_and_immutable_by_sha256",
+      "path": "data/synthetic/SYN_EQ_A.csv",
+      "redistribution_status": "project_owned_apache_2_0",
+      "role": "public_canonical_synthetic_market_data",
+      "row_count": 1804,
+      "schema": "Date,Open,High,Low,Close,Volume,AdjustedClose,Dividends,StockSplits",
+      "sha256": "48b0b12cb9feab6649348db415ff54198eb9f7097861a7f666af0bf9385a4350",
+      "size_bytes": 162297,
+      "source_description": "Repository-generated independent synthetic fixture; not real market data",
+      "ticker_or_universe": "SYN_EQ_A"
+    },
+    {
+      "acquisition_date": null,
+      "acquisition_method": "offline deterministic generation",
+      "adjustment_policy": "manifest_configuration",
+      "corporate_action_availability": "deterministic synthetic dividends and splits declared in metadata.json",
+      "data_classification": "synthetic",
+      "date_range": {
+        "end": "2025-12-31",
+        "start": "2019-01-01"
+      },
+      "fixture_seed": 20260713,
+      "format": "csv",
+      "generator_id": "synthetic_market_data_v1",
+      "generator_version": 1,
+      "license_or_redistribution_constraint": "Apache-2.0 project-owned synthetic fixture",
+      "logical_name": "synthetic_ohlcv_SYN_EQ_B",
+      "mutability": "regenerable_and_immutable_by_sha256",
+      "path": "data/synthetic/SYN_EQ_B.csv",
+      "redistribution_status": "project_owned_apache_2_0",
+      "role": "public_canonical_synthetic_market_data",
+      "row_count": 1804,
+      "schema": "Date,Open,High,Low,Close,Volume,AdjustedClose,Dividends,StockSplits",
+      "sha256": "f8ec8d1d916800a8d3449f9e53864de8085db4ac9c7f93b1435c5fea3c56e001",
+      "size_bytes": 160017,
+      "source_description": "Repository-generated independent synthetic fixture; not real market data",
+      "ticker_or_universe": "SYN_EQ_B"
+    },
+    {
+      "acquisition_date": null,
+      "acquisition_method": "offline deterministic generation",
+      "adjustment_policy": "manifest_configuration",
+      "corporate_action_availability": "deterministic synthetic dividends and splits declared in metadata.json",
+      "data_classification": "synthetic",
+      "date_range": {
+        "end": "2025-12-31",
+        "start": "2019-01-01"
+      },
+      "fixture_seed": 20260713,
+      "format": "csv",
+      "generator_id": "synthetic_market_data_v1",
+      "generator_version": 1,
+      "license_or_redistribution_constraint": "Apache-2.0 project-owned synthetic fixture",
+      "logical_name": "synthetic_ohlcv_SYN_BENCH",
+      "mutability": "regenerable_and_immutable_by_sha256",
+      "path": "data/synthetic/SYN_BENCH.csv",
+      "redistribution_status": "project_owned_apache_2_0",
+      "role": "public_canonical_synthetic_market_data",
+      "row_count": 1805,
+      "schema": "Date,Open,High,Low,Close,Volume,AdjustedClose,Dividends,StockSplits",
+      "sha256": "610e8c2f379716990b5df7a252e460679c838e6c33733c628774840260f9c773",
+      "size_bytes": 166211,
+      "source_description": "Repository-generated independent synthetic fixture; not real market data",
+      "ticker_or_universe": "SYN_BENCH"
+    },
+    {
+      "acquisition_date": null,
+      "acquisition_method": "offline deterministic generation",
+      "adjustment_policy": "manifest_configuration",
+      "corporate_action_availability": "deterministic synthetic dividends and splits declared in metadata.json",
+      "data_classification": "synthetic",
+      "date_range": {
+        "end": "2025-12-31",
+        "start": "2019-01-01"
+      },
+      "fixture_seed": 20260713,
+      "format": "csv",
+      "generator_id": "synthetic_market_data_v1",
+      "generator_version": 1,
+      "license_or_redistribution_constraint": "Apache-2.0 project-owned synthetic fixture",
+      "logical_name": "synthetic_ohlcv_SYN_EQ_C",
+      "mutability": "regenerable_and_immutable_by_sha256",
+      "path": "data/synthetic/SYN_EQ_C.csv",
+      "redistribution_status": "project_owned_apache_2_0",
+      "role": "public_canonical_synthetic_market_data",
+      "row_count": 1804,
+      "schema": "Date,Open,High,Low,Close,Volume,AdjustedClose,Dividends,StockSplits",
+      "sha256": "e89bbf0097270c993200f04e7bd73b84ad767dc708aedc8d0706017239848289",
+      "size_bytes": 159417,
+      "source_description": "Repository-generated independent synthetic fixture; not real market data",
+      "ticker_or_universe": "SYN_EQ_C"
+    },
+    {
+      "acquisition_date": null,
+      "acquisition_method": "offline deterministic generation",
+      "adjustment_policy": "manifest_configuration",
+      "corporate_action_availability": "deterministic synthetic dividends and splits declared in metadata.json",
+      "data_classification": "synthetic",
+      "date_range": {
+        "end": "2025-12-31",
+        "start": "2019-01-01"
+      },
+      "fixture_seed": 20260713,
+      "format": "csv",
+      "generator_id": "synthetic_market_data_v1",
+      "generator_version": 1,
+      "license_or_redistribution_constraint": "Apache-2.0 project-owned synthetic fixture",
+      "logical_name": "synthetic_ohlcv_SYN_CRYPTO",
+      "mutability": "regenerable_and_immutable_by_sha256",
+      "path": "data/synthetic/SYN_CRYPTO.csv",
+      "redistribution_status": "project_owned_apache_2_0",
+      "role": "public_canonical_synthetic_market_data",
+      "row_count": 2556,
+      "schema": "Date,Open,High,Low,Close,Volume,AdjustedClose,Dividends,StockSplits",
+      "sha256": "3b208726cfc0a10370ceaff5c741e95ae75c05922a2caf872f5969983f18c85b",
+      "size_bytes": 248965,
+      "source_description": "Repository-generated independent synthetic fixture; not real market data",
+      "ticker_or_universe": "SYN_CRYPTO"
+    }
+  ],
+  "known_volatile_fields": [
+    "actual_commit",
+    "elapsed_seconds",
+    "generated_at",
+    "generated_at_utc",
+    "git_commit_hash",
+    "hostname",
+    "output_directory",
+    "portfolio_output_directory",
+    "run_timestamp_utc",
+    "source_tree_status",
+    "timestamp",
+    "username"
+  ],
+  "limitations": [
+    "Synthetic outputs validate software and methodology but are not empirical market evidence",
+    "Mutable remote downloads are excluded from exact reconstruction",
+    "PNG bytes are presentation-only across platforms",
+    "Compiler and standard-library versions are recorded but not identity-bound for semantic reconstruction"
+  ],
+  "lineage": {
+    "edges": [
+      [
+        "inputs",
+        "simulation"
+      ],
+      [
+        "resolved_config",
+        "simulation"
+      ],
+      [
+        "quant_cli",
+        "simulation"
+      ],
+      [
+        "simulation",
+        "analytics"
+      ],
+      [
+        "analytics",
+        "validators"
+      ],
+      [
+        "analytics",
+        "reports"
+      ]
+    ],
+    "nodes": [
+      "inputs",
+      "resolved_config",
+      "quant_cli",
+      "simulation",
+      "analytics",
+      "validators",
+      "reports"
+    ]
+  },
+  "manifest_id": "sha256:222fa8f28c38e89735ae50bf0ffc6f2dab35a87512d69ddc90d4ce03cf18128b",
+  "manifest_schema_version": 1,
+  "methodology": {
+    "adjustment_policy": "raw_price",
+    "benchmark": "SYN_BENCH",
+    "calendar_policy": "union",
+    "result_schema": 3,
+    "version": "causal_daily_v3_stochastic_v2"
+  },
+  "outputs": {
+    "artifacts": [
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "attribution/attribution_reconciliation.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 2556,
+        "schema": {
+          "columns": [
+            "schema_version",
+            "experiment_id",
+            "policy",
+            "benchmark",
+            "adjustment_basis",
+            "calendar_mode",
+            "attribution_methodology",
+            "contribution_units",
+            "residual_tolerance",
+            "start_date",
+            "end_date",
+            "beginning_value",
+            "ending_value",
+            "external_cash_flow",
+            "market_pnl",
+            "dividend_income",
+            "corporate_action_effect",
+            "cash_return",
+            "commission",
+            "spread_cost",
+            "slippage_cost",
+            "residual"
+          ]
+        },
+        "semantic_sha256": "265017dfde2620fe899759ad7ecd92851ce53f155afbd660b59e8e0deb9b3a17",
+        "sha256": "1670d268044a95a85311b0bcb2974d3ec6ed0781abadd2d508ea3e1bdd2ccf3a",
+        "size_bytes": 845734,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "md",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "attribution/attribution_report.md",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": null,
+        "schema": null,
+        "semantic_sha256": "90e7037b914d2e11f3c28e3e8c5a76812a069704d9455fd9a1628ddd4222ec0b",
+        "sha256": "90e7037b914d2e11f3c28e3e8c5a76812a069704d9455fd9a1628ddd4222ec0b",
+        "size_bytes": 968,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "attribution/benchmark_relative_attribution.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 4,
+        "schema": {
+          "columns": [
+            "schema_version",
+            "experiment_id",
+            "policy",
+            "benchmark",
+            "adjustment_basis",
+            "calendar_mode",
+            "attribution_methodology",
+            "contribution_units",
+            "residual_tolerance",
+            "component",
+            "portfolio_contribution_return",
+            "benchmark_contribution_return",
+            "active_contribution_return"
+          ]
+        },
+        "semantic_sha256": "8da0c01534441c04dc2450b186a576d26bd1c8a2159a4927a63e064194ebeb2c",
+        "sha256": "3223c3ad7f3eb030848d0a50dcdd90814b0b055a0f4daf42b6d1f3f52ed6a7e3",
+        "size_bytes": 812,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "attribution/calendar_year_attribution.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 36,
+        "schema": {
+          "columns": [
+            "schema_version",
+            "experiment_id",
+            "policy",
+            "benchmark",
+            "adjustment_basis",
+            "calendar_mode",
+            "attribution_methodology",
+            "contribution_units",
+            "residual_tolerance",
+            "calendar_year",
+            "ticker",
+            "contribution",
+            "residual"
+          ]
+        },
+        "semantic_sha256": "86f2929b4b61f0cd433b025e73d9c18d4084d366171cc985689c00d4ef9b7523",
+        "sha256": "6d61838303da03ab465560bbdabdbad03f84ffb062dd82dffb0a5b0ffb93fbeb",
+        "size_bytes": 6457,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "attribution/cash_attribution.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 2556,
+        "schema": {
+          "columns": [
+            "schema_version",
+            "experiment_id",
+            "policy",
+            "benchmark",
+            "adjustment_basis",
+            "calendar_mode",
+            "attribution_methodology",
+            "contribution_units",
+            "residual_tolerance",
+            "start_date",
+            "end_date",
+            "beginning_cash",
+            "ending_cash",
+            "average_cash",
+            "average_cash_allocation",
+            "cash_return",
+            "uninvested_cash_drag",
+            "dividend_cash",
+            "costs_paid"
+          ]
+        },
+        "semantic_sha256": "c043e388187cb5443c546c68d7c9c8b85f7661d2fd0a3d0956b090ca37ae13a0",
+        "sha256": "36a5e93d90f85c8e8ba39048ac99732a70c06e3d2281ea65dfb4504a4bf0f0da",
+        "size_bytes": 724235,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "attribution/corporate_action_attribution.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 15,
+        "schema": {
+          "columns": [
+            "schema_version",
+            "experiment_id",
+            "policy",
+            "benchmark",
+            "adjustment_basis",
+            "calendar_mode",
+            "attribution_methodology",
+            "contribution_units",
+            "residual_tolerance",
+            "date",
+            "ticker",
+            "action_type",
+            "declared_value",
+            "economic_contribution",
+            "cash_effect",
+            "source"
+          ]
+        },
+        "semantic_sha256": "e2c8d7891290ba014fc7e5cf0f276580b0f62d06cd8c2c4340cac6852465f67e",
+        "sha256": "bdf07be8b8f31a354b9ca737ac3e954915b9e568f79640d9c87786c6d44b50f7",
+        "size_bytes": 3374,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "attribution/daily_asset_attribution.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 12776,
+        "schema": {
+          "columns": [
+            "schema_version",
+            "experiment_id",
+            "policy",
+            "benchmark",
+            "adjustment_basis",
+            "calendar_mode",
+            "attribution_methodology",
+            "contribution_units",
+            "residual_tolerance",
+            "start_date",
+            "end_date",
+            "ticker",
+            "beginning_quantity",
+            "ending_quantity",
+            "beginning_mark",
+            "ending_mark",
+            "beginning_marked_value",
+            "ending_marked_value",
+            "trade_cash_flow",
+            "market_pnl",
+            "dividend_income",
+            "split_adjustment",
+            "commission",
+            "spread_cost",
+            "slippage_cost",
+            "net_contribution",
+            "beginning_weight",
+            "ending_weight",
+            "tradable",
+            "stale_mark",
+            "stale_age_days",
+            "regime"
+          ]
+        },
+        "semantic_sha256": "e7415e1d533e84df9de573199fb87d7ff54648af499ebb28e8542e71038b1c61",
+        "sha256": "c667f439c156d1a84d3ec55368fb3af007796250a245147d32d9e6ab175104fc",
+        "size_bytes": 5643263,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "attribution/drawdown_episode_attribution.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 156,
+        "schema": {
+          "columns": [
+            "schema_version",
+            "experiment_id",
+            "policy",
+            "benchmark",
+            "adjustment_basis",
+            "calendar_mode",
+            "attribution_methodology",
+            "contribution_units",
+            "residual_tolerance",
+            "episode_id",
+            "peak_date",
+            "trough_date",
+            "recovery_date",
+            "drawdown_depth",
+            "peak_value",
+            "trough_value",
+            "duration_observations",
+            "recovery_observations",
+            "ticker",
+            "contribution",
+            "stale_mark_observations",
+            "unresolved"
+          ]
+        },
+        "semantic_sha256": "b9fb6f2166b172dedfe846a7607b4f3d06427cf52518ccd5a3787b650cbadd0c",
+        "sha256": "b2aec33ab1058b886ed45913a592891bbf7b57d27366d90d9dbb156f764d581f",
+        "size_bytes": 40416,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "png",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "attribution/figures/calendar_year_contribution.png",
+        "reproducibility_level": "presentation_only",
+        "required": true,
+        "row_count": null,
+        "schema": null,
+        "semantic_sha256": null,
+        "sha256": null,
+        "size_bytes": 45862,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "png",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "attribution/figures/cumulative_asset_contribution.png",
+        "reproducibility_level": "presentation_only",
+        "required": true,
+        "row_count": null,
+        "schema": null,
+        "semantic_sha256": null,
+        "sha256": null,
+        "size_bytes": 211479,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "png",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "attribution/figures/largest_asset_concentration.png",
+        "reproducibility_level": "presentation_only",
+        "required": true,
+        "row_count": null,
+        "schema": null,
+        "semantic_sha256": null,
+        "sha256": null,
+        "size_bytes": 27254,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "png",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "attribution/figures/rebalance_holding_period_contribution.png",
+        "reproducibility_level": "presentation_only",
+        "required": true,
+        "row_count": null,
+        "schema": null,
+        "semantic_sha256": null,
+        "sha256": null,
+        "size_bytes": 121885,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "png",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "attribution/figures/regime_contribution_heatmap.png",
+        "reproducibility_level": "presentation_only",
+        "required": true,
+        "row_count": null,
+        "schema": null,
+        "semantic_sha256": null,
+        "sha256": null,
+        "size_bytes": 64508,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "png",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "attribution/figures/return_contribution_waterfall.png",
+        "reproducibility_level": "presentation_only",
+        "required": true,
+        "row_count": null,
+        "schema": null,
+        "semantic_sha256": null,
+        "sha256": null,
+        "size_bytes": 30967,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "png",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "attribution/figures/risk_contribution.png",
+        "reproducibility_level": "presentation_only",
+        "required": true,
+        "row_count": null,
+        "schema": null,
+        "semantic_sha256": null,
+        "sha256": null,
+        "size_bytes": 29996,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "png",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "attribution/figures/transaction_cost_waterfall.png",
+        "reproducibility_level": "presentation_only",
+        "required": true,
+        "row_count": null,
+        "schema": null,
+        "semantic_sha256": null,
+        "sha256": null,
+        "size_bytes": 31540,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "png",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "attribution/figures/worst_drawdown_contribution.png",
+        "reproducibility_level": "presentation_only",
+        "required": true,
+        "row_count": null,
+        "schema": null,
+        "semantic_sha256": null,
+        "sha256": null,
+        "size_bytes": 33244,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "attribution/portfolio_attribution_summary.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 15,
+        "schema": {
+          "columns": [
+            "schema_version",
+            "experiment_id",
+            "policy",
+            "benchmark",
+            "adjustment_basis",
+            "calendar_mode",
+            "attribution_methodology",
+            "contribution_units",
+            "residual_tolerance",
+            "component",
+            "contribution",
+            "contribution_return",
+            "percentage_of_net_profit"
+          ]
+        },
+        "semantic_sha256": "09567d3c280fbf89e7b1902fa73f1eb51baf8ffbb3164b2c124f495a6e29e2fe",
+        "sha256": "f81c4f78f429ee4a6e9830076002c796bde514eb0e25b556d141846a5a933731",
+        "size_bytes": 2888,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "attribution/rebalance_attribution.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 85,
+        "schema": {
+          "columns": [
+            "schema_version",
+            "experiment_id",
+            "policy",
+            "benchmark",
+            "adjustment_basis",
+            "calendar_mode",
+            "attribution_methodology",
+            "contribution_units",
+            "residual_tolerance",
+            "rebalance_id",
+            "scheduled_date",
+            "decision_date",
+            "execution_date",
+            "next_rebalance_date",
+            "turnover",
+            "gross_trade_value",
+            "transaction_costs",
+            "cash_after",
+            "holding_period_contribution",
+            "deferred_assets",
+            "skipped_assets",
+            "partial_rebalance"
+          ]
+        },
+        "semantic_sha256": "af6f1681e28c252936a05f66c080ccbc42dc3fdc6c84c2d241c1881eff3302ce",
+        "sha256": "a6828b2e03c65f4e45aebb4f4ff8acadbc4ec54eb2500368d5cd166b424c1d01",
+        "size_bytes": 22953,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "attribution/regime_attribution.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 36,
+        "schema": {
+          "columns": [
+            "schema_version",
+            "experiment_id",
+            "policy",
+            "benchmark",
+            "adjustment_basis",
+            "calendar_mode",
+            "attribution_methodology",
+            "contribution_units",
+            "residual_tolerance",
+            "regime",
+            "ticker",
+            "contribution",
+            "observations",
+            "trades",
+            "rebalances",
+            "status"
+          ]
+        },
+        "semantic_sha256": "9a20f133692a26cc61f6f5c9fc9ccaff0d74ce0561f2c181e97580fb4f3307c6",
+        "sha256": "577c20ca42397d2c37809750e8e98990f801d2652f1da13e110e0f7b16cfd167",
+        "size_bytes": 7875,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "attribution/risk_contribution.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 6,
+        "schema": {
+          "columns": [
+            "schema_version",
+            "experiment_id",
+            "policy",
+            "benchmark",
+            "adjustment_basis",
+            "calendar_mode",
+            "attribution_methodology",
+            "contribution_units",
+            "residual_tolerance",
+            "ticker",
+            "component_volatility",
+            "percentage_contribution",
+            "beta_contribution",
+            "observations",
+            "risk_methodology"
+          ]
+        },
+        "semantic_sha256": "dd1b20d7956b6e6843b9c2ecd5ddb2b63773bc150191716cff524b684682ba58",
+        "sha256": "d5053083f253e407376306b999598098b1ac4c2f4a3346711b8b4baeb8bc4f4b",
+        "size_bytes": 1317,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "attribution/transaction_cost_attribution.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 198,
+        "schema": {
+          "columns": [
+            "schema_version",
+            "experiment_id",
+            "policy",
+            "benchmark",
+            "adjustment_basis",
+            "calendar_mode",
+            "attribution_methodology",
+            "contribution_units",
+            "residual_tolerance",
+            "date",
+            "ticker",
+            "commission",
+            "fixed_commission",
+            "minimum_commission",
+            "spread_cost",
+            "slippage_cost",
+            "total_cost",
+            "cumulative_cost",
+            "regime"
+          ]
+        },
+        "semantic_sha256": "6c2525eef19af18c671a1669f522f5aefdafa489bc8f7322253510a8ce411983",
+        "sha256": "5e4e303431259dc2977301cf4c8ce4dc8d5ecf0fa0f99263b00dd359c9c91b03",
+        "size_bytes": 50579,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "attribution/walk_forward_window_attribution.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 2,
+        "schema": {
+          "columns": [
+            "schema_version",
+            "experiment_id",
+            "policy",
+            "benchmark",
+            "adjustment_basis",
+            "calendar_mode",
+            "attribution_methodology",
+            "contribution_units",
+            "residual_tolerance",
+            "window_id",
+            "ticker",
+            "contribution",
+            "starting_capital",
+            "ending_capital",
+            "residual",
+            "status"
+          ]
+        },
+        "semantic_sha256": "aa370423fb842684b3b336d2879c27be8fdd106d9ed90cc078ff736ee8a63d37",
+        "sha256": "6803e7ecb068ca94f77ee2d7f417de38e8762f487024ea5c823fd54e580e4a37",
+        "size_bytes": 408,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "portfolio_allocation_weights.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 421,
+        "schema": {
+          "columns": [
+            "rebalance_id",
+            "policy_name",
+            "ticker",
+            "target_weight"
+          ]
+        },
+        "semantic_sha256": "bca2e5bb21f8d09e6c4f7c1f8e413c8969b7e7d902c3d3bcd6a909f51b6e71e3",
+        "sha256": "d4856c0514d90ad80cb472fd9aa77fa66c5e4945159740fc55d67edc79b4e865",
+        "size_bytes": 17888,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "portfolio_corporate_actions.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 15,
+        "schema": {
+          "columns": [
+            "action_date",
+            "ticker",
+            "action_type",
+            "value",
+            "quantity_before",
+            "quantity_after",
+            "cash_effect",
+            "portfolio_value_before",
+            "portfolio_value_after",
+            "adjustment_policy",
+            "source"
+          ]
+        },
+        "semantic_sha256": "3d8695c12d3e9c9d36f74a33d851791a2459290b5746bf27929dc1a10911e542",
+        "sha256": "70e9a88276962daf3bf477d33314f30a78d290a121c8e18e586ac1653048271f",
+        "size_bytes": 2357,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "portfolio_costs.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 198,
+        "schema": {
+          "columns": [
+            "rebalance_id",
+            "date",
+            "ticker",
+            "transaction_cost",
+            "slippage_cost",
+            "total_cost"
+          ]
+        },
+        "semantic_sha256": "453d31df24ffae61dcca6ab7c3c7af53d5dc4e3ed7e1dd3198384d7ac6c62c93",
+        "sha256": "d4ddef616738a9f9f7e74aa9a40c7ecd8abcd4297a2f56aa89fd10764f8b8f6f",
+        "size_bytes": 13884,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "portfolio_equity_curve.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 2557,
+        "schema": {
+          "columns": [
+            "date",
+            "portfolio_value",
+            "cash",
+            "total_holdings_value",
+            "total_return",
+            "drawdown",
+            "gross_exposure"
+          ]
+        },
+        "semantic_sha256": "4d2653272bcca36d5ee00241a7de0398718ce565a2be75ee3dba24c789a66ec3",
+        "sha256": "db858310df82793a1b922100d63e116ebf01462651cf6b1c9a9888f8c84b62a5",
+        "size_bytes": 292954,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "portfolio_fills.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 198,
+        "schema": {
+          "columns": [
+            "rebalance_id",
+            "date",
+            "ticker",
+            "side",
+            "quantity",
+            "price",
+            "transaction_cost",
+            "slippage_cost",
+            "cash_after",
+            "scheduled_rebalance_date",
+            "decision_date",
+            "execution_date"
+          ]
+        },
+        "semantic_sha256": "68a90d4a048d3a3a130c7c50ac246bd4f79aacd8b1a4040df1f01a2e035dc406",
+        "sha256": "8a99e7d588c71053a8af54bb913fde157bb62123598377650dedfaf0ac7bff74",
+        "size_bytes": 25839,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "portfolio_orders.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 198,
+        "schema": {
+          "columns": [
+            "rebalance_id",
+            "date",
+            "ticker",
+            "side",
+            "quantity",
+            "price",
+            "transaction_cost",
+            "slippage_cost"
+          ]
+        },
+        "semantic_sha256": "3dd948b2f6d4b4cfd6b628fa518421974fd5926d8336b920ddca9207f51d3a3e",
+        "sha256": "3994faa8503a66494d488722a0bbc0495d8173facaf5abf2eb953e2266356bb0",
+        "size_bytes": 15621,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "portfolio_performance_summary.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 2,
+        "schema": {
+          "columns": [
+            "policy_name",
+            "total_return",
+            "equal_weight_benchmark_return",
+            "spy_benchmark_return",
+            "excess_return",
+            "annualized_return",
+            "volatility",
+            "sharpe",
+            "sortino",
+            "max_drawdown",
+            "calmar",
+            "var_95",
+            "expected_shortfall_95",
+            "beta",
+            "alpha",
+            "information_ratio",
+            "turnover",
+            "total_transaction_costs",
+            "number_of_rebalances",
+            "number_of_fills",
+            "average_cash_allocation",
+            "average_gross_exposure",
+            "schema_version",
+            "calendar_mode",
+            "valuation_frequency",
+            "observations_per_year",
+            "annualization_method",
+            "total_valuation_observations",
+            "weekend_observations",
+            "stale_mark_observations",
+            "stale_mark_policy",
+            "max_stale_calendar_days"
+          ]
+        },
+        "semantic_sha256": "4a06d861c66bba955b2adca9a0dcefb87643fb68bf07885ccac4250751ff43b5",
+        "sha256": "815c1757a55f88037b51a01804c962a6687974d3201b48079795be97457c377c",
+        "size_bytes": 957,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "portfolio_positions.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 12781,
+        "schema": {
+          "columns": [
+            "date",
+            "ticker",
+            "quantity",
+            "price",
+            "market_value",
+            "target_weight",
+            "actual_weight",
+            "rebalance_id"
+          ]
+        },
+        "semantic_sha256": "f1ae7b83a2dc873f8ba9654f33b6fe48a985a3b6ed44a65abb2e1fe172306900",
+        "sha256": "5dc4dc35b17e9551395b1fc92258e1e97a464320c046e1d5ddc432bf84aa4c8b",
+        "size_bytes": 1326872,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "portfolio_rebalances.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 85,
+        "schema": {
+          "columns": [
+            "rebalance_id",
+            "scheduled_rebalance_date",
+            "decision_date",
+            "execution_date",
+            "deferred_asset_count",
+            "skipped_asset_count",
+            "partial_rebalance",
+            "closed_asset_policy",
+            "turnover",
+            "cash_buffer",
+            "max_weight",
+            "min_trade_value"
+          ]
+        },
+        "semantic_sha256": "398ab6e059317d6a92fc0f6a7604909f4337f63e72e6772de94c7c00c499b135",
+        "sha256": "4e3a3872971915fdca2dcecdc68de7aeed25dad8905c069aa9997cd35a52b0d3",
+        "size_bytes": 10348,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "portfolio_valuations.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 12781,
+        "schema": {
+          "columns": [
+            "date",
+            "ticker",
+            "tradable",
+            "has_bar",
+            "mark_price",
+            "mark_source",
+            "stale_age_days",
+            "position_quantity",
+            "marked_value",
+            "actual_weight"
+          ]
+        },
+        "semantic_sha256": "8ee79e1e706602e789611b230ae55c3f47ee30bb4c0058d0f03d96080da2e033",
+        "sha256": "ccaeb656d4fde0e4ea5a5d886aef398b6f608721a4246150643f2e48bdbaacfb",
+        "size_bytes": 1362999,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "json",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "run_metadata.json",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": null,
+        "schema": {
+          "root_type": "dict"
+        },
+        "semantic_sha256": "c7639d12f7dcbe962d818265cd9fd2789e3c59a6891d545b521f4d89048b258b",
+        "sha256": "e139a003a3cc3f37705dbf19d93edb7bf35aed8d997033650b71ff7293b5c5ca",
+        "size_bytes": 493,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "statistics/attribution_robustness.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 2,
+        "schema": {
+          "columns": [
+            "schema_version",
+            "experiment_id",
+            "method",
+            "rng_engine",
+            "rng_mapping",
+            "stochastic_methodology_version",
+            "seed",
+            "simulation_count",
+            "block_length",
+            "input_series",
+            "benchmark",
+            "confidence_level",
+            "candidate_count",
+            "observation_count",
+            "annualization_method",
+            "component",
+            "estimate",
+            "status"
+          ]
+        },
+        "semantic_sha256": "fe54a7215b9bb7eb61d12c9e0fbb292c4a2d59fc30378f3487720d806230b58a",
+        "sha256": "3a3b54acaba98ab23b7c866f11cbc61e4acb4ccbe019a44c232045182a84c0d4",
+        "size_bytes": 511,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "statistics/bootstrap_metric_distributions.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 1001,
+        "schema": {
+          "columns": [
+            "schema_version",
+            "experiment_id",
+            "method",
+            "rng_engine",
+            "rng_mapping",
+            "stochastic_methodology_version",
+            "seed",
+            "simulation_count",
+            "block_length",
+            "input_series",
+            "benchmark",
+            "confidence_level",
+            "candidate_count",
+            "observation_count",
+            "annualization_method",
+            "simulation",
+            "cumulative_return",
+            "annualized_return",
+            "volatility",
+            "sharpe",
+            "sortino",
+            "max_drawdown",
+            "calmar",
+            "terminal_wealth",
+            "active_return",
+            "information_ratio"
+          ]
+        },
+        "semantic_sha256": "1c9658831168cdb141c85a370cf07c2cf750a2947930d55c5d27aeadbdc4804b",
+        "sha256": "0712ca15487bd4e0a0368839398ccddebe8721661cb1bb0895516876238b6d59",
+        "size_bytes": 349373,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "statistics/bootstrap_paths_sample.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 51101,
+        "schema": {
+          "columns": [
+            "schema_version",
+            "experiment_id",
+            "method",
+            "rng_engine",
+            "rng_mapping",
+            "stochastic_methodology_version",
+            "seed",
+            "simulation_count",
+            "block_length",
+            "input_series",
+            "benchmark",
+            "confidence_level",
+            "candidate_count",
+            "observation_count",
+            "annualization_method",
+            "path",
+            "step",
+            "return"
+          ]
+        },
+        "semantic_sha256": "f0ece922dcf2c0986ed80bb2cfd957ce7e94eae153188071463e828f7d7d3aff",
+        "sha256": "3610057b45e5b18e9a88e3d88e855114085c6188b5cd4bb4389a37ab998e8123",
+        "size_bytes": 10959590,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "statistics/bootstrap_summary.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 3,
+        "schema": {
+          "columns": [
+            "schema_version",
+            "experiment_id",
+            "method",
+            "rng_engine",
+            "rng_mapping",
+            "stochastic_methodology_version",
+            "seed",
+            "simulation_count",
+            "block_length",
+            "input_series",
+            "benchmark",
+            "confidence_level",
+            "candidate_count",
+            "observation_count",
+            "annualization_method",
+            "metric",
+            "mean",
+            "median",
+            "standard_deviation",
+            "lower_bound",
+            "upper_bound",
+            "probability"
+          ]
+        },
+        "semantic_sha256": "6f0b4f4c48babf2a09f26f4ad04eb43020dd3063448e569c2e8b6bee8debf97c",
+        "sha256": "a0a051f6a9155b830bd2f053a5b3d326d40cad6d51864b992738a69e19973262",
+        "size_bytes": 887,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "png",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "statistics/figures/active_return_distribution.png",
+        "reproducibility_level": "presentation_only",
+        "required": true,
+        "row_count": null,
+        "schema": null,
+        "semantic_sha256": null,
+        "sha256": null,
+        "size_bytes": 29795,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "png",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "statistics/figures/confidence_band_equity.png",
+        "reproducibility_level": "presentation_only",
+        "required": true,
+        "row_count": null,
+        "schema": null,
+        "semantic_sha256": null,
+        "sha256": null,
+        "size_bytes": 130090,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "png",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "statistics/figures/max_drawdown_distribution.png",
+        "reproducibility_level": "presentation_only",
+        "required": true,
+        "row_count": null,
+        "schema": null,
+        "semantic_sha256": null,
+        "sha256": null,
+        "size_bytes": 30373,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "png",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "statistics/figures/sharpe_distribution.png",
+        "reproducibility_level": "presentation_only",
+        "required": true,
+        "row_count": null,
+        "schema": null,
+        "semantic_sha256": null,
+        "sha256": null,
+        "size_bytes": 26804,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "png",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "statistics/figures/terminal_wealth_distribution.png",
+        "reproducibility_level": "presentation_only",
+        "required": true,
+        "row_count": null,
+        "schema": null,
+        "semantic_sha256": null,
+        "sha256": null,
+        "size_bytes": 28386,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "statistics/multiple_testing_summary.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 2,
+        "schema": {
+          "columns": [
+            "schema_version",
+            "experiment_id",
+            "method",
+            "rng_engine",
+            "rng_mapping",
+            "stochastic_methodology_version",
+            "seed",
+            "simulation_count",
+            "block_length",
+            "input_series",
+            "benchmark",
+            "confidence_level",
+            "candidate_count",
+            "observation_count",
+            "annualization_method",
+            "test_method",
+            "eligible_count",
+            "observed_best_mean",
+            "p_value",
+            "null_hypothesis"
+          ]
+        },
+        "semantic_sha256": "51d3dea13bee5474ab69ce21c468f95bfea31408383dfda252ba06dcf3cd41f4",
+        "sha256": "f2554259869ab4a38293b25a016c1d4b6ea46e4cb11a87f373ba05863fb3496e",
+        "size_bytes": 604,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "statistics/oos_degradation.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 2,
+        "schema": {
+          "columns": [
+            "schema_version",
+            "experiment_id",
+            "method",
+            "rng_engine",
+            "rng_mapping",
+            "stochastic_methodology_version",
+            "seed",
+            "simulation_count",
+            "block_length",
+            "input_series",
+            "benchmark",
+            "confidence_level",
+            "candidate_count",
+            "observation_count",
+            "annualization_method",
+            "in_sample_return",
+            "oos_return",
+            "return_degradation",
+            "in_sample_sharpe",
+            "oos_sharpe",
+            "sharpe_degradation",
+            "status"
+          ]
+        },
+        "semantic_sha256": "484bfa3f2a42e0f3f51644e34a7112d2a0e8a35301c5569567549db777131cd5",
+        "sha256": "35cdb6c96378f15dccfc4c4d05325013a0db5212e90d831211e842f44cbb4b94",
+        "size_bytes": 567,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "statistics/parameter_selection_history.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 2,
+        "schema": {
+          "columns": [
+            "schema_version",
+            "experiment_id",
+            "method",
+            "rng_engine",
+            "rng_mapping",
+            "stochastic_methodology_version",
+            "seed",
+            "simulation_count",
+            "block_length",
+            "input_series",
+            "benchmark",
+            "confidence_level",
+            "candidate_count",
+            "observation_count",
+            "annualization_method",
+            "window_id",
+            "selected_parameter",
+            "status"
+          ]
+        },
+        "semantic_sha256": "b96e98f038c068359b439751106b5a5c31c464c133aecb9a5a0b5b741eccf82c",
+        "sha256": "06454a89b0bb268aa53650a3778b03917458236ff3121680e3319e661b0d93e3",
+        "size_bytes": 505,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "statistics/parameter_stability.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 2,
+        "schema": {
+          "columns": [
+            "schema_version",
+            "experiment_id",
+            "method",
+            "rng_engine",
+            "rng_mapping",
+            "stochastic_methodology_version",
+            "seed",
+            "simulation_count",
+            "block_length",
+            "input_series",
+            "benchmark",
+            "confidence_level",
+            "candidate_count",
+            "observation_count",
+            "annualization_method",
+            "parameter",
+            "selection_frequency",
+            "changes",
+            "stability_score",
+            "status"
+          ]
+        },
+        "semantic_sha256": "09712317f9e8f2c713a1271b8e796b36d268784cd06682d4846529ad0441bb46",
+        "sha256": "451441762897535eb7aa1ac8e95793e2b88a67f8cded150bb78867f6c9b5fa9d",
+        "size_bytes": 533,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "statistics/portfolio_policy_robustness.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 2,
+        "schema": {
+          "columns": [
+            "schema_version",
+            "experiment_id",
+            "method",
+            "rng_engine",
+            "rng_mapping",
+            "stochastic_methodology_version",
+            "seed",
+            "simulation_count",
+            "block_length",
+            "input_series",
+            "benchmark",
+            "confidence_level",
+            "candidate_count",
+            "observation_count",
+            "annualization_method",
+            "policy",
+            "return_lower",
+            "return_upper",
+            "sharpe_lower",
+            "sharpe_upper",
+            "probability_positive_active",
+            "probability_loss"
+          ]
+        },
+        "semantic_sha256": "a23c265066a4f672f7284a5ba5e3b3aedd1bfb22ae5d66ed6a22602c104e6926",
+        "sha256": "0ae84959e1ab64134010aeed42fc3ca455b001b801558e26e943e5502d2a6f4c",
+        "size_bytes": 651,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "statistics/sharpe_inference.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 2,
+        "schema": {
+          "columns": [
+            "schema_version",
+            "experiment_id",
+            "method",
+            "rng_engine",
+            "rng_mapping",
+            "stochastic_methodology_version",
+            "seed",
+            "simulation_count",
+            "block_length",
+            "input_series",
+            "benchmark",
+            "confidence_level",
+            "candidate_count",
+            "observation_count",
+            "annualization_method",
+            "sharpe_mean",
+            "sharpe_lower",
+            "sharpe_upper",
+            "probability_sharpe_positive",
+            "probability_sharpe_exceeds_benchmark"
+          ]
+        },
+        "semantic_sha256": "502cac4cce12c1ebacbc00d1e604bf743b09d1c97b90272cddb24bab937a5297",
+        "sha256": "ea3de21156eea0904da140c8dacc7a764b9b5b57c5d4f6b2d2a9c15f6bc128bc",
+        "size_bytes": 591,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "statistics/statistical_input_series.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 2556,
+        "schema": {
+          "columns": [
+            "schema_version",
+            "experiment_id",
+            "method",
+            "rng_engine",
+            "rng_mapping",
+            "stochastic_methodology_version",
+            "seed",
+            "simulation_count",
+            "block_length",
+            "input_series",
+            "benchmark",
+            "confidence_level",
+            "candidate_count",
+            "observation_count",
+            "annualization_method",
+            "date",
+            "return",
+            "benchmark_return",
+            "active_return"
+          ]
+        },
+        "semantic_sha256": "7d6afd4ab4b2a9e4eca202fc89cac9880bc735b3c86993d2a427c335c1af1189",
+        "sha256": "38a6b34b437b3bd782cf2feeb7c137726908ba3cd8f9c9a1657149c6e07c09d3",
+        "size_bytes": 636907,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "json",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "statistics/statistical_manifest.json",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": null,
+        "schema": {
+          "root_type": "dict"
+        },
+        "semantic_sha256": "7fe11b28abdbc95e96271f46aace08cbe94691ac8ba396ccc0efe91c04205c3c",
+        "sha256": "967b5a6f8bb5df58106e6af7b8bc2d9ad60eddd1ee18e5704b6b8d954681665c",
+        "size_bytes": 512,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "md",
+        "comparison_policy": "presence_only",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "statistics/statistical_report.md",
+        "reproducibility_level": "methodological",
+        "required": true,
+        "row_count": null,
+        "schema": null,
+        "semantic_sha256": null,
+        "sha256": null,
+        "size_bytes": 787,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "statistics/statistical_warnings.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 2,
+        "schema": {
+          "columns": [
+            "schema_version",
+            "experiment_id",
+            "method",
+            "rng_engine",
+            "rng_mapping",
+            "stochastic_methodology_version",
+            "seed",
+            "simulation_count",
+            "block_length",
+            "input_series",
+            "benchmark",
+            "confidence_level",
+            "candidate_count",
+            "observation_count",
+            "annualization_method",
+            "warning"
+          ]
+        },
+        "semantic_sha256": "c03c33cb08a08fc7154214718ed113bb2184b33225705182edbe9d55dd8183b1",
+        "sha256": "195488c51e14ce6c95586362d48825cd7e82075db7b0d8d7b16dafea70ddf3a9",
+        "size_bytes": 425,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "statistics/strategy_robustness.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 2,
+        "schema": {
+          "columns": [
+            "schema_version",
+            "experiment_id",
+            "method",
+            "rng_engine",
+            "rng_mapping",
+            "stochastic_methodology_version",
+            "seed",
+            "simulation_count",
+            "block_length",
+            "input_series",
+            "benchmark",
+            "confidence_level",
+            "candidate_count",
+            "observation_count",
+            "annualization_method",
+            "strategy",
+            "return_lower",
+            "return_upper",
+            "sharpe_lower",
+            "sharpe_upper",
+            "probability_positive_active",
+            "status"
+          ]
+        },
+        "semantic_sha256": "fc538b080b6a9e70146b76defb848a38881791f523549b9dae73924425574b2f",
+        "sha256": "350329f0818d3795c9bab879a87de663b76bf290dca3edb7410cad743cee5760",
+        "size_bytes": 556,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      }
+    ],
+    "forbid_extra": true,
+    "root_policy": "caller_selected_isolated_directory"
+  },
+  "package_type": "portfolio",
+  "randomness": {
+    "engine": "mt19937",
+    "mapping": "portable_bounded_v1",
+    "seed": 47,
+    "seed_derivation": "existing deterministic experiment seed; independent of worker scheduling",
+    "simulation_count": 1000,
+    "stochastic_methodology_version": 2
+  },
+  "reports": [
+    {
+      "name": "attribution_figures",
+      "required": true
+    },
+    {
+      "name": "attribution_report",
+      "required": true
+    },
+    {
+      "name": "statistics_figures",
+      "required": true
+    },
+    {
+      "name": "statistics_report",
+      "required": true
+    }
+  ],
+  "repository": "https://github.com/MrithunjoyB/cpp-event-driven-backtester",
+  "reproducibility_level": "canonical_semantic",
+  "runtime_environment": {
+    "dependency_lock": "requirements-validation.txt",
+    "locale": "C",
+    "platform_policy": "semantic_cross_platform",
+    "python": "3.9.6",
+    "timezone": "UTC"
+  },
+  "source_commit": "01198f25aaae9ad9051994de5bbaf8e4c8ab4b55",
+  "source_tree_policy": "exact_commit",
+  "validators": [
+    {
+      "name": "validate_results",
+      "required": true
+    },
+    {
+      "name": "statistics_reference",
+      "required": true
+    }
+  ]
+}

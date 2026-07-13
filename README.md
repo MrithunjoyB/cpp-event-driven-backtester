@@ -2,7 +2,7 @@
 
 A modular C++17 platform for causal backtesting, shared-cash portfolio simulation, calendar-aware out-of-sample evaluation, benchmark-relative analysis, trade-aware attribution, and dependence-preserving statistical inference.
 
-The system supports reproducible strategy and allocation-policy experiments on daily OHLCV data. It separates simulation from export, records methodological assumptions in schema-versioned outputs, and uses Python only for data acquisition, independent validation, visualization, and reporting.
+The system supports reproducible strategy and allocation-policy experiments on daily OHLCV data. Public reconstruction uses independently generated synthetic fixtures; empirical research uses local, user-supplied data that is never part of the public canonical suite. Simulation is separated from export, and Python is used for fixture generation, optional acquisition, independent validation, visualization, and reporting.
 
 Development is AI-assisted and remains directed, reviewed, and maintained by Mrithunjoy Basumatary. AI systems are not project authors or copyright holders.
 
@@ -24,6 +24,7 @@ The portfolio research path additionally handles mixed equity and cryptocurrency
 | Attribution | Trade-aware asset, cash, cost, corporate-action, rebalance, benchmark-relative, drawdown, volatility, regime, and calendar-year attribution; exact reconciliation with residual rejection |
 | Statistical Inference | Circular moving-block bootstrap by default; IID comparison mode; empirical confidence intervals; centered max-mean reality checks over MA, RSI, MACD, Volatility Breakout, and combined candidate grids; parameter stability and neighbourhood diagnostics |
 | Engineering | Reusable `quant_core` C++17 library; thin `quant_cli`; typed JSON configuration; versioned reproducibility manifests; hash-verified inputs and outputs; deterministic bounded candidate execution; immutable per-run data reuse; deterministic C++/Python tests; strict warnings; Linux/macOS CI; ASan, UBSan, and TSan |
+| Data Boundary | Five deterministic synthetic assets; offline byte-for-byte generation; provider-neutral user-data validation; local SHA-256 manifests; tracked-data and sampled-row exclusion gate |
 
 ## Methodological Design
 
@@ -62,7 +63,7 @@ See [Architecture](docs/ARCHITECTURE.md) and [Data Model](docs/DATA_MODEL.md) fo
 
 ## Research Workflow
 
-1. Acquire and validate historical data.
+1. Generate and validate the public synthetic fixtures, or validate lawful user-supplied data locally.
 2. Resolve and validate a typed experiment configuration.
 3. Run a single-asset or shared-cash portfolio experiment.
 4. Perform calendar-duration walk-forward evaluation where configured.
@@ -73,38 +74,32 @@ See [Architecture](docs/ARCHITECTURE.md) and [Data Model](docs/DATA_MODEL.md) fo
 9. Generate figures and reports.
 
 ```bash
-python3 scripts/download_data.py
+python3 scripts/generate_synthetic_market_data.py
+python3 scripts/validate_synthetic_market_data.py --regenerate-check
+python3 scripts/validate_public_data_boundary.py
 ./build/quant_cli validate-config --config configs/portfolio_equal_weight.json
 ./build/quant_cli run --config configs/portfolio_equal_weight.json
 ./build/quant_cli run --config configs/selection_risk_all.json --execution-mode parallel --threads 4
-python3 scripts/validate_results.py results
-python3 scripts/visualize_results.py
+python3 scripts/validate_market_data.py data/local/LOCAL.csv
+python3 scripts/generate_local_data_manifest.py --tickers LOCAL
 ```
 
 Reconstruct the complete canonical research suite, including validators and reports, with:
 
 ```bash
-python3 scripts/reproduce.py --manifest manifests/canonical_research_suite.json \
-  --output-directory results/reproduced/canonical-suite --allow-compatible-environment
+python3 scripts/reproduce.py --manifest manifests/public_reproducibility_suite.json \
+  --output-directory results/reproduced/public-synthetic-suite --allow-compatible-environment
 ```
 
-## Verified Research Findings
+## Evidence Boundary
 
-The checked schema-v3 equal-weight portfolio output reports a **536.94%** historical return and **425.47%** active return versus SPY. BTC-USD contributed approximately **33.46%** and TSLA **31.48%** of net profit; together they account for approximately **64.94%**, indicating material concentration. The worst drawdown was approximately **-48.77%**, with BTC-USD the dominant negative contributor during that episode.
+The current public canonical outputs use synthetic data and provide software, accounting, inference, and reproducibility evidence only. Their returns and statistical values are not empirical market findings and must not be interpreted as profitability evidence.
 
-Using 1,000 circular moving-block bootstrap simulations over 2,190 return observations:
+Earlier repository revisions evaluated user-obtained AAPL, MSFT, SPY, TSLA, and BTC-USD data. That historical local research reported an equal-weight return of approximately **536.94%**, active return of **425.47%** versus SPY, and a worst drawdown of **-48.77%**. Approximately **64.94%** of net profit was attributed to BTC-USD and TSLA, indicating material concentration. Moving-block bootstrap results favored Inverse Volatility most strongly, Equal Weight also showed comparatively strong evidence, and Momentum Top-N remained inconclusive.
 
-| Allocation policy | Sharpe 95% confidence interval | Probability Sharpe exceeds benchmark |
-| --- | ---: | ---: |
-| Equal Weight | 0.351 to 1.932 | 94.9% |
-| Inverse Volatility | 0.362 to 2.030 | 97.9% |
-| Momentum Top-N | -0.145 to 1.381 | 35.2% |
+Those findings are historical, not forecasts, and are no longer public-canonical: the underlying provider files are not redistributed, and reproduction requires equivalent lawfully obtained inputs. Audit summaries remain for methodological traceability. See [Data Provenance](docs/DATA_PROVENANCE.md) and [Final Audit](docs/FINAL_AUDIT.md).
 
-Inverse Volatility currently has the strongest statistical evidence, while Equal Weight also shows comparatively strong evidence. Momentum Top-N remains inconclusive. These are historical findings, not forecasts; portfolio performance is materially concentrated in BTC-USD and TSLA.
-
-Stochastic methodology version 2 uses a repository-owned unbiased bounded mapping with `mt19937`. The regenerated combined TSLA MACD adjusted p-value is approximately `0.0559` at base costs, `0.0509` at zero cost, and `0.0729` at high cost; all remain above 0.05. Regime slices remain exploratory. See [RNG Methodology](docs/RNG_METHODOLOGY.md) and [Final Audit](docs/FINAL_AUDIT.md).
-
-Full generated reports are written locally to `results/research_v3/portfolio_equal_weight/attribution/attribution_report.md`, `results/research_v3/portfolio_equal_weight/statistics/statistical_report.md`, and `results/research_v3/selection_risk/all_families/selection_risk/selection_risk_report.md`. Generated research artifacts are intentionally not tracked.
+Stochastic methodology version 2 still uses `mt19937` with the repository-owned `portable_bounded_v1` mapping. Public synthetic reports label their evidence boundary directly and are generated under ignored `results/public_synthetic/` paths.
 
 ## Build
 
@@ -132,7 +127,7 @@ On the measured Apple M1 Release workload, immutable data and benchmark reuse re
 
 ## Validation
 
-The current tree has 23 CTest targets covering deterministic regression, domain/configuration, methodology, export, bootstrap, stable RNG vectors, calendar, corporate actions, union-calendar portfolios, attribution, statistics, candidate selection risk, performance/concurrency, reproducibility, final-audit gates, and CLI behavior. The regression snapshot check matches 8/8 tracked scenarios.
+The migration tree has 27 CTest targets, including deterministic synthetic generation, user-data validation, public-boundary corruption tests, and an executable tracked-tree gate in addition to the existing quantitative, reproducibility, audit, and CLI coverage. The public synthetic regression snapshot check matches 8/8 scenarios.
 
 Validation also includes strict compiler warnings, ASan, UBSan, TSan, Linux and macOS Release CI, schema/result validation, dedicated attribution and statistical corruption tests, parallel package equivalence, and Python reference cross-checks. See [Testing](docs/TESTING.md) for commands and test boundaries.
 
@@ -144,7 +139,7 @@ See [Result Schema](docs/RESULT_SCHEMA.md) for output filenames, columns, units,
 
 ## Reproducibility
 
-Reproducibility mechanisms include versioned manifests, hash-verified tracked inputs, resolved configurations, deterministic seeds, a repository-owned stable bounded sampler, schema/build/dependency provenance, atomic reconstruction, regression snapshots, Python references, and CI. Release-candidate manifests use exact implementation identity and zero-tolerance semantic comparison for stochastic numerical artifacts.
+Reproducibility mechanisms include offline fixed-point fixture generation, versioned manifests, hash-verified synthetic inputs, resolved configurations, deterministic seeds, a repository-owned stable bounded sampler, schema/build/dependency provenance, atomic reconstruction, regression snapshots, Python references, and CI. The public suite is `public_reproducibility_suite`; optional acquisition and user-local files are excluded.
 
 ## Documentation
 
@@ -153,6 +148,8 @@ Reproducibility mechanisms include versioned manifests, hash-verified tracked in
 - [Data Model](docs/DATA_MODEL.md)
 - [Market Calendar](docs/MARKET_CALENDAR.md)
 - [Corporate Actions](docs/CORPORATE_ACTIONS.md)
+- [Data Provenance](docs/DATA_PROVENANCE.md)
+- [Data Input Guide](docs/DATA_INPUT_GUIDE.md)
 - [Methodology](docs/METHODOLOGY.md)
 - [Attribution](docs/ATTRIBUTION.md)
 - [Statistical Methodology](docs/STATISTICAL_METHODOLOGY.md)
@@ -162,13 +159,14 @@ Reproducibility mechanisms include versioned manifests, hash-verified tracked in
 - [Reproducibility](docs/REPRODUCIBILITY.md)
 - [RNG Methodology](docs/RNG_METHODOLOGY.md)
 - [Final Audit](docs/FINAL_AUDIT.md)
+- [Limitations](docs/LIMITATIONS.md)
 
 ## Limitations
 
 - The simulation uses daily bars and is long-only by default; it does not model order books, ticks, intraday queues, taxes, financing, borrow costs, or withholding taxes.
 - Exchange closures are inferred from data availability because authoritative exchange calendars are not yet integrated.
 - Payable-date settlement, delistings, symbol changes, and cash-in-lieu processing are incomplete.
-- Downloaded market data may not contain complete dividend, split, or other corporate-action provenance.
+- Public fixtures are synthetic and cannot support empirical market conclusions. User-supplied data may have incomplete dividend, split, or other corporate-action provenance.
 - Candidate histories are normalized counterfactual OOS diagnostics, not deployable continuous-capital paths; selected-strategy continuous capital remains separate.
 - Reality-check evidence is conditional on eligibility and strict common-date intersection. Regime-conditioned tests are exploratory because they are not additionally corrected across regime slices.
 - Portfolio-policy reality-check outputs remain one-policy diagnostics and are distinct from the strategy-grid correction.
@@ -199,7 +197,7 @@ Possible future directions, not current capabilities or committed deliverables:
 
 The project source code, documentation, configuration, and original test fixtures are licensed under the [Apache License 2.0](LICENSE). Copyright 2026 Mrithunjoy Basumatary. See [NOTICE](NOTICE) for attribution and scope.
 
-The historical market-data CSVs in `data/` are third-party data acquired from Yahoo Finance through yfinance. They are excluded from the Apache-2.0 grant and remain subject to applicable upstream terms; this repository does not grant rights to redistribute or commercially use them. Users should supply market data they are independently entitled to use. The tracked files currently support exact research reconstruction, but their upstream provenance is incomplete and their public redistribution status is an unresolved `v1.0.0` release gate.
+The bundled files in `data/synthetic/` are independently generated project fixtures covered by Apache-2.0. Third-party and user-supplied market data is excluded from the current tree and the license grant; users must supply data they are independently entitled to use. Historical commits still contain formerly tracked Yahoo-derived files, as documented in [Data Provenance](docs/DATA_PROVENANCE.md). No history rewrite was performed.
 
 ## Disclaimer
 

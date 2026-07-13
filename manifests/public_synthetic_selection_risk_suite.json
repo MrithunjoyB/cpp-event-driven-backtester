@@ -1,0 +1,40 @@
+{
+  "children": [
+    {
+      "id": "public_synthetic_selection_risk_ma",
+      "manifest": "manifests/public_synthetic_selection_risk_ma.json"
+    },
+    {
+      "id": "public_synthetic_selection_risk_rsi",
+      "manifest": "manifests/public_synthetic_selection_risk_rsi.json"
+    },
+    {
+      "id": "public_synthetic_selection_risk_macd",
+      "manifest": "manifests/public_synthetic_selection_risk_macd.json"
+    },
+    {
+      "id": "public_synthetic_selection_risk_volatility_breakout",
+      "manifest": "manifests/public_synthetic_selection_risk_volatility_breakout.json"
+    },
+    {
+      "id": "public_synthetic_selection_risk_combined",
+      "manifest": "manifests/public_synthetic_selection_risk_combined.json"
+    },
+    {
+      "id": "public_synthetic_selection_risk_combined_zero_cost",
+      "manifest": "manifests/public_synthetic_selection_risk_combined_zero_cost.json"
+    },
+    {
+      "id": "public_synthetic_selection_risk_combined_high_cost",
+      "manifest": "manifests/public_synthetic_selection_risk_combined_high_cost.json"
+    }
+  ],
+  "default_execution_mode": "serial",
+  "default_threads": 1,
+  "description": "Public synthetic seven-package selection-risk reconstruction plan",
+  "manifest_schema_version": 1,
+  "package_type": "suite",
+  "source_commit": "01198f25aaae9ad9051994de5bbaf8e4c8ab4b55",
+  "suite_id": "public_synthetic_selection_risk_suite",
+  "suite_id_hash": "sha256:5f4bf20fdbaaf0b0d4d4454e0845e91a734a5bd2b36fb00b97e79da06ca8d0eb"
+}

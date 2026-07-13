@@ -47,7 +47,7 @@ def main():
         config = PACKAGES.get(package)
         if config is None:
             raise SystemExit(f"unknown package: {package}")
-        output_dir = ROOT / "results/research_v3/selection_risk" / package / "selection_risk"
+        output_dir = ROOT / "results/public_synthetic/selection_risk" / package / "selection_risk"
         reference = None
         for threads in thread_counts:
             mode = "serial" if threads == 1 else "parallel"

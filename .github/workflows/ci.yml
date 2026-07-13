@@ -2,6 +2,9 @@ name: CMake CI
 
 on: [push, pull_request]
 
+permissions:
+  contents: read
+
 jobs:
   release:
     strategy:
@@ -9,23 +12,24 @@ jobs:
         os: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: "3.12"
           cache: pip
+      - run: python3 -m pip install -r requirements-validation.txt
+      - run: python3 scripts/validate_synthetic_market_data.py data/synthetic --regenerate-check
+      - run: python3 scripts/validate_public_data_boundary.py
       - run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DQUANT_ENABLE_STRICT_WARNINGS=ON
       - run: cmake --build build --parallel 2
       - run: ctest --test-dir build --output-on-failure
       - run: ./build/quant_cli validate-config --config configs/ma_walk_forward.json
       - run: ./build/quant_cli run --config configs/ma_walk_forward.json --dry-run
-      - run: python3 -m pip install -r requirements.txt
       - run: python3 scripts/validate_reproducibility.py manifests --verify-inputs
-      - run: python3 scripts/reproduce.py --manifest manifests/single_aapl_ma.json --output-directory ${{ runner.temp }}/reproduced-single --build-directory build --no-build --allow-compatible-environment --json-report ${{ runner.temp }}/reconstruction-report.json
-      - run: python3 scripts/validate_reproducibility.py manifests/single_aapl_ma.json --verify-inputs --report ${{ runner.temp }}/reconstruction-report.json
-      - run: ./build/quant_cli --mode single --ticker AAPL --strategy ma_cross
+      - run: python3 scripts/reproduce.py --manifest manifests/public_synthetic_single_ma.json --output-directory ${{ runner.temp }}/reproduced-single --build-directory build --no-build --allow-compatible-environment --json-report ${{ runner.temp }}/reconstruction-report.json
+      - run: python3 scripts/validate_reproducibility.py manifests/public_synthetic_single_ma.json --verify-inputs --report ${{ runner.temp }}/reconstruction-report.json
+      - run: ./build/quant_cli --mode single --ticker SYN_EQ_A --strategy ma_cross
       - run: python3 scripts/validate_results.py results
-      - run: python3 scripts/test_download_data.py
       - run: ./build/quant_cli run --config configs/fixtures/mixed_union.json
       - run: python3 scripts/validate_results.py test_results/schema_v3
       - run: python3 scripts/test_attribution_validator.py
@@ -36,12 +40,12 @@ jobs:
       - run: MPLCONFIGDIR=${{ runner.temp }}/matplotlib python3 scripts/visualize_statistics.py --directory test_results/schema_v3/statistics
       - run: python3 scripts/generate_statistics_report.py --directory test_results/schema_v3/statistics
       - run: ./build/quant_cli run --config configs/selection_risk_ma.json
-      - run: python3 scripts/validate_selection_risk.py results/research_v3/selection_risk/ma/selection_risk
-      - run: python3 scripts/test_selection_risk_reference.py results/research_v3/selection_risk/ma/selection_risk
+      - run: python3 scripts/validate_selection_risk.py results/public_synthetic/selection_risk/ma/selection_risk
+      - run: python3 scripts/test_selection_risk_reference.py results/public_synthetic/selection_risk/ma/selection_risk
       - run: python3 scripts/test_selection_risk_validator.py
       - run: python3 scripts/test_parallel_equivalence.py --build build --packages ma --threads 1,2,4
-      - run: MPLCONFIGDIR=${{ runner.temp }}/matplotlib python3 scripts/visualize_selection_risk.py --directory results/research_v3/selection_risk/ma/selection_risk
-      - run: python3 scripts/generate_selection_risk_report.py --directory results/research_v3/selection_risk/ma/selection_risk
+      - run: MPLCONFIGDIR=${{ runner.temp }}/matplotlib python3 scripts/visualize_selection_risk.py --directory results/public_synthetic/selection_risk/ma/selection_risk
+      - run: python3 scripts/generate_selection_risk_report.py --directory results/public_synthetic/selection_risk/ma/selection_risk
 
   sanitizers:
     strategy:
@@ -49,7 +53,9 @@ jobs:
         sanitizer: [address, undefined, thread]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      - run: python3 scripts/validate_synthetic_market_data.py data/synthetic --regenerate-check
+      - run: python3 scripts/validate_public_data_boundary.py
       - run: cmake -S . -B build-${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=Debug -DQUANT_SANITIZER=${{ matrix.sanitizer }}
       - run: cmake --build build-${{ matrix.sanitizer }} --parallel 2
       - run: ctest --test-dir build-${{ matrix.sanitizer }} --output-on-failure

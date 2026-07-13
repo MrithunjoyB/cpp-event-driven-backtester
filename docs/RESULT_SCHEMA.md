@@ -1,5 +1,7 @@
 # Result Schema
 
+All outputs under `results/public_synthetic/` are generated from synthetic fixtures and constitute validation evidence only. Package manifests carry the synthetic input classification, generator identity, seed, and hashes. User-local empirical outputs remain ignored and outside the public canonical inventory.
+
 Research summaries and methodology outputs use schema version 2. Schema version is owned by export/metadata code, not simulation engines. `BacktestResult`, `PortfolioBacktestResult`, and `BootstrapResult` retain trades, equity, metrics, fills, positions, and sampled distributions in memory before export.
 
 Single-asset summary rows identify strategy parameters, benchmark ticker and execution/cost policy, net and gross benchmark returns, net excess return, risk metrics, turnover, and costs. Walk-forward files explicitly separate in-sample candidates from frozen out-of-sample results and include interval boundaries, capital linkage, benchmark policy, and boundary liquidation costs. Regime rows include the information cutoff and causal volatility-threshold method. Portfolio files contain shared cash, synchronized positions, fills, rebalances, target weights, costs, and portfolio-level risk metrics.
@@ -8,7 +10,7 @@ CSV headers are centralized in `CsvResultExporter` for reusable simulation and p
 
 ## Schema V3
 
-Schema v3 applies to union-calendar shared-cash portfolio results under `results/research_v3/`. It adds per-asset valuation marks, tradability and stale age, scheduled/decision/execution rebalance dates, corporate-action records, calendar and annualization metadata, and weekend/stale observation counts. Schema v2 remains the corrected legacy intersection methodology and is not overwritten.
+Schema v3 applies to union-calendar shared-cash portfolio results under `results/public_synthetic/` for public reconstruction and equivalent user-selected paths for local research. It adds per-asset valuation marks, tradability and stale age, scheduled/decision/execution rebalance dates, corporate-action records, calendar and annualization metadata, and weekend/stale observation counts. Schema v2 remains the corrected legacy intersection methodology and is not overwritten.
 
 Attribution extends schema v3 under each portfolio's `attribution/` directory. Daily asset rows, period reconciliation, cash, costs, corporate actions, rebalances, benchmark-relative return, drawdowns, covariance risk, causal regimes, and calendar years share experiment, policy, benchmark, adjustment, calendar, methodology, unit, and residual-tolerance metadata. Existing schema-v3 files are unchanged.
 
@@ -16,6 +18,6 @@ Statistical schema-v3 extensions live under each experiment's `statistics/` dire
 
 Statistical and selection-risk schema-v3 outputs also include `rng_engine`, `rng_mapping`, and `stochastic_methodology_version`. Current values are `mt19937`, `portable_bounded_v1`, and `2`; validators reject missing, unknown, legacy, or mixed stochastic metadata.
 
-Selection-risk schema-v3 extensions live under `results/research_v3/selection_risk/<experiment>/selection_risk/`. They retain candidate definitions and eligibility, exact dated normalized OOS and active returns, a separately rerun continuous-capital selected-strategy history, window metrics, causal selections, parameter frequencies, IS/OOS ranks and degradation, transitions, neighbourhood sensitivity, family/cross-family/regime reality checks, compact max-statistic distributions, warnings, and a manifest. Parent single-asset experiment configuration remains schema v2; the selection-risk output family is independently versioned as schema v3.
+Selection-risk schema-v3 extensions live under `results/public_synthetic/selection_risk/<experiment>/selection_risk/` in the public suite. They retain candidate definitions and eligibility, exact dated normalized OOS and active returns, a separately rerun continuous-capital selected-strategy history, window metrics, causal selections, parameter frequencies, IS/OOS ranks and degradation, transitions, neighbourhood sensitivity, family/cross-family/regime reality checks, compact max-statistic distributions, warnings, and a manifest. Parent single-asset experiment configuration remains schema v2; the selection-risk output family is independently versioned as schema v3.
 
 Reproducibility manifest schema v1 inventories each expected artifact with its relative path, type, schema/header, size, row count, byte hash where stable, semantic hash or explicit methodological comparison policy, reproducibility level, validator, required status, and parent lineage. Reconstruction reports distinguish exact, semantic, methodological shape/tolerance, presentation-only, environment-only, failed, and not-applicable outcomes. See [Reproducibility](REPRODUCIBILITY.md).

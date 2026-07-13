@@ -5,7 +5,7 @@ import matplotlib;matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import pandas as pd
 def main():
- p=argparse.ArgumentParser();p.add_argument("--directory",default="results/research_v3/portfolio_equal_weight/statistics");a=p.parse_args();root=Path(a.directory);figs=root/"figures";figs.mkdir(parents=True,exist_ok=True)
+ p=argparse.ArgumentParser();p.add_argument("--directory",default="results/public_synthetic/portfolio_equal_weight/statistics");a=p.parse_args();root=Path(a.directory);figs=root/"figures";figs.mkdir(parents=True,exist_ok=True)
  d=pd.read_csv(root/"bootstrap_metric_distributions.csv")
  for col,title in [("terminal_wealth","Terminal Wealth"),("sharpe","Sharpe Ratio"),("max_drawdown","Maximum Drawdown"),("active_return","Active Return")]:
   fig,ax=plt.subplots(figsize=(7,4));ax.hist(d[col],bins=35,color="#287271",alpha=.85);ax.axvline(d[col].median(),color="black",ls="--");ax.set(title=f"Moving-block Bootstrap: {title}",xlabel=col,ylabel="Frequency");fig.tight_layout();fig.savefig(figs/f"{col}_distribution.png",dpi=160);plt.close(fig)

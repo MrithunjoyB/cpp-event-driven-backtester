@@ -2,7 +2,7 @@
 
 ## Policy
 
-Canonical reconstruction uses the five repository-tracked OHLCV files only after exact SHA-256 verification. `download_data.py` remains an acquisition convenience, but a fresh Yahoo/yFinance download is mutable and never qualifies as the same canonical input. Each manifest records file size, row count, date range, schema, adjustment context, source description, acquisition boundary, mutability classification, and redistribution caveat. Corporate-action provenance in the downloaded data remains incomplete.
+Public canonical reconstruction uses the five project-owned files under `data/synthetic/` after byte-for-byte offline regeneration and exact SHA-256 verification. Each package also hashes `metadata.json`, which records generator identity/version, seed, schema, calendars, missing dates, corporate actions, row counts, and redistribution classification. `download_data.py` is optional local acquisition and is never a public canonical input.
 
 The manifest schema is versioned at `manifests/schema/reproducibility-manifest-v1.schema.json`. Runtime validation is deliberately stricter than the descriptive JSON Schema: unknown root fields, unsupported versions, invalid identities, duplicate inputs/artifacts, unsafe paths, missing lineage, undeclared validators, nonzero tolerances, and malformed suites fail before execution.
 
@@ -18,7 +18,7 @@ PNG/SVG/PDF figures are presentation-only because renderer, font, compression, a
 
 Stochastic methodology version 2 uses `mt19937` with the repository-owned `portable_bounded_v1` mapping. Raw retained paths, bootstrap distributions, summaries, probabilities, max-statistic draws, and adjusted p-values are canonical semantic artifacts; the old shape-only and broad numerical tolerance policies are retired. Presentation files remain presence-validated and the non-inferential rank-correlation diagnostic retains a `1e-15` floating-point tolerance.
 
-Release-candidate manifests require the exact committed migration implementation boundary. Compatible-descendant reconstruction is no longer accepted by manifest validation. Legacy manifests remain recoverable from Git history but are not valid release-candidate inputs.
+Public migration manifests identify the exact committed implementation boundary `01198f25...`. Because generated manifests necessarily enter Git afterward, reconstruction on a descendant requires the explicit `--allow-compatible-environment` ancestry check. A future release gate must bind the tag target and package identities without pretending a committed file can contain its own commit SHA. Legacy provider-data manifests remain recoverable from Git history but are not valid public inputs.
 
 One compiler-sensitive diagnostic field, `is_oos_spearman_rank_correlation`, permits `1e-15` absolute variation; observed GCC/AppleClang variation is approximately `1.83e-17`. Candidate rank ordering and every selection field remain exact.
 
@@ -32,18 +32,18 @@ The current manifests identify the committed RNG migration implementation bounda
 
 ## Environment and Dependencies
 
-Manifests record compiler, CMake, C++ standard, build type, strict-warning mode, OS, architecture, Python, CLI version, binary SHA-256, locale, timezone, and dependency lock. Validation/report dependencies are pinned in `requirements-validation.txt`; acquisition dependencies are separated in `requirements-acquisition.txt`. `requirements.txt` is the exact union used by CI.
+Manifests record compiler, CMake, C++ standard, build type, strict-warning mode, OS, architecture, Python, CLI version, binary SHA-256, locale, timezone, and dependency lock. Validation/report dependencies are pinned in `requirements-validation.txt` and used by public CI; acquisition dependencies are separated in `requirements-acquisition.txt`. `requirements.txt` remains a convenience union, not the canonical CI environment.
 
 Compiler and standard-library identities are recorded but are not part of semantic identity. Linux and macOS execute the same repository-owned integer mapping and reference vectors. Locale is forced to `C`, timezone to `UTC`, and Matplotlib uses an isolated cache. Platform-specific figures are generated and validated for presence, not byte identity.
 
 ## One-Command Reconstruction
 
-Representative package:
+Representative public synthetic package:
 
 ```bash
 python3 scripts/reproduce.py \
-  --manifest manifests/portfolio_equal_weight.json \
-  --output-directory results/reproduced/equal_weight \
+  --manifest manifests/public_synthetic_portfolio_equal_weight.json \
+  --output-directory results/reproduced/public-synthetic-equal-weight \
   --allow-compatible-environment \
   --json-report results/reproduced/equal_weight-report.json
 ```
@@ -52,8 +52,8 @@ Complete canonical suite:
 
 ```bash
 python3 scripts/reproduce.py \
-  --manifest manifests/canonical_research_suite.json \
-  --output-directory results/reproduced/canonical-suite \
+  --manifest manifests/public_reproducibility_suite.json \
+  --output-directory results/reproduced/public-synthetic-suite \
   --execution-mode parallel --threads 4 \
   --allow-compatible-environment \
   --json-report results/reproduced/canonical-suite-report.json
@@ -65,7 +65,7 @@ The orchestrator validates the manifest, commit policy, input/config hashes, exa
 
 ## Canonical Manifests
 
-The tracked set contains a representative single strategy; Equal Weight, Inverse Volatility, and Momentum Top-N portfolios; Equal Weight attribution and statistics views; MA, RSI, MACD, Volatility Breakout, combined, zero-cost combined, and high-cost combined selection-risk packages; a seven-package selection-risk plan; and the complete research-suite plan. Package manifests embed complete resolved configuration snapshots and a compact lineage graph from inputs/configuration/executable through simulation, analytics, validation, and reporting.
+The tracked public set contains 13 synthetic packages: a representative single strategy; Equal Weight, Inverse Volatility, and Momentum Top-N portfolios; Equal Weight attribution and statistics views; and MA, RSI, MACD, Volatility Breakout, combined, zero-cost combined, and high-cost combined selection-risk packages. Two suite plans orchestrate selection-risk and complete public reconstruction. Package manifests classify every input as synthetic and embed generator identity, seed, resolved configuration, validators, output inventory, and lineage.
 
 ## Clean Checkout
 
@@ -73,9 +73,12 @@ The tracked set contains a representative single strategy; Equal Weight, Inverse
 git clone https://github.com/MrithunjoyB/cpp-event-driven-backtester.git
 cd cpp-event-driven-backtester
 python3 -m pip install -r requirements-validation.txt
+python3 scripts/generate_synthetic_market_data.py
+python3 scripts/validate_synthetic_market_data.py --regenerate-check
+python3 scripts/validate_public_data_boundary.py
 python3 scripts/validate_reproducibility.py manifests --verify-inputs
-python3 scripts/reproduce.py --manifest manifests/canonical_research_suite.json \
-  --output-directory results/reproduced/canonical-suite \
+python3 scripts/reproduce.py --manifest manifests/public_reproducibility_suite.json \
+  --output-directory results/reproduced/public-synthetic-suite \
   --allow-compatible-environment
 ```
 
@@ -85,7 +88,8 @@ No existing build or result directory is required. Generated outputs, caches, fa
 
 | Threat | Classification | Control |
 | --- | --- | --- |
-| Mutable Yahoo data, changed CSV/config, missing corporate actions | Semantic-result and exact-byte | Tracked inputs, SHA-256/size/schema checks, explicit provenance limitation |
+| Fixture drift, copied provider rows, changed CSV/config | Semantic-result and release boundary | Offline regeneration, SHA-256/size/schema checks, forbidden hashes/row fingerprints, tracked-tree gate |
+| User/local provider data leaking into a public package | Legal/provenance boundary | Ignored local directory, manifest classification, public-boundary validator |
 | Compiler, standard library, CMake, Python dependency drift | Environment and possible semantic-result | Recorded environment, exact Python lock, Linux/macOS semantic CI |
 | Timestamp, staging path, hostname, commit metadata | Exact-byte | Explicit volatile JSON fields; independent provenance checks |
 | Random seed, thread count, unordered completion | Semantic-result | Recorded seed/settings, indexed deterministic collection, cross-thread reconstruction |
@@ -96,4 +100,4 @@ No existing build or result directory is required. Generated outputs, caches, fa
 
 ## Limitations
 
-The manifests cannot repair incomplete upstream corporate-action provenance or grant redistribution rights. Figure appearance can vary with platform rendering. Exact semantic reconstruction depends on the recorded implementation commit, tracked inputs, configuration, and supported toolchain; it is not a claim of arbitrary future compiler equivalence.
+Synthetic fixtures cannot support empirical market conclusions. Local user data may have incomplete corporate-action provenance, and the project cannot grant provider rights. Historical commits still contain removed provider files. Figure appearance can vary with platform rendering. Exact semantic reconstruction depends on the recorded implementation boundary, synthetic input hashes, configuration, and supported toolchain; it is not a claim of arbitrary future compiler equivalence.

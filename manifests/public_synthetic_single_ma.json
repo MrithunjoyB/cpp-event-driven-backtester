@@ -1,0 +1,590 @@
+{
+  "build": {
+    "build_type": "Release",
+    "compiler_policy": "recorded_not_identity_bound",
+    "cxx_standard": 17,
+    "required_cli_version": "2.0.0",
+    "sanitizer": "none",
+    "strict_warnings": true,
+    "system": "CMake"
+  },
+  "commands": [
+    {
+      "argv": [
+        "{cli}",
+        "--mode",
+        "single",
+        "--ticker",
+        "SYN_EQ_A",
+        "--strategy",
+        "ma_cross"
+      ],
+      "cwd_key": "legacy_cwd",
+      "name": "experiment"
+    },
+    {
+      "argv": [
+        "{python}",
+        "scripts/validate_results.py",
+        "{output}"
+      ],
+      "name": "validate_results"
+    }
+  ],
+  "configuration": {
+    "defaults_applied": true,
+    "driver": "legacy_cli",
+    "path": "configs/repro_single_syn_eq_a_ma.json",
+    "resolved": {
+      "benchmark": "same_asset",
+      "data_directory": "data/synthetic",
+      "driver": "legacy_cli",
+      "execution_policy": "close_decision_next_open_fill",
+      "mode": "single",
+      "result_schema_version": 1,
+      "slippage_rate": 0.0005,
+      "starting_capital": 100000.0,
+      "strategy": "ma_cross",
+      "ticker": "SYN_EQ_A",
+      "transaction_cost_rate": 0.001
+    },
+    "sha256": "4828870de441c127c5e1b53ee9f7cfc8d80b421db6e337b8c59dbd3132cd88f0"
+  },
+  "created_by": "generate_reproducibility_manifests.py/public_synthetic_v1",
+  "description": "Public synthetic canonical reproducibility package for public_synthetic_single_ma; not empirical market evidence",
+  "execution": {
+    "default_mode": "serial",
+    "effective_threads": 1,
+    "policy": "close_decision_next_open_fill",
+    "supported_modes": [
+      "serial",
+      "parallel"
+    ],
+    "supported_threads": [
+      1,
+      2,
+      4,
+      8
+    ]
+  },
+  "experiment_id": "public_synthetic_single_ma",
+  "inputs": [
+    {
+      "data_classification": "synthetic",
+      "fixture_seed": 20260713,
+      "format": "json",
+      "generator_id": "synthetic_market_data_v1",
+      "generator_version": 1,
+      "logical_name": "synthetic_fixture_metadata",
+      "path": "data/synthetic/metadata.json",
+      "redistribution_status": "project_owned_apache_2_0",
+      "role": "public_canonical_generator_metadata",
+      "sha256": "f0a9f87a8a3047b36ccc9f32a685f0d1bf7a140066f1febd765f16efe1a009bb",
+      "size_bytes": 3905
+    },
+    {
+      "acquisition_date": null,
+      "acquisition_method": "offline deterministic generation",
+      "adjustment_policy": "manifest_configuration",
+      "corporate_action_availability": "deterministic synthetic dividends and splits declared in metadata.json",
+      "data_classification": "synthetic",
+      "date_range": {
+        "end": "2025-12-31",
+        "start": "2019-01-01"
+      },
+      "fixture_seed": 20260713,
+      "format": "csv",
+      "generator_id": "synthetic_market_data_v1",
+      "generator_version": 1,
+      "license_or_redistribution_constraint": "Apache-2.0 project-owned synthetic fixture",
+      "logical_name": "synthetic_ohlcv_SYN_EQ_A",
+      "mutability": "regenerable_and_immutable_by_sha256",
+      "path": "data/synthetic/SYN_EQ_A.csv",
+      "redistribution_status": "project_owned_apache_2_0",
+      "role": "public_canonical_synthetic_market_data",
+      "row_count": 1804,
+      "schema": "Date,Open,High,Low,Close,Volume,AdjustedClose,Dividends,StockSplits",
+      "sha256": "48b0b12cb9feab6649348db415ff54198eb9f7097861a7f666af0bf9385a4350",
+      "size_bytes": 162297,
+      "source_description": "Repository-generated independent synthetic fixture; not real market data",
+      "ticker_or_universe": "SYN_EQ_A"
+    },
+    {
+      "acquisition_date": null,
+      "acquisition_method": "offline deterministic generation",
+      "adjustment_policy": "manifest_configuration",
+      "corporate_action_availability": "deterministic synthetic dividends and splits declared in metadata.json",
+      "data_classification": "synthetic",
+      "date_range": {
+        "end": "2025-12-31",
+        "start": "2019-01-01"
+      },
+      "fixture_seed": 20260713,
+      "format": "csv",
+      "generator_id": "synthetic_market_data_v1",
+      "generator_version": 1,
+      "license_or_redistribution_constraint": "Apache-2.0 project-owned synthetic fixture",
+      "logical_name": "synthetic_ohlcv_SYN_EQ_B",
+      "mutability": "regenerable_and_immutable_by_sha256",
+      "path": "data/synthetic/SYN_EQ_B.csv",
+      "redistribution_status": "project_owned_apache_2_0",
+      "role": "public_canonical_synthetic_market_data",
+      "row_count": 1804,
+      "schema": "Date,Open,High,Low,Close,Volume,AdjustedClose,Dividends,StockSplits",
+      "sha256": "f8ec8d1d916800a8d3449f9e53864de8085db4ac9c7f93b1435c5fea3c56e001",
+      "size_bytes": 160017,
+      "source_description": "Repository-generated independent synthetic fixture; not real market data",
+      "ticker_or_universe": "SYN_EQ_B"
+    },
+    {
+      "acquisition_date": null,
+      "acquisition_method": "offline deterministic generation",
+      "adjustment_policy": "manifest_configuration",
+      "corporate_action_availability": "deterministic synthetic dividends and splits declared in metadata.json",
+      "data_classification": "synthetic",
+      "date_range": {
+        "end": "2025-12-31",
+        "start": "2019-01-01"
+      },
+      "fixture_seed": 20260713,
+      "format": "csv",
+      "generator_id": "synthetic_market_data_v1",
+      "generator_version": 1,
+      "license_or_redistribution_constraint": "Apache-2.0 project-owned synthetic fixture",
+      "logical_name": "synthetic_ohlcv_SYN_BENCH",
+      "mutability": "regenerable_and_immutable_by_sha256",
+      "path": "data/synthetic/SYN_BENCH.csv",
+      "redistribution_status": "project_owned_apache_2_0",
+      "role": "public_canonical_synthetic_market_data",
+      "row_count": 1805,
+      "schema": "Date,Open,High,Low,Close,Volume,AdjustedClose,Dividends,StockSplits",
+      "sha256": "610e8c2f379716990b5df7a252e460679c838e6c33733c628774840260f9c773",
+      "size_bytes": 166211,
+      "source_description": "Repository-generated independent synthetic fixture; not real market data",
+      "ticker_or_universe": "SYN_BENCH"
+    },
+    {
+      "acquisition_date": null,
+      "acquisition_method": "offline deterministic generation",
+      "adjustment_policy": "manifest_configuration",
+      "corporate_action_availability": "deterministic synthetic dividends and splits declared in metadata.json",
+      "data_classification": "synthetic",
+      "date_range": {
+        "end": "2025-12-31",
+        "start": "2019-01-01"
+      },
+      "fixture_seed": 20260713,
+      "format": "csv",
+      "generator_id": "synthetic_market_data_v1",
+      "generator_version": 1,
+      "license_or_redistribution_constraint": "Apache-2.0 project-owned synthetic fixture",
+      "logical_name": "synthetic_ohlcv_SYN_EQ_C",
+      "mutability": "regenerable_and_immutable_by_sha256",
+      "path": "data/synthetic/SYN_EQ_C.csv",
+      "redistribution_status": "project_owned_apache_2_0",
+      "role": "public_canonical_synthetic_market_data",
+      "row_count": 1804,
+      "schema": "Date,Open,High,Low,Close,Volume,AdjustedClose,Dividends,StockSplits",
+      "sha256": "e89bbf0097270c993200f04e7bd73b84ad767dc708aedc8d0706017239848289",
+      "size_bytes": 159417,
+      "source_description": "Repository-generated independent synthetic fixture; not real market data",
+      "ticker_or_universe": "SYN_EQ_C"
+    },
+    {
+      "acquisition_date": null,
+      "acquisition_method": "offline deterministic generation",
+      "adjustment_policy": "manifest_configuration",
+      "corporate_action_availability": "deterministic synthetic dividends and splits declared in metadata.json",
+      "data_classification": "synthetic",
+      "date_range": {
+        "end": "2025-12-31",
+        "start": "2019-01-01"
+      },
+      "fixture_seed": 20260713,
+      "format": "csv",
+      "generator_id": "synthetic_market_data_v1",
+      "generator_version": 1,
+      "license_or_redistribution_constraint": "Apache-2.0 project-owned synthetic fixture",
+      "logical_name": "synthetic_ohlcv_SYN_CRYPTO",
+      "mutability": "regenerable_and_immutable_by_sha256",
+      "path": "data/synthetic/SYN_CRYPTO.csv",
+      "redistribution_status": "project_owned_apache_2_0",
+      "role": "public_canonical_synthetic_market_data",
+      "row_count": 2556,
+      "schema": "Date,Open,High,Low,Close,Volume,AdjustedClose,Dividends,StockSplits",
+      "sha256": "3b208726cfc0a10370ceaff5c741e95ae75c05922a2caf872f5969983f18c85b",
+      "size_bytes": 248965,
+      "source_description": "Repository-generated independent synthetic fixture; not real market data",
+      "ticker_or_universe": "SYN_CRYPTO"
+    }
+  ],
+  "known_volatile_fields": [
+    "actual_commit",
+    "elapsed_seconds",
+    "generated_at",
+    "generated_at_utc",
+    "git_commit_hash",
+    "hostname",
+    "output_directory",
+    "portfolio_output_directory",
+    "run_timestamp_utc",
+    "source_tree_status",
+    "timestamp",
+    "username"
+  ],
+  "limitations": [
+    "Synthetic outputs validate software and methodology but are not empirical market evidence",
+    "Mutable remote downloads are excluded from exact reconstruction",
+    "PNG bytes are presentation-only across platforms",
+    "Compiler and standard-library versions are recorded but not identity-bound for semantic reconstruction"
+  ],
+  "lineage": {
+    "edges": [
+      [
+        "inputs",
+        "simulation"
+      ],
+      [
+        "resolved_config",
+        "simulation"
+      ],
+      [
+        "quant_cli",
+        "simulation"
+      ],
+      [
+        "simulation",
+        "analytics"
+      ],
+      [
+        "analytics",
+        "validators"
+      ],
+      [
+        "analytics",
+        "reports"
+      ]
+    ],
+    "nodes": [
+      "inputs",
+      "resolved_config",
+      "quant_cli",
+      "simulation",
+      "analytics",
+      "validators",
+      "reports"
+    ]
+  },
+  "manifest_id": "sha256:cd09847cfcbba741a5a4b9c91a1ea445f6afa90023dbe4224806d56e88d0bad3",
+  "manifest_schema_version": 1,
+  "methodology": {
+    "adjustment_policy": "raw_price",
+    "benchmark": "same_asset",
+    "calendar_policy": "asset_calendar",
+    "result_schema": 1,
+    "version": "causal_daily_v3_stochastic_v2"
+  },
+  "outputs": {
+    "artifacts": [
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "SYN_EQ_A_MA_Cross_equity_curve.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 1805,
+        "schema": {
+          "columns": [
+            "date",
+            "portfolio_value",
+            "cash",
+            "holdings",
+            "total_return",
+            "drawdown"
+          ]
+        },
+        "semantic_sha256": "67fe58bfcf170005a67a109355143c59092932ae24536627b53cd46e430d52bc",
+        "sha256": "2156261258a2cff952a34c66e3d9ca80315073f545df7a1ba3f9524d36dc3ac0",
+        "size_bytes": 175883,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "SYN_EQ_A_MA_Cross_performance_summary.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 2,
+        "schema": {
+          "columns": [
+            "schema_version",
+            "ticker",
+            "strategy",
+            "parameter_set",
+            "benchmark_ticker",
+            "benchmark_execution_policy",
+            "benchmark_cost_policy",
+            "excess_return_basis",
+            "total_return",
+            "benchmark_gross_return",
+            "benchmark_net_return",
+            "excess_return",
+            "annualized_return",
+            "volatility",
+            "sharpe",
+            "max_drawdown",
+            "win_rate",
+            "profit_factor",
+            "num_trades",
+            "turnover",
+            "total_transaction_costs",
+            "cost_drag",
+            "average_trade_return"
+          ]
+        },
+        "semantic_sha256": "a0a8d6b8bfd81ab74123953362c6931ceaff27d6f04e916cc9b019613d6781be",
+        "sha256": "f1f7f652ddd7dfb869491cf02f3ebe26ebc0748172bc4858dbfe8dfe5c789c8b",
+        "size_bytes": 761,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "SYN_EQ_A_MA_Cross_trades.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 33,
+        "schema": {
+          "columns": [
+            "date",
+            "ticker",
+            "strategy",
+            "action",
+            "price",
+            "quantity",
+            "cost",
+            "slippage",
+            "portfolio_value",
+            "realized_pnl",
+            "trade_return"
+          ]
+        },
+        "semantic_sha256": "da084c824d8f26d21c2b1d58fac15e9aead48edb2594f965cf347f92cd4e216f",
+        "sha256": "ffbd5b7bf3533dc7919193c2266f016ccaad5f91e87a32dcdf0b68df04b53e3c",
+        "size_bytes": 4492,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "equity_curve.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 1805,
+        "schema": {
+          "columns": [
+            "date",
+            "portfolio_value",
+            "cash",
+            "holdings",
+            "total_return",
+            "drawdown"
+          ]
+        },
+        "semantic_sha256": "67fe58bfcf170005a67a109355143c59092932ae24536627b53cd46e430d52bc",
+        "sha256": "2156261258a2cff952a34c66e3d9ca80315073f545df7a1ba3f9524d36dc3ac0",
+        "size_bytes": 175883,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "performance_summary.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 2,
+        "schema": {
+          "columns": [
+            "schema_version",
+            "ticker",
+            "strategy",
+            "parameter_set",
+            "benchmark_ticker",
+            "benchmark_execution_policy",
+            "benchmark_cost_policy",
+            "excess_return_basis",
+            "total_return",
+            "benchmark_gross_return",
+            "benchmark_net_return",
+            "excess_return",
+            "annualized_return",
+            "volatility",
+            "sharpe",
+            "max_drawdown",
+            "win_rate",
+            "profit_factor",
+            "num_trades",
+            "turnover",
+            "total_transaction_costs",
+            "cost_drag",
+            "average_trade_return"
+          ]
+        },
+        "semantic_sha256": "a0a8d6b8bfd81ab74123953362c6931ceaff27d6f04e916cc9b019613d6781be",
+        "sha256": "f1f7f652ddd7dfb869491cf02f3ebe26ebc0748172bc4858dbfe8dfe5c789c8b",
+        "size_bytes": 761,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "json",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "run_metadata.json",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": null,
+        "schema": {
+          "root_type": "dict"
+        },
+        "semantic_sha256": "6f3a92026a67a7b7f3757d992cb1a71d2535cfc9e559f9a4020ca97ae2654f8a",
+        "sha256": "9ef293858315d28572ba178a4b4bff3b8fb1fa0244f51e8de46fa2c251bc2d7a",
+        "size_bytes": 491,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "strategy_comparison.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 2,
+        "schema": {
+          "columns": [
+            "schema_version",
+            "ticker",
+            "strategy",
+            "parameter_set",
+            "benchmark_ticker",
+            "benchmark_execution_policy",
+            "benchmark_cost_policy",
+            "excess_return_basis",
+            "total_return",
+            "benchmark_gross_return",
+            "benchmark_net_return",
+            "excess_return",
+            "annualized_return",
+            "volatility",
+            "sharpe",
+            "max_drawdown",
+            "win_rate",
+            "profit_factor",
+            "num_trades",
+            "turnover",
+            "total_transaction_costs",
+            "cost_drag",
+            "average_trade_return"
+          ]
+        },
+        "semantic_sha256": "a0a8d6b8bfd81ab74123953362c6931ceaff27d6f04e916cc9b019613d6781be",
+        "sha256": "f1f7f652ddd7dfb869491cf02f3ebe26ebc0748172bc4858dbfe8dfe5c789c8b",
+        "size_bytes": 761,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      },
+      {
+        "artifact_type": "csv",
+        "parents": [
+          "canonical_inputs",
+          "resolved_configuration",
+          "quant_cli"
+        ],
+        "path": "trades.csv",
+        "reproducibility_level": "canonical_semantic",
+        "required": true,
+        "row_count": 33,
+        "schema": {
+          "columns": [
+            "date",
+            "ticker",
+            "strategy",
+            "action",
+            "price",
+            "quantity",
+            "cost",
+            "slippage",
+            "portfolio_value",
+            "realized_pnl",
+            "trade_return"
+          ]
+        },
+        "semantic_sha256": "da084c824d8f26d21c2b1d58fac15e9aead48edb2594f965cf347f92cd4e216f",
+        "sha256": "ffbd5b7bf3533dc7919193c2266f016ccaad5f91e87a32dcdf0b68df04b53e3c",
+        "size_bytes": 4492,
+        "tolerance": null,
+        "validator": "reproducibility_validator"
+      }
+    ],
+    "forbid_extra": true,
+    "root_policy": "caller_selected_isolated_directory"
+  },
+  "package_type": "single_strategy",
+  "randomness": {
+    "engine": "mt19937",
+    "mapping": "portable_bounded_v1",
+    "seed": 0,
+    "seed_derivation": "existing deterministic experiment seed; independent of worker scheduling",
+    "simulation_count": 0,
+    "stochastic_methodology_version": 2
+  },
+  "reports": [],
+  "repository": "https://github.com/MrithunjoyB/cpp-event-driven-backtester",
+  "reproducibility_level": "canonical_semantic",
+  "runtime_environment": {
+    "dependency_lock": "requirements-validation.txt",
+    "locale": "C",
+    "platform_policy": "semantic_cross_platform",
+    "python": "3.9.6",
+    "timezone": "UTC"
+  },
+  "source_commit": "01198f25aaae9ad9051994de5bbaf8e4c8ab4b55",
+  "source_tree_policy": "exact_commit",
+  "validators": [
+    {
+      "name": "validate_results",
+      "required": true
+    }
+  ]
+}

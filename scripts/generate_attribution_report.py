@@ -12,7 +12,7 @@ def rows(path: Path) -> list[dict[str, str]]:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--directory", default="results/research_v3/portfolio_equal_weight/attribution")
+    parser.add_argument("--directory", default="results/public_synthetic/portfolio_equal_weight/attribution")
     args = parser.parse_args()
     root = Path(args.directory)
     summary = {row["component"]: row for row in rows(root / "portfolio_attribution_summary.csv")}

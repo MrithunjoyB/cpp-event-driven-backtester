@@ -1,0 +1,25 @@
+{
+  "baseline_commit": "d806943b5bb6d433e4a56e042fd16acdf5ee726d",
+  "current_tree_commit_policy": "migration implementation commit plus reviewed manifest/documentation descendants",
+  "data_blocker_status": "closed_for_post_migration_release_tree",
+  "forbidden_current_tree_files": 0,
+  "history_rewrite_performed": false,
+  "implementation_commit": "01198f25aaae9ad9051994de5bbaf8e4c8ab4b55",
+  "public_manifest_count": 13,
+  "public_suite_count": 2,
+  "public_suite_id": "public_reproducibility_suite",
+  "remote_ci_evidence": "must be verified externally on the final pushed migration commit",
+  "removed_provider_file_count": 5,
+  "removed_tracked_derived_artifact_count": 289,
+  "rng_mapping": "portable_bounded_v1",
+  "schema_version": 1,
+  "stochastic_methodology_version": 2,
+  "synthetic_asset_count": 5,
+  "tag_created": false,
+  "validators": [
+    "scripts/validate_synthetic_market_data.py",
+    "scripts/validate_public_data_boundary.py",
+    "scripts/validate_reproducibility.py",
+    "scripts/check_regression_snapshots.py"
+  ]
+}

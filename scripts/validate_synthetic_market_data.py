@@ -12,7 +12,7 @@ import tempfile
 from datetime import date, timedelta
 from pathlib import Path
 
-from generate_synthetic_market_data import ASSETS, GENERATOR_ID, SCHEMA, generate
+from generate_synthetic_market_data import ASSETS, DIVIDENDS, GENERATOR_ID, SCHEMA, SPLITS, _dates_for, generate
 
 
 class ValidationError(RuntimeError):
@@ -79,6 +79,12 @@ def validate(directory: Path, regenerate_check: bool = False) -> dict:
                 raise ValidationError(f"weekend row in weekday fixture {asset}")
         if entry.get("date_range") != {"start": rows[0]["Date"], "end": rows[-1]["Date"]}:
             raise ValidationError(f"date range mismatch for {asset}")
+        if dates != _dates_for(asset):
+            raise ValidationError(f"calendar or missing-date rule mismatch for {asset}")
+        observed_dividends = {date.fromisoformat(row["Date"]): float(row["Dividends"]) for row in rows if float(row["Dividends"]) != 0.0}
+        observed_splits = {date.fromisoformat(row["Date"]): float(row["StockSplits"]) for row in rows if float(row["StockSplits"]) != 0.0}
+        if observed_dividends != DIVIDENDS[asset] or observed_splits != SPLITS[asset]:
+            raise ValidationError(f"corporate-action schedule mismatch for {asset}")
         if entry["calendar"] == "synthetic_seven_day":
             missing = {date.fromisoformat(value) for value in entry.get("missing_dates", [])}
             expected = (dates[-1] - dates[0]).days + 1 - len(missing)

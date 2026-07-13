@@ -1,0 +1,6 @@
+scenario,key,expected
+public_synthetic_single_ma,total_return,-0.559576446351
+public_synthetic_single_ma,num_trades,32
+public_synthetic_shared_cash_equal_weight,total_return,1.713391
+public_synthetic_shared_cash_equal_weight,number_of_rebalances,84
+public_synthetic_walk_forward_ma_first_window,selected_parameters,short=5;long=50

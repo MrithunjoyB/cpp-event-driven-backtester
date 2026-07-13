@@ -9,8 +9,10 @@ The Apache License, Version 2.0 applies to the project source code,
 documentation, configuration, and original test fixtures except where a file or
 directory states otherwise.
 
-The market-data files under data/ were acquired from Yahoo Finance through
-yfinance. They are third-party data, are not licensed under Apache-2.0 by this
-project, and remain subject to the applicable upstream terms. Their inclusion
-does not grant redistribution or commercial-use rights. See README.md and
-docs/REPRODUCIBILITY.md for provenance limitations.
+The bundled files under data/synthetic/ are independently generated project
+fixtures covered by Apache-2.0. They are not real market data.
+
+Third-party and user-supplied market data is not included in the current tree
+and is outside this project's license grant. Historical Git commits contain
+previously tracked third-party data; see docs/DATA_PROVENANCE.md. Optional data
+acquisition does not grant provider or redistribution rights.

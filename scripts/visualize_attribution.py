@@ -17,7 +17,7 @@ def save(fig: plt.Figure, path: Path) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--directory", default="results/research_v3/portfolio_equal_weight/attribution")
+    parser.add_argument("--directory", default="results/public_synthetic/portfolio_equal_weight/attribution")
     args = parser.parse_args()
     root = Path(args.directory)
     figures = root / "figures"

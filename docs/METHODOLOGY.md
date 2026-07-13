@@ -11,3 +11,9 @@ Attribution is an additive currency-P&L decomposition of consecutive union-calen
 Statistical inference defaults to moving-block resampling of continuous linked returns. IID bootstrap is comparison-only. Normalized-window OOS curves cannot be treated as deployable histories, and full-sample inputs require an explicit diagnostic label.
 
 Grid-wide selection-risk analysis retains every eligible candidate's exact dated OOS returns. Each candidate/window path starts from normalized capital and liquidates with configured costs, so it is a counterfactual diagnostic rather than a deployable capital history. Training rank and eligibility use only the preceding training window. Candidate and cost-matched benchmark returns are compared only on exact common dates. Family-wise and combined panels use the centered circular moving-block max-mean reality check documented in `STATISTICAL_METHODOLOGY.md`.
+
+## Data Boundary
+
+The public canonical suite runs the same execution, accounting, attribution, bootstrap, and selection-risk methods on deterministic synthetic inputs. Synthetic paths exercise trends, mean reversion, stress pulses, drawdowns, gaps, mixed calendars, missing sessions, stale marks, dividends, and forward/reverse splits. They are not calibrated to or derived from real markets.
+
+Empirical research uses user-supplied local data under the same engine methods. Public synthetic outputs and historical local empirical outputs are separate evidence classes; values from one are never presented as continuity with the other.

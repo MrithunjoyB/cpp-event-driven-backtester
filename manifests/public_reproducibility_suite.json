@@ -1,0 +1,64 @@
+{
+  "children": [
+    {
+      "id": "public_synthetic_single_ma",
+      "manifest": "manifests/public_synthetic_single_ma.json"
+    },
+    {
+      "id": "public_synthetic_portfolio_equal_weight",
+      "manifest": "manifests/public_synthetic_portfolio_equal_weight.json"
+    },
+    {
+      "id": "public_synthetic_portfolio_inverse_volatility",
+      "manifest": "manifests/public_synthetic_portfolio_inverse_volatility.json"
+    },
+    {
+      "id": "public_synthetic_portfolio_momentum_top_n",
+      "manifest": "manifests/public_synthetic_portfolio_momentum_top_n.json"
+    },
+    {
+      "id": "public_synthetic_attribution_equal_weight",
+      "manifest": "manifests/public_synthetic_attribution_equal_weight.json"
+    },
+    {
+      "id": "public_synthetic_statistics_equal_weight",
+      "manifest": "manifests/public_synthetic_statistics_equal_weight.json"
+    },
+    {
+      "id": "public_synthetic_selection_risk_ma",
+      "manifest": "manifests/public_synthetic_selection_risk_ma.json"
+    },
+    {
+      "id": "public_synthetic_selection_risk_rsi",
+      "manifest": "manifests/public_synthetic_selection_risk_rsi.json"
+    },
+    {
+      "id": "public_synthetic_selection_risk_macd",
+      "manifest": "manifests/public_synthetic_selection_risk_macd.json"
+    },
+    {
+      "id": "public_synthetic_selection_risk_volatility_breakout",
+      "manifest": "manifests/public_synthetic_selection_risk_volatility_breakout.json"
+    },
+    {
+      "id": "public_synthetic_selection_risk_combined",
+      "manifest": "manifests/public_synthetic_selection_risk_combined.json"
+    },
+    {
+      "id": "public_synthetic_selection_risk_combined_zero_cost",
+      "manifest": "manifests/public_synthetic_selection_risk_combined_zero_cost.json"
+    },
+    {
+      "id": "public_synthetic_selection_risk_combined_high_cost",
+      "manifest": "manifests/public_synthetic_selection_risk_combined_high_cost.json"
+    }
+  ],
+  "default_execution_mode": "serial",
+  "default_threads": 1,
+  "description": "Complete offline public synthetic canonical reconstruction plan",
+  "manifest_schema_version": 1,
+  "package_type": "suite",
+  "source_commit": "01198f25aaae9ad9051994de5bbaf8e4c8ab4b55",
+  "suite_id": "public_reproducibility_suite",
+  "suite_id_hash": "sha256:1608e66a7cf25486a6c5b06df9d5ebed6f3cd5ccf931405da1bab1513565f59e"
+}

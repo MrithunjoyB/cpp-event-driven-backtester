@@ -2,7 +2,7 @@ from __future__ import annotations
 import argparse,csv
 from pathlib import Path
 def main():
- p=argparse.ArgumentParser();p.add_argument("--directory",default="results/research_v3/portfolio_equal_weight/statistics");a=p.parse_args();root=Path(a.directory)
+ p=argparse.ArgumentParser();p.add_argument("--directory",default="results/public_synthetic/portfolio_equal_weight/statistics");a=p.parse_args();root=Path(a.directory)
  s={r["metric"]:r for r in csv.DictReader((root/"bootstrap_summary.csv").open())};sh=list(csv.DictReader((root/"sharpe_inference.csv").open()))[0];mt=list(csv.DictReader((root/"multiple_testing_summary.csv").open()))[0]
  text=f"""# Public Synthetic Statistical Robustness Report
 
