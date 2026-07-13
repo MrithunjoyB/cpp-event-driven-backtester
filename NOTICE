@@ -1,0 +1,16 @@
+C++ Systematic Strategy Evaluation and Robustness Platform
+Copyright 2026 Mrithunjoy Basumatary
+
+This product was developed with AI-assisted code generation under the direction,
+review, and maintainership of Mrithunjoy Basumatary. AI systems are not named as
+copyright holders, contributors, or co-authors.
+
+The Apache License, Version 2.0 applies to the project source code,
+documentation, configuration, and original test fixtures except where a file or
+directory states otherwise.
+
+The market-data files under data/ were acquired from Yahoo Finance through
+yfinance. They are third-party data, are not licensed under Apache-2.0 by this
+project, and remain subject to the applicable upstream terms. Their inclusion
+does not grant redistribution or commercial-use rights. See README.md and
+docs/REPRODUCIBILITY.md for provenance limitations.

@@ -4,6 +4,8 @@ A modular C++17 platform for causal backtesting, shared-cash portfolio simulatio
 
 The system supports reproducible strategy and allocation-policy experiments on daily OHLCV data. It separates simulation from export, records methodological assumptions in schema-versioned outputs, and uses Python only for data acquisition, independent validation, visualization, and reporting.
 
+Development is AI-assisted and remains directed, reviewed, and maintained by Mrithunjoy Basumatary. AI systems are not project authors or copyright holders.
+
 ## Research Scope
 
 Historical strategy evaluation is vulnerable to timing errors, optimistic execution assumptions, benchmark mismatches, calendar misalignment, accounting omissions, and selection bias. This repository addresses those problems through causal signal-to-fill timing, explicit costs, calendar-duration walk-forward tests, continuous out-of-sample capital, benchmark execution parity, and validated portfolio accounting.
@@ -192,6 +194,12 @@ Possible future directions, not current capabilities or committed deliverables:
 - Machine-learning strategy adapters
 - Live paper-trading integration
 - Exchange-native calendar and corporate-action providers
+
+## License and Data Terms
+
+The project source code, documentation, configuration, and original test fixtures are licensed under the [Apache License 2.0](LICENSE). Copyright 2026 Mrithunjoy Basumatary. See [NOTICE](NOTICE) for attribution and scope.
+
+The historical market-data CSVs in `data/` are third-party data acquired from Yahoo Finance through yfinance. They are excluded from the Apache-2.0 grant and remain subject to applicable upstream terms; this repository does not grant rights to redistribute or commercially use them. Users should supply market data they are independently entitled to use. The tracked files currently support exact research reconstruction, but their upstream provenance is incomplete and their public redistribution status is an unresolved `v1.0.0` release gate.
 
 ## Disclaimer
 
