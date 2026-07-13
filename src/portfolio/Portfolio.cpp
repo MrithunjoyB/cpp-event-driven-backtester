@@ -50,7 +50,7 @@ bool Portfolio::process_fill(const FillEvent& fill, double market_price) {
         if (fill.quantity > position_) {
             return false;
         }
-        realized_pnl = proceeds - average_entry_price_ * fill.quantity;
+        realized_pnl = std::fma(-average_entry_price_, static_cast<double>(fill.quantity), proceeds);
         double basis = average_entry_price_ * fill.quantity;
         trade_return = basis > 0.0 ? realized_pnl / basis : 0.0;
         cash_ += proceeds;

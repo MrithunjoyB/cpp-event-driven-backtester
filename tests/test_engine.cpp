@@ -13,8 +13,10 @@
 #include "quant/domain/Errors.h"
 
 #include <cmath>
+#include <cstdint>
 #include <cstdlib>
 #include <cstdio>
+#include <cstring>
 #include <functional>
 #include <filesystem>
 #include <fstream>
@@ -31,6 +33,13 @@ int assertions_run = 0;
 
 bool nearly_equal(double lhs, double rhs, double tolerance = 1e-6) {
     return std::fabs(lhs - rhs) <= tolerance;
+}
+
+std::uint64_t double_bits(double value) {
+    std::uint64_t bits = 0;
+    static_assert(sizeof(bits) == sizeof(value), "unexpected double width");
+    std::memcpy(&bits, &value, sizeof(bits));
+    return bits;
 }
 
 void require(bool condition, const std::string& message) {
@@ -203,6 +212,33 @@ int main() {
         require(portfolio.process_fill(fill(OrderSide::Buy, 10, 100.0, 0.0, 0.0), 100.0), "buy rejected");
         require(portfolio.process_fill(fill(OrderSide::Sell, 10, 90.0, 0.0, 0.0), 90.0), "sell rejected");
         require(nearly_equal(portfolio.trades().back().realized_pnl, -100.0), "bad losing PnL");
+    });
+    run_case("Realized PnL uses deterministic fused arithmetic", [&] {
+        constexpr int quantity = 924;
+        constexpr double buy_market_price = 102.801355;
+        constexpr double sell_market_price = 110.840625;
+        ExecutionHandler execution(0.001, 0.0005);
+        const FillEvent buy = execution.execute_order(
+            OrderEvent{EventType::Order, "2019-08-08", "SYN_EQ_A", "MA_Cross", OrderSide::Buy, quantity},
+            buy_market_price);
+        const FillEvent sell = execution.execute_order(
+            OrderEvent{EventType::Order, "2019-10-28", "SYN_EQ_A", "MA_Cross", OrderSide::Sell, quantity},
+            sell_market_price);
+
+        const double average_entry_price = (buy.gross_value + buy.transaction_cost) / quantity;
+        const double proceeds = sell.gross_value - sell.transaction_cost;
+        volatile double separately_rounded_basis = average_entry_price * quantity;
+        const double separately_rounded_pnl = proceeds - separately_rounded_basis;
+        const double fused_pnl = std::fma(-average_entry_price, static_cast<double>(quantity), proceeds);
+
+        require(separately_rounded_pnl != fused_pnl, "regression fixture does not expose contraction difference");
+        require(double_bits(fused_pnl) == UINT64_C(0x40bbdc2e70e073ab), "unexpected fused PnL bits");
+
+        Portfolio portfolio(200000.0);
+        require(portfolio.process_fill(buy, buy_market_price), "regression buy rejected");
+        require(portfolio.process_fill(sell, sell_market_price), "regression sell rejected");
+        require(double_bits(portfolio.trades().back().realized_pnl) == double_bits(fused_pnl),
+                "portfolio realized PnL is not the deterministic fused result");
     });
     run_case("Multiple sequential trades", [&] {
         Portfolio portfolio(10000.0);
