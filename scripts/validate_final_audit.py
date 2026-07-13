@@ -10,22 +10,22 @@ missing=required-{p.name for p in root.glob("*")}; errors=[]
 if missing: errors.append("missing files: "+", ".join(sorted(missing)))
 try: manifest=json.loads((root/"audit_manifest.json").read_text())
 except Exception as error: manifest={};errors.append("invalid manifest: "+str(error))
-if manifest.get("audit_schema_version")!=1: errors.append("invalid audit schema")
-if manifest.get("decision")!="C. FAIL — RNG MIGRATION REQUIRED": errors.append("invalid release decision")
+if manifest.get("audit_schema_version")!=2: errors.append("invalid audit schema")
+decision="A. RNG MIGRATION COMPLETE — PASS TO FINAL RELEASE ENGINEERING"
+if manifest.get("decision")!=decision: errors.append("invalid release decision")
 for item in manifest.get("files",[]):
  path=root/item["path"]
  if not path.is_file(): errors.append("manifest file missing: "+item["path"]);continue
  if hashlib.sha256(path.read_bytes()).hexdigest()!=item["sha256"]: errors.append("audit hash mismatch: "+item["path"])
 findings=list(csv.DictReader((root/"audit_findings.csv").open())) if (root/"audit_findings.csv").exists() else []
-if not any(row["severity"]=="High" and row["release_blocker"]=="yes" for row in findings): errors.append("missing High release blocker")
+if any(row["severity"] in {"Critical","High"} and row.get("status")!="resolved" for row in findings): errors.append("unresolved Critical/High finding")
 for row in findings:
- for key in ("id","evidence","impact","remediation","closure_test"): 
+ for key in ("id","evidence","impact","remediation","reproduction","status","closure_test"):
   if not row.get(key): errors.append(f"finding {row.get('id')} missing {key}")
 thresholds=list(csv.DictReader((root/"threshold_stability.csv").open())) if (root/"threshold_stability.csv").exists() else []
-if not any(row["band_crossing"]=="1" for row in thresholds): errors.append("threshold crossing evidence missing")
-if not any(row["margin_less_than_one_se"]=="1" and row["release_relevant"]=="1" for row in thresholds): errors.append("near-threshold release evidence missing")
+if any(row.get("migrated_band","")=="" for row in thresholds): errors.append("migrated threshold evidence missing")
 for name in ("final_audit_report.md","rng_migration_decision.md"):
- if name in required and (root/name).is_file() and "C. FAIL — RNG MIGRATION REQUIRED" not in (root/name).read_text(): errors.append(name+" decision mismatch")
+ if name in required and (root/name).is_file() and decision not in (root/name).read_text(): errors.append(name+" decision mismatch")
 claims=list(csv.DictReader((root/"audit_claim_inventory.csv").open())) if (root/"audit_claim_inventory.csv").exists() else []
 for key in ("source_file","documentation","supporting_test","supporting_artifact","independent_audit_method","status"):
  if claims and key not in claims[0]: errors.append("claim inventory missing "+key)

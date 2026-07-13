@@ -94,13 +94,13 @@ Using 1,000 circular moving-block bootstrap simulations over 2,190 return observ
 
 | Allocation policy | Sharpe 95% confidence interval | Probability Sharpe exceeds benchmark |
 | --- | ---: | ---: |
-| Equal Weight | 0.276 to 2.024 | 94.5% |
-| Inverse Volatility | 0.379 to 2.066 | 98.2% |
-| Momentum Top-N | -0.182 to 1.400 | 34.4% |
+| Equal Weight | 0.351 to 1.932 | 94.9% |
+| Inverse Volatility | 0.362 to 2.030 | 97.9% |
+| Momentum Top-N | -0.145 to 1.381 | 35.2% |
 
 Inverse Volatility currently has the strongest statistical evidence, while Equal Weight also shows comparatively strong evidence. Momentum Top-N remains inconclusive. These are historical findings, not forecasts; portfolio performance is materially concentrated in BTC-USD and TSLA.
 
-The current macOS canonical strategy-grid baseline retains 41 configured candidates per ticker and contains no family/ticker or combined rejection at 5%. TSLA MACD is close to the boundary (`p` approximately 0.057 at base costs and 0.052 at zero cost). The final audit found that these margins are not stable enough for release across standard-library index mappings and Monte Carlo variation. A platform-stable RNG migration and regenerated stochastic baselines are required before these values can support a v1.0.0 inference claim. See [Final Audit](docs/FINAL_AUDIT.md).
+Stochastic methodology version 2 uses a repository-owned unbiased bounded mapping with `mt19937`. The regenerated combined TSLA MACD adjusted p-value is approximately `0.0559` at base costs, `0.0509` at zero cost, and `0.0729` at high cost; all remain above 0.05. Regime slices remain exploratory. See [RNG Methodology](docs/RNG_METHODOLOGY.md) and [Final Audit](docs/FINAL_AUDIT.md).
 
 Full generated reports are written locally to `results/research_v3/portfolio_equal_weight/attribution/attribution_report.md`, `results/research_v3/portfolio_equal_weight/statistics/statistical_report.md`, and `results/research_v3/selection_risk/all_families/selection_risk/selection_risk_report.md`. Generated research artifacts are intentionally not tracked.
 
@@ -130,7 +130,7 @@ On the measured Apple M1 Release workload, immutable data and benchmark reuse re
 
 ## Validation
 
-The current tree has 21 CTest targets covering deterministic regression, domain/configuration, methodology, export, bootstrap, calendar, corporate actions, union-calendar portfolios, attribution, statistics, candidate selection risk, performance/concurrency, reproducibility, final-audit gates, and CLI behavior. The regression snapshot check matches 8/8 tracked scenarios.
+The current tree has 23 CTest targets covering deterministic regression, domain/configuration, methodology, export, bootstrap, stable RNG vectors, calendar, corporate actions, union-calendar portfolios, attribution, statistics, candidate selection risk, performance/concurrency, reproducibility, final-audit gates, and CLI behavior. The regression snapshot check matches 8/8 tracked scenarios.
 
 Validation also includes strict compiler warnings, ASan, UBSan, TSan, Linux and macOS Release CI, schema/result validation, dedicated attribution and statistical corruption tests, parallel package equivalence, and Python reference cross-checks. See [Testing](docs/TESTING.md) for commands and test boundaries.
 
@@ -142,7 +142,7 @@ See [Result Schema](docs/RESULT_SCHEMA.md) for output filenames, columns, units,
 
 ## Reproducibility
 
-Reproducibility mechanisms include versioned manifests, hash-verified tracked inputs, resolved configurations, deterministic seeds, schema/build/dependency provenance, atomic reconstruction, regression snapshots, Python references, and CI. Deterministic financial artifacts reconstruct semantically across platforms; stochastic inference remains release-blocked pending a platform-stable bounded sampler.
+Reproducibility mechanisms include versioned manifests, hash-verified tracked inputs, resolved configurations, deterministic seeds, a repository-owned stable bounded sampler, schema/build/dependency provenance, atomic reconstruction, regression snapshots, Python references, and CI. Release-candidate manifests use exact implementation identity and zero-tolerance semantic comparison for stochastic numerical artifacts.
 
 ## Documentation
 
@@ -158,6 +158,7 @@ Reproducibility mechanisms include versioned manifests, hash-verified tracked in
 - [Testing](docs/TESTING.md)
 - [Performance](docs/PERFORMANCE.md)
 - [Reproducibility](docs/REPRODUCIBILITY.md)
+- [RNG Methodology](docs/RNG_METHODOLOGY.md)
 - [Final Audit](docs/FINAL_AUDIT.md)
 
 ## Limitations
@@ -176,11 +177,10 @@ Reproducibility mechanisms include versioned manifests, hash-verified tracked in
 
 ### Near-Term Roadmap
 
-1. Migrate stochastic index sampling to a versioned repository-owned stable bounded sampler.
-2. Increment the statistical methodology version and regenerate all stochastic baselines.
-3. Prove threshold stability and exact stochastic reconstruction across libc++ and libstdc++.
-4. Regenerate strict manifests at the final audited commit.
-5. Complete release acceptance checks before preparing `v1.0.0`.
+1. Complete final release acceptance checks and curate release artifacts.
+2. Hash-pin Python validation distributions and reviewed GitHub Actions revisions.
+3. Produce final release notes without changing migrated methodology.
+4. Prepare `v1.0.0` only after final CI and reconstruction remain green.
 
 ### Longer-Term Extensions
 

@@ -34,7 +34,7 @@
   "description": "Complete seven-package selection-risk reconstruction plan",
   "manifest_schema_version": 1,
   "package_type": "suite",
-  "source_commit": "ba31b17bfa6b3cafdd0228d0ea7ae1c7481b70cf",
+  "source_commit": "c21852e3688e501749567fc139ead379e0fe0314",
   "suite_id": "complete_seven_package_selection_risk",
-  "suite_id_hash": "sha256:614fcb4864bd7a5c8729b317f8603948bfe0deb7a91822cbad42be750f2a33fd"
+  "suite_id_hash": "sha256:4a358039590ccabd24b63ba55b1dfe086982a06ba6b26830cc262982cf33f011"
 }

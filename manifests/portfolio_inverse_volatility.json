@@ -320,14 +320,14 @@
       "reports"
     ]
   },
-  "manifest_id": "sha256:be4293144c995012ad5c914553e2b9006bdbd4c5077cabc11ece9a7941a096d4",
+  "manifest_id": "sha256:f43ff0fc688533ea839f577bd8f274c756ba3f2599ccefa29aa45d54760e528d",
   "manifest_schema_version": 1,
   "methodology": {
     "adjustment_policy": "raw_price",
     "benchmark": "SPY",
     "calendar_policy": "union",
     "result_schema": 3,
-    "version": "causal_daily_v3"
+    "version": "causal_daily_v3_stochastic_v2"
   },
   "outputs": {
     "artifacts": [
@@ -1357,7 +1357,7 @@
           "root_type": "dict"
         },
         "semantic_sha256": "b4b2c6d1f0bf23d178b0a36ddfdd0695ecf1987de3d160a69033029f2a7b3a27",
-        "sha256": "2c6fcacfe8b7af96783ced1af3d9db7fc4d6e50b9c5b91075b0c7b28db6f918a",
+        "sha256": "66acdca868805cde6f9a4a2bdfc0ad0169b0a409b2c920858d6a9466e2c34aa6",
         "size_bytes": 487,
         "tolerance": null,
         "validator": "reproducibility_validator"
@@ -1378,6 +1378,9 @@
             "schema_version",
             "experiment_id",
             "method",
+            "rng_engine",
+            "rng_mapping",
+            "stochastic_methodology_version",
             "seed",
             "simulation_count",
             "block_length",
@@ -1392,22 +1395,21 @@
             "status"
           ]
         },
-        "semantic_sha256": "556f29570e4150d60e7897e9b763037d5d0eab3f88bcee8b48c26f7a1124161a",
-        "sha256": "b360d745e25fb11beca3207c4703e3d877a428ed13a9f4e505f3042e18bb6a8c",
-        "size_bytes": 408,
+        "semantic_sha256": "efe2281c4428f11dd387faf7fa85908dc336d267f21c98fcd2805b0ebaf4bd57",
+        "sha256": "89e981be3712b66f46fd7949af2b89029fffd1d7681d0dd9535e1305d0ceaa2e",
+        "size_bytes": 492,
         "tolerance": null,
         "validator": "reproducibility_validator"
       },
       {
         "artifact_type": "csv",
-        "comparison_policy": "shape_only",
         "parents": [
           "canonical_inputs",
           "resolved_configuration",
           "quant_cli"
         ],
         "path": "statistics/bootstrap_metric_distributions.csv",
-        "reproducibility_level": "methodological",
+        "reproducibility_level": "canonical_semantic",
         "required": true,
         "row_count": 1001,
         "schema": {
@@ -1415,6 +1417,9 @@
             "schema_version",
             "experiment_id",
             "method",
+            "rng_engine",
+            "rng_mapping",
+            "stochastic_methodology_version",
             "seed",
             "simulation_count",
             "block_length",
@@ -1437,22 +1442,21 @@
             "information_ratio"
           ]
         },
-        "semantic_sha256": null,
-        "sha256": null,
-        "size_bytes": 238523,
+        "semantic_sha256": "a011a99087041c85f09084b2ec771e56782e23daa13d080c088cd287ebf63f63",
+        "sha256": "6cad466cb0f8c00270fa02d68c5b7dc8cad93f468c1b03e446364fd28b2b46f6",
+        "size_bytes": 268592,
         "tolerance": null,
         "validator": "reproducibility_validator"
       },
       {
         "artifact_type": "csv",
-        "comparison_policy": "shape_only",
         "parents": [
           "canonical_inputs",
           "resolved_configuration",
           "quant_cli"
         ],
         "path": "statistics/bootstrap_paths_sample.csv",
-        "reproducibility_level": "methodological",
+        "reproducibility_level": "canonical_semantic",
         "required": true,
         "row_count": 43801,
         "schema": {
@@ -1460,6 +1464,9 @@
             "schema_version",
             "experiment_id",
             "method",
+            "rng_engine",
+            "rng_mapping",
+            "stochastic_methodology_version",
             "seed",
             "simulation_count",
             "block_length",
@@ -1474,66 +1481,21 @@
             "return"
           ]
         },
-        "semantic_sha256": null,
-        "sha256": null,
-        "size_bytes": 6984308,
+        "semantic_sha256": "af54657e6f69eb8e6bc3e11be9eaaf9808a194d1892c60e4f78ede4f7e30c07f",
+        "sha256": "639c9d79d982e1b79e825e11ce255b19d66b6eb509d9792e0823da15e77be5b1",
+        "size_bytes": 8298446,
         "tolerance": null,
         "validator": "reproducibility_validator"
       },
       {
         "artifact_type": "csv",
-        "comparison_policy": "numeric_field_tolerance",
-        "expected_rows": [
-          {
-            "annualization_method": "source_result_factor=365.250000",
-            "benchmark": "SPY",
-            "block_length": "13",
-            "candidate_count": "1",
-            "confidence_level": "0.95",
-            "experiment_id": "portfolio_inverse_volatility",
-            "input_series": "portfolio_policy_union_returns",
-            "lower_bound": "0.491558",
-            "mean": "5.680351",
-            "median": "4.437205",
-            "method": "moving_block_circular",
-            "metric": "cumulative_return",
-            "observation_count": "2190",
-            "probability": "0.003000",
-            "schema_version": "3",
-            "seed": "46",
-            "simulation_count": "1000",
-            "standard_deviation": "4.588862",
-            "upper_bound": "18.579360"
-          },
-          {
-            "annualization_method": "source_result_factor=365.250000",
-            "benchmark": "SPY",
-            "block_length": "13",
-            "candidate_count": "1",
-            "confidence_level": "0.95",
-            "experiment_id": "portfolio_inverse_volatility",
-            "input_series": "portfolio_policy_union_returns",
-            "lower_bound": "0.379265",
-            "mean": "1.198971",
-            "median": "1.187653",
-            "method": "moving_block_circular",
-            "metric": "sharpe",
-            "observation_count": "2190",
-            "probability": "1.000000",
-            "schema_version": "3",
-            "seed": "46",
-            "simulation_count": "1000",
-            "standard_deviation": "0.421405",
-            "upper_bound": "2.065551"
-          }
-        ],
         "parents": [
           "canonical_inputs",
           "resolved_configuration",
           "quant_cli"
         ],
         "path": "statistics/bootstrap_summary.csv",
-        "reproducibility_level": "methodological",
+        "reproducibility_level": "canonical_semantic",
         "required": true,
         "row_count": 3,
         "schema": {
@@ -1541,6 +1503,9 @@
             "schema_version",
             "experiment_id",
             "method",
+            "rng_engine",
+            "rng_mapping",
+            "stochastic_methodology_version",
             "seed",
             "simulation_count",
             "block_length",
@@ -1559,17 +1524,10 @@
             "probability"
           ]
         },
-        "semantic_sha256": null,
-        "sha256": null,
-        "size_bytes": 660,
-        "tolerance": {
-          "lower_bound": 0.25,
-          "mean": 0.2,
-          "median": 0.15,
-          "probability": 0.04,
-          "standard_deviation": 1.0,
-          "upper_bound": 3.0
-        },
+        "semantic_sha256": "77abcf0811e0cfee5cb341cf500d0d60eaa0da8f874a5f9ab8df4016c7b10c43",
+        "sha256": "b6353547fa73b2eb6d39fb332fa4daeba95b450946454e52b37a62408fc31888",
+        "size_bytes": 774,
+        "tolerance": null,
         "validator": "reproducibility_validator"
       },
       {
@@ -1586,7 +1544,7 @@
         "schema": null,
         "semantic_sha256": null,
         "sha256": null,
-        "size_bytes": 26859,
+        "size_bytes": 27926,
         "tolerance": null,
         "validator": "reproducibility_validator"
       },
@@ -1604,7 +1562,7 @@
         "schema": null,
         "semantic_sha256": null,
         "sha256": null,
-        "size_bytes": 218729,
+        "size_bytes": 215957,
         "tolerance": null,
         "validator": "reproducibility_validator"
       },
@@ -1622,7 +1580,7 @@
         "schema": null,
         "semantic_sha256": null,
         "sha256": null,
-        "size_bytes": 27659,
+        "size_bytes": 30724,
         "tolerance": null,
         "validator": "reproducibility_validator"
       },
@@ -1640,7 +1598,7 @@
         "schema": null,
         "semantic_sha256": null,
         "sha256": null,
-        "size_bytes": 28393,
+        "size_bytes": 28110,
         "tolerance": null,
         "validator": "reproducibility_validator"
       },
@@ -1658,41 +1616,19 @@
         "schema": null,
         "semantic_sha256": null,
         "sha256": null,
-        "size_bytes": 27919,
+        "size_bytes": 30338,
         "tolerance": null,
         "validator": "reproducibility_validator"
       },
       {
         "artifact_type": "csv",
-        "comparison_policy": "numeric_field_tolerance",
-        "expected_rows": [
-          {
-            "annualization_method": "source_result_factor=365.250000",
-            "benchmark": "SPY",
-            "block_length": "13",
-            "candidate_count": "1",
-            "confidence_level": "0.95",
-            "eligible_count": "1",
-            "experiment_id": "portfolio_inverse_volatility",
-            "input_series": "portfolio_policy_union_returns",
-            "method": "moving_block_circular",
-            "null_hypothesis": "no_candidate_outperforms_benchmark_in_expected_return",
-            "observation_count": "2190",
-            "observed_best_mean": "0.000461",
-            "p_value": "0.003996",
-            "schema_version": "3",
-            "seed": "46",
-            "simulation_count": "1000",
-            "test_method": "centered_moving_block_reality_check"
-          }
-        ],
         "parents": [
           "canonical_inputs",
           "resolved_configuration",
           "quant_cli"
         ],
         "path": "statistics/multiple_testing_summary.csv",
-        "reproducibility_level": "methodological",
+        "reproducibility_level": "canonical_semantic",
         "required": true,
         "row_count": 2,
         "schema": {
@@ -1700,6 +1636,9 @@
             "schema_version",
             "experiment_id",
             "method",
+            "rng_engine",
+            "rng_mapping",
+            "stochastic_methodology_version",
             "seed",
             "simulation_count",
             "block_length",
@@ -1716,12 +1655,10 @@
             "null_hypothesis"
           ]
         },
-        "semantic_sha256": null,
-        "sha256": null,
-        "size_bytes": 489,
-        "tolerance": {
-          "p_value": 0.01
-        },
+        "semantic_sha256": "610aa439dc53fe50e05f093cd71154b3ce0039ace6f2c4c627c28b6c776bef0d",
+        "sha256": "7dfc6df9d1fd90cab4a828996d896b9e0580b2927c71ab3d7118a77ff58a9b53",
+        "size_bytes": 573,
+        "tolerance": null,
         "validator": "reproducibility_validator"
       },
       {
@@ -1740,6 +1677,9 @@
             "schema_version",
             "experiment_id",
             "method",
+            "rng_engine",
+            "rng_mapping",
+            "stochastic_methodology_version",
             "seed",
             "simulation_count",
             "block_length",
@@ -1758,9 +1698,9 @@
             "status"
           ]
         },
-        "semantic_sha256": "b6221a7fb1339dd7db3d53cd3982d49274cafc31a61f15a195318eb3a7a75356",
-        "sha256": "0bb8af477ade3de4ddb512ae19c0a712fc3c7ac94960c2113b26255cbd424e7e",
-        "size_bytes": 464,
+        "semantic_sha256": "f031a00d8fb4538064427d691984e57b4d28191710dfb8ab696ad529998be802",
+        "sha256": "aaa84be5c5b632f71d9116f17660292d621b144866097b3a81d230fe5cedc6cb",
+        "size_bytes": 548,
         "tolerance": null,
         "validator": "reproducibility_validator"
       },
@@ -1780,6 +1720,9 @@
             "schema_version",
             "experiment_id",
             "method",
+            "rng_engine",
+            "rng_mapping",
+            "stochastic_methodology_version",
             "seed",
             "simulation_count",
             "block_length",
@@ -1794,9 +1737,9 @@
             "status"
           ]
         },
-        "semantic_sha256": "fe36f5f25edc71af81d8d35e6958f9a82d3781153a213bb626dd4f32e2547622",
-        "sha256": "b7216cec6988acf2242ad3038a85a82edd3144df96b57bf61311574a42651c33",
-        "size_bytes": 402,
+        "semantic_sha256": "82e573b29f764b78b6ef1aed8a4a112f87b61a7fdfc239d26eed103db94e0185",
+        "sha256": "b4d415057ff930534eb45690569beafab96eb9a2a1ae419910bc542c698bac81",
+        "size_bytes": 486,
         "tolerance": null,
         "validator": "reproducibility_validator"
       },
@@ -1816,6 +1759,9 @@
             "schema_version",
             "experiment_id",
             "method",
+            "rng_engine",
+            "rng_mapping",
+            "stochastic_methodology_version",
             "seed",
             "simulation_count",
             "block_length",
@@ -1832,45 +1778,21 @@
             "status"
           ]
         },
-        "semantic_sha256": "88972ef632e5d74fc95d915911cc71c510233a7aca31d9ad57196d7b165bec0e",
-        "sha256": "3da4302fc2745408d42dfec7cde2e12b576bde910cb85ce903940fba25d413aa",
-        "size_bytes": 430,
+        "semantic_sha256": "88fa5544fcda76962e7da66dc3686bff305ac18a1b67b209ad1739b01427542a",
+        "sha256": "fb6f7f9f0273f3569a70081c1e47d12ed5ce103ec107a517fb3fc7291c560408",
+        "size_bytes": 514,
         "tolerance": null,
         "validator": "reproducibility_validator"
       },
       {
         "artifact_type": "csv",
-        "comparison_policy": "numeric_field_tolerance",
-        "expected_rows": [
-          {
-            "annualization_method": "source_result_factor=365.250000",
-            "benchmark": "SPY",
-            "block_length": "13",
-            "candidate_count": "1",
-            "confidence_level": "0.95",
-            "experiment_id": "portfolio_inverse_volatility",
-            "input_series": "portfolio_policy_union_returns",
-            "method": "moving_block_circular",
-            "observation_count": "2190",
-            "policy": "portfolio_inverse_volatility",
-            "probability_loss": "0.003000",
-            "probability_positive_active": "0.995000",
-            "return_lower": "0.491558",
-            "return_upper": "18.579360",
-            "schema_version": "3",
-            "seed": "46",
-            "sharpe_lower": "0.379265",
-            "sharpe_upper": "2.065551",
-            "simulation_count": "1000"
-          }
-        ],
         "parents": [
           "canonical_inputs",
           "resolved_configuration",
           "quant_cli"
         ],
         "path": "statistics/portfolio_policy_robustness.csv",
-        "reproducibility_level": "methodological",
+        "reproducibility_level": "canonical_semantic",
         "required": true,
         "row_count": 2,
         "schema": {
@@ -1878,6 +1800,9 @@
             "schema_version",
             "experiment_id",
             "method",
+            "rng_engine",
+            "rng_mapping",
+            "stochastic_methodology_version",
             "seed",
             "simulation_count",
             "block_length",
@@ -1896,50 +1821,21 @@
             "probability_loss"
           ]
         },
-        "semantic_sha256": null,
-        "sha256": null,
-        "size_bytes": 497,
-        "tolerance": {
-          "probability_loss": 0.04,
-          "probability_positive_active": 0.04,
-          "return_lower": 0.25,
-          "return_upper": 3.0,
-          "sharpe_lower": 0.1,
-          "sharpe_upper": 0.1
-        },
+        "semantic_sha256": "7705deb7c961cb91808d02c9b2dc3f694f7041de9ceb4ee47d6f7afa935a58e6",
+        "sha256": "768d97b68b2f0428f63bfdaca1419291893ee0dd1d619e9ce6cc7015d326e8ed",
+        "size_bytes": 581,
+        "tolerance": null,
         "validator": "reproducibility_validator"
       },
       {
         "artifact_type": "csv",
-        "comparison_policy": "numeric_field_tolerance",
-        "expected_rows": [
-          {
-            "annualization_method": "source_result_factor=365.250000",
-            "benchmark": "SPY",
-            "block_length": "13",
-            "candidate_count": "1",
-            "confidence_level": "0.95",
-            "experiment_id": "portfolio_inverse_volatility",
-            "input_series": "portfolio_policy_union_returns",
-            "method": "moving_block_circular",
-            "observation_count": "2190",
-            "probability_sharpe_exceeds_benchmark": "0.982000",
-            "probability_sharpe_positive": "1.000000",
-            "schema_version": "3",
-            "seed": "46",
-            "sharpe_lower": "0.379265",
-            "sharpe_mean": "1.198971",
-            "sharpe_upper": "2.065551",
-            "simulation_count": "1000"
-          }
-        ],
         "parents": [
           "canonical_inputs",
           "resolved_configuration",
           "quant_cli"
         ],
         "path": "statistics/sharpe_inference.csv",
-        "reproducibility_level": "methodological",
+        "reproducibility_level": "canonical_semantic",
         "required": true,
         "row_count": 2,
         "schema": {
@@ -1947,6 +1843,9 @@
             "schema_version",
             "experiment_id",
             "method",
+            "rng_engine",
+            "rng_mapping",
+            "stochastic_methodology_version",
             "seed",
             "simulation_count",
             "block_length",
@@ -1963,16 +1862,10 @@
             "probability_sharpe_exceeds_benchmark"
           ]
         },
-        "semantic_sha256": null,
-        "sha256": null,
-        "size_bytes": 457,
-        "tolerance": {
-          "probability_sharpe_exceeds_benchmark": 0.04,
-          "probability_sharpe_positive": 0.04,
-          "sharpe_lower": 0.1,
-          "sharpe_mean": 0.1,
-          "sharpe_upper": 0.1
-        },
+        "semantic_sha256": "897e04fa72eab26f0866a54ec8ae0504610929a3f050ab6127efb40eb05c6a04",
+        "sha256": "646d7b441d501196b98c8f42a809c1f49058f02446e927a4927b0bf2e5a56cbe",
+        "size_bytes": 541,
+        "tolerance": null,
         "validator": "reproducibility_validator"
       },
       {
@@ -1991,6 +1884,9 @@
             "schema_version",
             "experiment_id",
             "method",
+            "rng_engine",
+            "rng_mapping",
+            "stochastic_methodology_version",
             "seed",
             "simulation_count",
             "block_length",
@@ -2006,9 +1902,9 @@
             "active_return"
           ]
         },
-        "semantic_sha256": "e969953f71461506b1e2bff1cd9883e05850a9fb51ac0c106f92bfa38104c2c0",
-        "sha256": "20b9a52f560796d7260f41431df9381266164893f058c6a75beebdfc4fcb2c78",
-        "size_bytes": 399341,
+        "semantic_sha256": "b47a6a0019497dfad6f08564b47c86db17f4e10b937d3a32509bc6a9fdb2569f",
+        "sha256": "6f1b42117e9e31a5907fba4f81b3c2295d5566a114e389e324896e4cb10b79ff",
+        "size_bytes": 465095,
         "tolerance": null,
         "validator": "reproducibility_validator"
       },
@@ -2026,9 +1922,9 @@
         "schema": {
           "root_type": "dict"
         },
-        "semantic_sha256": "b72bdf2dd366b398ea5298da59eed54d13fd6657fe15b2b63e314d1d387143df",
-        "sha256": "a10539b2315f683171eec299d7c2b3e887d57f0116896cd457b1de63d451de0b",
-        "size_bytes": 393,
+        "semantic_sha256": "96441bf39a132c25c6bf0de348eddd620a3a816ce689f48e8bdc4928fd95653d",
+        "sha256": "86fc9e3bde91d259839f421a49c9ad304e6b36d8bdd71c0f36f58855d250adb0",
+        "size_bytes": 499,
         "tolerance": null,
         "validator": "reproducibility_validator"
       },
@@ -2047,7 +1943,7 @@
         "schema": null,
         "semantic_sha256": null,
         "sha256": null,
-        "size_bytes": 731,
+        "size_bytes": 730,
         "tolerance": null,
         "validator": "reproducibility_validator"
       },
@@ -2067,6 +1963,9 @@
             "schema_version",
             "experiment_id",
             "method",
+            "rng_engine",
+            "rng_mapping",
+            "stochastic_methodology_version",
             "seed",
             "simulation_count",
             "block_length",
@@ -2079,9 +1978,9 @@
             "warning"
           ]
         },
-        "semantic_sha256": "16d90369afe776387ecc2dce29f3375d91fc0b7023288880c5a675025828a61f",
-        "sha256": "df4c671f502e5e60500678c7d69d4888db1574b1384a972700fa82c1a6d4e234",
-        "size_bytes": 322,
+        "semantic_sha256": "dbb307a2b7a818d3c245d89982a8d348af082cf96f0a461ace90d5f3314f6d9e",
+        "sha256": "4cdc64505a8a31850dd04d209003a8545c3a9cb164ba6694b5b40e86dcdf9aa7",
+        "size_bytes": 406,
         "tolerance": null,
         "validator": "reproducibility_validator"
       },
@@ -2101,6 +2000,9 @@
             "schema_version",
             "experiment_id",
             "method",
+            "rng_engine",
+            "rng_mapping",
+            "stochastic_methodology_version",
             "seed",
             "simulation_count",
             "block_length",
@@ -2119,9 +2021,9 @@
             "status"
           ]
         },
-        "semantic_sha256": "6191126d5aab2249ea2c857e3caa503fb4d467f600c9730c2c8734c6945df496",
-        "sha256": "4419623c0857a4c90b9f3fb0a9b65e1cf2ddb851f7b485e043af9f24ac9cceea",
-        "size_bytes": 453,
+        "semantic_sha256": "9f2fe715ad4d74d016c3057c6524f5cafb969ba542e76da1553841c7a13aebeb",
+        "sha256": "819ba008cb5944117b0b1b47a246ad533b710b02f80be5f2e3e7e6e8585ec581",
+        "size_bytes": 537,
         "tolerance": null,
         "validator": "reproducibility_validator"
       }
@@ -2131,9 +2033,12 @@
   },
   "package_type": "portfolio",
   "randomness": {
+    "engine": "mt19937",
+    "mapping": "portable_bounded_v1",
     "seed": 46,
     "seed_derivation": "existing deterministic experiment seed; independent of worker scheduling",
-    "simulation_count": 1000
+    "simulation_count": 1000,
+    "stochastic_methodology_version": 2
   },
   "reports": [
     {
@@ -2162,8 +2067,8 @@
     "python": "3.9.6",
     "timezone": "UTC"
   },
-  "source_commit": "ba31b17bfa6b3cafdd0228d0ea7ae1c7481b70cf",
-  "source_tree_policy": "exact_or_explicit_compatible_descendant",
+  "source_commit": "c21852e3688e501749567fc139ead379e0fe0314",
+  "source_tree_policy": "exact_commit",
   "validators": [
     {
       "name": "validate_results",

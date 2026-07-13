@@ -11,7 +11,7 @@ from pathlib import Path
 from reproducibility import manifest_identity, reconstruct, row_count, sha256_file
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE_COMMIT = "ba31b17bfa6b3cafdd0228d0ea7ae1c7481b70cf"
+SOURCE_COMMIT = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
 DATA = ["AAPL", "MSFT", "SPY", "TSLA", "BTC-USD"]
 
 
@@ -90,7 +90,7 @@ def make_manifest(identifier, package_type, config_path, kind, cli):
         "manifest_schema_version": 1, "manifest_id": "pending", "experiment_id": identifier,
         "package_type": package_type, "description": f"Canonical reproducibility package for {identifier}",
         "created_by": "generate_reproducibility_manifests.py/reproducibility_v1",
-        "source_commit": SOURCE_COMMIT, "source_tree_policy": "exact_or_explicit_compatible_descendant",
+        "source_commit": SOURCE_COMMIT, "source_tree_policy": "exact_commit",
         "repository": "https://github.com/MrithunjoyB/cpp-event-driven-backtester",
         "build": {"system": "CMake", "build_type": "Release", "cxx_standard": 17, "strict_warnings": True,
                   "sanitizer": "none", "required_cli_version": "2.0.0", "compiler_policy": "recorded_not_identity_bound"},
@@ -102,8 +102,9 @@ def make_manifest(identifier, package_type, config_path, kind, cli):
         "execution": {"policy": "close_decision_next_open_fill", "default_mode": "serial", "effective_threads": 1,
                       "supported_modes": ["serial", "parallel"], "supported_threads": [1, 2, 4, 8]},
         "randomness": {"seed": seed, "seed_derivation": "existing deterministic experiment seed; independent of worker scheduling",
+                       "engine": "mt19937", "mapping": "portable_bounded_v1", "stochastic_methodology_version": 2,
                        "simulation_count": 1000 if package_type in {"portfolio", "statistics", "selection_risk", "attribution"} else 0},
-        "methodology": {"version": "causal_daily_v3", "result_schema": 3 if package_type != "single_strategy" else 1,
+        "methodology": {"version": "causal_daily_v3_stochastic_v2", "result_schema": 3 if package_type != "single_strategy" else 1,
                         "benchmark": resolved.get("benchmark", "same_asset"), "adjustment_policy": resolved.get("adjustment_policy", "raw_price"),
                         "calendar_policy": resolved.get("calendar_valuation_mode", "asset_calendar")},
         "commands": commands(kind),
@@ -124,18 +125,6 @@ def make_manifest(identifier, package_type, config_path, kind, cli):
 
 def apply_cross_platform_statistical_policy(manifest, capture):
     policies = {
-        "statistics/bootstrap_metric_distributions.csv": ("shape_only", None),
-        "statistics/bootstrap_paths_sample.csv": ("shape_only", None),
-        "statistics/bootstrap_summary.csv": ("numeric_field_tolerance", {
-            "mean": 0.20, "median": 0.15, "standard_deviation": 1.0,
-            "lower_bound": 0.25, "upper_bound": 3.0, "probability": 0.04}),
-        "statistics/multiple_testing_summary.csv": ("numeric_field_tolerance", {"p_value": 0.01}),
-        "statistics/portfolio_policy_robustness.csv": ("numeric_field_tolerance", {
-            "return_lower": 0.25, "return_upper": 3.0, "sharpe_lower": 0.10, "sharpe_upper": 0.10,
-            "probability_positive_active": 0.04, "probability_loss": 0.04}),
-        "statistics/sharpe_inference.csv": ("numeric_field_tolerance", {
-            "sharpe_mean": 0.10, "sharpe_lower": 0.10, "sharpe_upper": 0.10,
-            "probability_sharpe_positive": 0.04, "probability_sharpe_exceeds_benchmark": 0.04}),
         "statistics/statistical_report.md": ("presence_only", None),
     }
     for artifact in manifest["outputs"]["artifacts"]:
@@ -154,11 +143,6 @@ def apply_cross_platform_statistical_policy(manifest, capture):
 
 def apply_cross_platform_selection_policy(manifest, capture):
     policies = {
-        "selection_risk/multiple_testing_bootstrap_distribution.csv": ("shape_only", None),
-        "selection_risk/family_selection_risk.csv": ("numeric_field_tolerance", {"adjusted_p_value": 0.05}),
-        "selection_risk/cross_family_selection_risk.csv": ("numeric_field_tolerance", {"adjusted_p_value": 0.05}),
-        "selection_risk/multiple_testing_summary.csv": ("numeric_field_tolerance", {"adjusted_p_value": 0.05}),
-        "selection_risk/regime_selection_risk.csv": ("numeric_field_tolerance", {"adjusted_p_value": 0.06}),
         "selection_risk/selection_risk_report.md": ("presence_only", None),
         "selection_risk/candidate_rank_stability.csv": ("numeric_field_tolerance", {"is_oos_spearman_rank_correlation": 1e-15}),
     }

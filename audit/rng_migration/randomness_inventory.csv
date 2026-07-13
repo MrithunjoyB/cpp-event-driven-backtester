@@ -1,0 +1,4 @@
+process,source,engine,mapping,seed_origin,thread_behavior,status
+portfolio IID bootstrap,src/experiments/BootstrapAnalyzer.cpp,mt19937,portable_bounded_v1,typed configuration,serial draw order,portable
+portfolio circular moving-block bootstrap,src/analytics/StatisticalAnalysis.cpp,mt19937,portable_bounded_v1,typed configuration,serial draw order,portable
+selection-risk max-mean bootstrap,src/analytics/StatisticalAnalysis.cpp,mt19937,portable_bounded_v1,typed configuration,task-independent serial draw order,portable

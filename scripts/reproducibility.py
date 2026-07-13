@@ -132,6 +132,13 @@ def validate_manifest(manifest, path=None):
         errors.append(f"unsupported manifest schema: {manifest.get('manifest_schema_version')}")
     if manifest.get("reproducibility_level") not in LEVELS:
         errors.append("unknown reproducibility level")
+    randomness = manifest.get("randomness", {})
+    if randomness.get("engine") != "mt19937" or randomness.get("mapping") != "portable_bounded_v1":
+        errors.append("unknown or legacy RNG methodology")
+    if randomness.get("stochastic_methodology_version") != 2:
+        errors.append("stochastic methodology version must be 2")
+    if manifest.get("source_tree_policy") != "exact_commit":
+        errors.append("release-candidate manifests require exact_commit source policy")
     names = [item.get("logical_name") for item in manifest.get("inputs", [])]
     if len(names) != len(set(names)):
         errors.append("duplicate logical input names")

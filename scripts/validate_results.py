@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import json
 import math
 import sys
 from pathlib import Path
@@ -450,6 +451,25 @@ def main() -> int:
         missing = sorted(name for name in required_statistics if not (directory / name).exists())
         if missing:
             issues.append(f"{directory}: missing required statistical files {missing}")
+            continue
+        try:
+            statistical_manifest = json.loads((directory / "statistical_manifest.json").read_text())
+        except (OSError, json.JSONDecodeError) as error:
+            issues.append(f"{directory}: malformed statistical manifest: {error}")
+            continue
+        if statistical_manifest.get("rng_engine") != "mt19937" or statistical_manifest.get("rng_mapping") != "portable_bounded_v1":
+            issues.append(f"{directory}: unknown or legacy RNG methodology")
+        if statistical_manifest.get("stochastic_methodology_version") != 2:
+            issues.append(f"{directory}: stochastic methodology must be version 2")
+        for filename in required_statistics - {"statistical_manifest.json"}:
+            path = directory / filename
+            if path.suffix != ".csv":
+                continue
+            with path.open(newline="") as handle:
+                for line_number, row in enumerate(csv.DictReader(handle), 2):
+                    if row.get("rng_engine") != "mt19937" or row.get("rng_mapping") != "portable_bounded_v1" or row.get("stochastic_methodology_version") != "2":
+                        issues.append(f"{path}:{line_number}: missing or mixed RNG methodology")
+                        break
     if issues:
         print("Result validation failed:")
         for issue in issues:

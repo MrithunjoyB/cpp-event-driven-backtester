@@ -107,9 +107,16 @@ bad = copy.deepcopy(manifest); bad["reproducibility_level"] = "marketing_exact"
 rejected(lambda: validate_manifest(bad), "unknown level")
 bad = copy.deepcopy(manifest); bad["surprise"] = True
 rejected(lambda: validate_manifest(bad), "unknown manifest field")
-check(manifest["source_tree_policy"] == "exact_or_explicit_compatible_descendant", "commit policy")
+check(manifest["source_tree_policy"] == "exact_commit", "commit policy")
 check(manifest["execution"]["supported_threads"] == [1, 2, 4, 8], "thread policy")
 check(manifest["randomness"]["seed_derivation"].find("worker") >= 0, "seed policy")
+check(manifest["randomness"]["engine"] == "mt19937", "RNG engine metadata")
+check(manifest["randomness"]["mapping"] == "portable_bounded_v1", "RNG mapping metadata")
+check(manifest["randomness"]["stochastic_methodology_version"] == 2, "stochastic methodology metadata")
+bad = copy.deepcopy(manifest); bad["randomness"]["mapping"] = "standard_library_distribution"
+rejected(lambda: validate_manifest(bad), "legacy RNG mapping rejection")
+bad = copy.deepcopy(manifest); del bad["randomness"]["engine"]
+rejected(lambda: validate_manifest(bad), "missing RNG engine rejection")
 check(all(not Path(item["path"]).is_absolute() for item in manifest["inputs"]), "portable paths")
 portfolio_manifest = load_manifest(ROOT / "manifests/portfolio_equal_weight.json")
 check(any(item["reproducibility_level"] == "presentation_only" for item in portfolio_manifest["outputs"]["artifacts"]), "presentation boundary")
@@ -117,6 +124,6 @@ check(all(item["tolerance"] is None for item in manifest["outputs"]["artifacts"]
 check(verify_inputs(ROOT, manifest)[0]["status"] == "exact_match", "verify-only primitive")
 check(sha256_bytes(b"abc") == "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad", "standard sha256")
 
-if cases != 46:
-    raise AssertionError(f"expected 46 cases, observed {cases}")
+if cases != 51:
+    raise AssertionError(f"expected 51 cases, observed {cases}")
 print(f"{cases} reproducibility cases passed")

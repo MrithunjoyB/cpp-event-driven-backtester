@@ -1,68 +1,69 @@
 {
-  "audit_id": "final_audit_rng_gate_v1",
-  "audit_schema_version": 1,
-  "baseline_commit": "7275f2c4445dc5a6c875d071c9a75c21f5e0c171",
-  "decision": "C. FAIL \u2014 RNG MIGRATION REQUIRED",
+  "audit_id": "rng_migration_closure_v2",
+  "audit_schema_version": 2,
+  "baseline_commit": "d9fccf6978de7a7051bd6dcbc20a114c700607ef",
+  "decision": "A. RNG MIGRATION COMPLETE \u2014 PASS TO FINAL RELEASE ENGINEERING",
   "files": [
     {
       "path": "audit_claim_inventory.csv",
-      "sha256": "8f19ac87763947a46282f34a876951c51d1ba97235223c4676e86af2abb7c5f3",
-      "size_bytes": 6197
+      "sha256": "5c690efa1050aa066bf3274dcd4543ab5b73ac1c63f1144350022084d310db92",
+      "size_bytes": 1718
     },
     {
       "path": "audit_findings.csv",
-      "sha256": "07bddf9f7550af341e2ea5d5b9795ff9287c8df6df1a8da594348316f1f3f234",
-      "size_bytes": 2367
+      "sha256": "40cb26cf296d6e49f02f00723a2f62c7739ae7ff28d19a9d4e9ddd933223b7ad",
+      "size_bytes": 2171
     },
     {
       "path": "cross_platform_comparison.csv",
-      "sha256": "bbcf6688aac16e75de6242da8e1f7dd8f6a91701663bac9b05727f00f292fbda",
-      "size_bytes": 594
+      "sha256": "07eaa35a4e03a38fc347bc4dee07d02a4acfe1ed4aeefb306798c11d59644b78",
+      "size_bytes": 533
     },
     {
       "path": "final_audit_report.md",
-      "sha256": "5c0b6187774ad5f01094448eae4e2f5771e3f125bf58ba2406ad333bf225b11d",
-      "size_bytes": 5558
+      "sha256": "73f16ab025286a04fc747a960d273e2bb99850078c76b31ecd1be274083d5c14",
+      "size_bytes": 1514
     },
     {
       "path": "release_acceptance_criteria.md",
-      "sha256": "d40aa548f557b5dbfe882855ac4203b69b21580b30ea319a9897c8c261177f66",
-      "size_bytes": 1397
+      "sha256": "827376b46fcac98f3191bfc52d7d3e7722b24c4e558241e39cdc21c845ccf3ea",
+      "size_bytes": 827
     },
     {
       "path": "release_blockers.md",
-      "sha256": "957c2f56971434c4db51a452be349fb8db95a09e0ca3d6f0acb7be746d59d393",
-      "size_bytes": 632
+      "sha256": "86fffdf0909e4f41be084ad3be81a6f8a216537d8629f2085a38b1a4b58767b3",
+      "size_bytes": 124
     },
     {
       "path": "rng_migration_decision.md",
-      "sha256": "f3841eb05850c44bec9546c276af29019faf4127def60d4752fbe18a104dd002",
-      "size_bytes": 1919
+      "sha256": "c755cf1ffb0c21b080481cbfa228e290acce8614168715872c688638748bee6b",
+      "size_bytes": 295
     },
     {
       "path": "rng_portability_evidence.csv",
-      "sha256": "a67cbb2ccd6b893f714edf0787f21076920bb5f7df805774d79c5fed6c8486d2",
-      "size_bytes": 648
+      "sha256": "8ad329d73ee401426b4cb51a0cf731f4fbcdc932b04952df775044f5925120e7",
+      "size_bytes": 665
     },
     {
       "path": "test_quality_review.csv",
-      "sha256": "8ea1ee7b07564e1288b3c6fb0e2d6a4266281e0f0b4566befb5d35531b4a5ede",
-      "size_bytes": 610
+      "sha256": "784d9795c9ccbfe89c3a23527c0ba9fb07b371650f9bb76e3f5322856fb6a014",
+      "size_bytes": 462
     },
     {
       "path": "threshold_stability.csv",
-      "sha256": "7de352dea3dbd6cf5434d3c1ed2ee017ff64af58d3507b684c65d73d52250f0c",
-      "size_bytes": 1226
+      "sha256": "5e57a9a20526e2ea19409989597fa3855fe75adf9f174248ba688c58b34f3948",
+      "size_bytes": 1391
     },
     {
       "path": "tolerance_review.csv",
-      "sha256": "7b89bd32cd77b925050ae95fb7a1545459e9958a34adc269e6f71e684705dc2c",
-      "size_bytes": 991
+      "sha256": "9416bdef692605120ff6f0a1cbad17da255e88c7afb1003d51d995e7301dfca2",
+      "size_bytes": 387
     },
     {
       "path": "validator_corruption_results.csv",
-      "sha256": "5bb934485c840f0a7bb4b98479da3c4b1effb961b6fd984868b3b0de37b69371",
-      "size_bytes": 490
+      "sha256": "2ee9fa6c53aa4012d35bffe2a15a7f2f636294b432f46370202f72db82377b9c",
+      "size_bytes": 277
     }
-  ]
+  ],
+  "migration_implementation_commit": "c21852e"
 }

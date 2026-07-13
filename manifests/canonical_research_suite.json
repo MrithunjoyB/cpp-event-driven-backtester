@@ -58,7 +58,7 @@
   "description": "Complete canonical research reconstruction plan",
   "manifest_schema_version": 1,
   "package_type": "suite",
-  "source_commit": "ba31b17bfa6b3cafdd0228d0ea7ae1c7481b70cf",
+  "source_commit": "c21852e3688e501749567fc139ead379e0fe0314",
   "suite_id": "canonical_research_suite",
-  "suite_id_hash": "sha256:7d1899cf46f071db2dd8583d3d4804b5682e7eaffc31a7e56bd7096e46f6c213"
+  "suite_id_hash": "sha256:10d8f07ae6a1eef8e2e6f079e6218a1e64df8a0fad62d9565b773e636652ec5a"
 }

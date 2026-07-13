@@ -16,6 +16,8 @@ Regime-conditioned tests use the existing causal classifier and reject subsets w
 
 Statistical confidence is conditional historical evidence and does not imply future profitability.
 
-## Release Portability Gate
+## Stochastic Methodology Version 2
 
-The final audit found that `std::uniform_int_distribution` produces different index mappings across libc++ and libstdc++. Fixed seeds therefore repeat within one standard-library implementation but do not define one portable stochastic path. TSLA MACD and zero-cost adjusted p-values are close enough to 0.05 that current Monte Carlo and platform-mapping variation can change an inferential band. The existing outputs remain historical methodology-v3 evidence, but they are not an acceptable v1.0.0 stochastic baseline. Release requires the platform-stable sampler and methodology migration specified in [Final Audit](FINAL_AUDIT.md).
+Bootstrap and reality-check sampling use `mt19937` with the repository-owned `portable_bounded_v1` mapping documented in [RNG Methodology](RNG_METHODOLOGY.md). Statistical outputs record stochastic methodology version 2. Previous standard-library-distribution outputs are legacy evidence and are not mixed with migrated packages.
+
+All portfolio-policy and strategy-grid stochastic baselines were regenerated. Broad cross-platform p-value and probability tolerances were removed. Regime-conditioned results remain exploratory regardless of whether an individual migrated p-value lies below 0.05.

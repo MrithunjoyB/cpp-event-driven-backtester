@@ -8,7 +8,7 @@ cmake --build build --parallel
 ctest --test-dir build --output-on-failure
 ```
 
-The current commit registers 21 targets covering the preserved regression suite, typed date/config behavior, causal methodology, exporters, deterministic bootstrap analysis, bounded execution, reproducibility, final-audit release gates, and CLI smoke checks. Fixtures in `tests/fixtures` are local and deterministic; tests never download live data.
+The current commit registers 23 targets covering the preserved regression suite, typed date/config behavior, causal methodology, exporters, deterministic bootstrap analysis, stable RNG vectors, bounded execution, reproducibility, final-audit release gates, and CLI smoke checks. Fixtures in `tests/fixtures` are local and deterministic; tests never download live data.
 
 `calendar_tests`, `union_portfolio_tests`, and `corporate_action_tests` cover union/intersection timelines, stale marks, weekend risk, closed-market execution prevention, civil schedules, causal deferral, splits, reverse splits, dividends, adjusted-mode double-count prevention, and invalid actions. Run `python3 scripts/test_download_data.py` for deterministic downloader normalization.
 
@@ -59,4 +59,4 @@ python3 scripts/test_selection_risk_reference.py results/research_v3/selection_r
 python3 scripts/test_selection_risk_validator.py
 ```
 
-`final_audit_tests` adds 15 independent threshold, Monte Carlo-error, tolerance-overlap, engine/mapping, migration, and blocker fixtures. `final_audit_validator` rejects missing or altered audit artifacts, absent High blockers, false release decisions, and audit reports without threshold-crossing evidence.
+`stable_rng_tests` and `stable_rng_python_reference` verify 8,704 cross-language golden outputs, rejection paths, bounds, and engine consumption. `final_audit_tests` adds 20 blocker-closure checks. `final_audit_validator` rejects altered evidence, unresolved Critical/High findings, stale decisions, and incomplete migrated threshold evidence.

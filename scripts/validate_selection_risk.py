@@ -38,7 +38,8 @@ def validate(directory):
     except (OSError, json.JSONDecodeError) as exc:
         return [f"malformed selection-risk manifest: {exc}"]
     for key in ("schema_version", "experiment_id", "history_policy", "benchmark", "seed",
-                "simulation_count", "block_length", "bootstrap_method", "null_hypothesis"):
+                "simulation_count", "block_length", "bootstrap_method", "null_hypothesis",
+                "rng_engine", "rng_mapping", "stochastic_methodology_version"):
         if key not in manifest:
             errors.append(f"manifest missing {key}")
     if not manifest.get("git_commit_hash"):
@@ -49,6 +50,10 @@ def validate(directory):
         errors.append("candidate diagnostic history is mislabeled")
     if manifest.get("bootstrap_method") != "moving_block_circular":
         errors.append("moving-block bootstrap must be the primary method")
+    if manifest.get("rng_engine") != "mt19937" or manifest.get("rng_mapping") != "portable_bounded_v1":
+        errors.append("selection-risk package uses unknown or legacy RNG methodology")
+    if manifest.get("stochastic_methodology_version") != 2:
+        errors.append("selection-risk package stochastic methodology must be version 2")
     if int(manifest.get("simulation_count", 0)) <= 0 or int(manifest.get("block_length", 0)) <= 0:
         errors.append("invalid bootstrap metadata")
 
@@ -113,12 +118,18 @@ def validate(directory):
             if int(row["eligible_candidates"]) > int(row["configured_candidates"]): errors.append("eligible candidate count exceeds configured count")
             if int(row["common_observations"]) < 30: errors.append("insufficient common observations")
             if row.get("method") != "centered_moving_block_reality_check": errors.append("incorrect multiple-testing method")
+            if row.get("rng_engine") != manifest.get("rng_engine") or row.get("rng_mapping") != manifest.get("rng_mapping"):
+                errors.append("mixed stochastic methodology in selection-risk package")
+            if int(row.get("stochastic_methodology_version", 0)) != manifest.get("stochastic_methodology_version"):
+                errors.append("stochastic methodology version mismatch")
     for row in rows(directory / "candidate_rank_stability.csv"):
         if not finite(row.get("is_oos_spearman_rank_correlation")) or not -1 <= float(row["is_oos_spearman_rank_correlation"]) <= 1:
             errors.append("invalid IS/OOS rank correlation")
     for row in rows(directory / "regime_selection_risk.csv"):
         if not finite(row.get("adjusted_p_value")) or not 0 <= float(row["adjusted_p_value"]) <= 1:
             errors.append("invalid regime adjusted p-value")
+        if row.get("rng_mapping") != "portable_bounded_v1" or row.get("stochastic_methodology_version") != "2":
+            errors.append("legacy regime stochastic methodology")
     return sorted(set(errors))
 
 def main():

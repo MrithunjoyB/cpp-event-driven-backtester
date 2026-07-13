@@ -45,7 +45,7 @@ with tempfile.TemporaryDirectory() as temporary:
     manifest = {
         "manifest_schema_version": 1, "manifest_id": "pending", "experiment_id": "fixture",
         "package_type": "fixture", "description": "fixture", "created_by": "test",
-        "source_commit": commit, "source_tree_policy": "exact_or_explicit_compatible_descendant",
+        "source_commit": commit, "source_tree_policy": "exact_commit",
         "repository": "fixture", "build": {"cxx_standard": 17},
         "runtime_environment": {"dependency_lock": "requirements-validation.txt"},
         "inputs": [{"logical_name": "input", "role": "fixture", "path": "data/input.csv",
@@ -53,7 +53,9 @@ with tempfile.TemporaryDirectory() as temporary:
         "configuration": {"path": "configs/test.json", "sha256": sha256_file(root / "configs/test.json"),
                           "driver": "typed_config", "resolved": {}, "defaults_applied": True},
         "execution": {"policy": "fixture", "default_mode": "serial", "effective_threads": 1},
-        "randomness": {"seed": 0}, "methodology": {"version": "fixture"},
+        "randomness": {"seed": 0, "engine": "mt19937", "mapping": "portable_bounded_v1",
+                       "stochastic_methodology_version": 2},
+        "methodology": {"version": "fixture_stochastic_v2"},
         "commands": [
             {"name": "generate", "argv": [sys.executable, "-c", "from pathlib import Path; p=Path(r'{output}'); p.mkdir(exist_ok=True); (p/'a.csv').write_text('x\\n1\\n')"]},
             {"name": "validator", "argv": [sys.executable, "-c", "raise SystemExit(0)"]},

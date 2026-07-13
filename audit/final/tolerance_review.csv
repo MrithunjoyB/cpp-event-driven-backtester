@@ -1,8 +1,4 @@
-file,field,current_tolerance,observed_max_difference,audit_assessment,conclusion_sensitivity
-selection_risk/family_selection_risk.csv,adjusted_p_value,0.05,0.026973,unsupported,overlaps 0.05 decision threshold
-selection_risk/cross_family_selection_risk.csv,adjusted_p_value,0.05,0.034965,unsupported,can overlap 0.05 threshold
-selection_risk/regime_selection_risk.csv,adjusted_p_value,0.06,0.052947,justified_noninferential,regime slices explicitly exploratory
-statistics/sharpe_inference.csv,probability fields,0.04,0.026,unsupported_near_boundary,Momentum/Equal Weight values approach 0.95
-statistics/bootstrap_summary.csv,Sharpe fields,0.1,0.091634,too_wide_for_release_claim,bound nearly exhausted by one platform pair
-statistics/bootstrap_summary.csv,return_upper,3.0,2.57885,too_wide_for_release_claim,bound empirically fitted to one pair
-selection_risk/candidate_rank_stability.csv,is_oos_spearman_rank_correlation,1e-15,1.82682e-17,justified,far below ranking-changing scale
+artifact_family,retained_tolerance,justification,conclusion_overlap
+stochastic CSV and JSON,0,platform-stable integer draws and canonical serialization,none
+candidate rank correlation,1e-15,independently observed floating-point reduction rounding,none; non-inferential diagnostic
+figures and Markdown reports,presence_only,presentation rendering is not a numerical identity surface,none

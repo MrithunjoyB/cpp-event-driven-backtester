@@ -235,14 +235,14 @@
       "reports"
     ]
   },
-  "manifest_id": "sha256:180f1a254b29ba6d481ddfe6fc93abe599a15379614df2179225b79dcdfb2caf",
+  "manifest_id": "sha256:ce906e705da5a90ea7a4cd182ded0629cf7e2d58391cf75afae15e0ae892b942",
   "manifest_schema_version": 1,
   "methodology": {
     "adjustment_policy": "raw_price",
     "benchmark": "same_asset",
     "calendar_policy": "asset_calendar",
     "result_schema": 1,
-    "version": "causal_daily_v3"
+    "version": "causal_daily_v3_stochastic_v2"
   },
   "outputs": {
     "artifacts": [
@@ -435,7 +435,7 @@
           "root_type": "dict"
         },
         "semantic_sha256": "6f3a92026a67a7b7f3757d992cb1a71d2535cfc9e559f9a4020ca97ae2654f8a",
-        "sha256": "1c0c0637dd22b57c6fd18f150a04b9cc6080c65138a36be35ea885bd5607ce06",
+        "sha256": "c6942e7372d6fca92257169cfda2a3ec9b3aadc5b133e01f4830638f4bd0dce6",
         "size_bytes": 491,
         "tolerance": null,
         "validator": "reproducibility_validator"
@@ -522,9 +522,12 @@
   },
   "package_type": "single_strategy",
   "randomness": {
+    "engine": "mt19937",
+    "mapping": "portable_bounded_v1",
     "seed": 0,
     "seed_derivation": "existing deterministic experiment seed; independent of worker scheduling",
-    "simulation_count": 0
+    "simulation_count": 0,
+    "stochastic_methodology_version": 2
   },
   "reports": [],
   "repository": "https://github.com/MrithunjoyB/cpp-event-driven-backtester",
@@ -536,8 +539,8 @@
     "python": "3.9.6",
     "timezone": "UTC"
   },
-  "source_commit": "ba31b17bfa6b3cafdd0228d0ea7ae1c7481b70cf",
-  "source_tree_policy": "exact_or_explicit_compatible_descendant",
+  "source_commit": "c21852e3688e501749567fc139ead379e0fe0314",
+  "source_tree_policy": "exact_commit",
   "validators": [
     {
       "name": "validate_results",

@@ -1,6 +1,6 @@
 evidence_id,component,observation,classification,release_impact
-RNG-1,engine,std::mt19937 is seeded explicitly,portable_engine_sequence,none alone
-RNG-2,mapping,std::uniform_int_distribution<size_t> mapping is not standardized,platform_mapping_variation,raw sampled indices differ
-RNG-3,threads,bootstrap remains serial and candidate task collection is indexed,not_thread_scheduling,thread count does not explain stochastic difference
-RNG-4,floating_point,Spearman diagnostic differs by about 1.83e-17,separate_compiler_roundoff,non-inferential
-RNG-5,serialization,stable ordering and formatting verified independently,not_serialization,none
+RNG-LEGACY,std::uniform_int_distribution,Legacy mapping differed across libc++ and libstdc++,historical_root_cause,resolved_by_migration
+RNG-VECTOR,portable_bounded_v1,"8,704 C++ and independent Python vector outputs match",exact_mapping,pass
+RNG-ENGINE,std::mt19937,Explicit 32-bit engine words and fixed seeds are retained,portable_engine_sequence,pass
+RNG-CONSUMPTION,rejection path,Per-sample and cumulative engine-word consumption match vectors,exact_consumption,pass
+RNG-THREADS,execution,Canonical stochastic tasks retain serial draw order independent of worker count,schedule_independent,pass
