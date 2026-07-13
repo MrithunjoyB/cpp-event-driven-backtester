@@ -34,18 +34,9 @@ def band(value: float, threshold: float, kind: str) -> str:
     return "reject" if value < threshold else "do_not_reject"
 
 
-selection = ROOT / "results/research_v3/selection_risk"
-portfolio = ROOT / "results/research_v3"
-new_values = {
-    "tsla_macd_family": float(first(selection / "macd/selection_risk/family_selection_risk.csv", ticker="TSLA", strategy_family="MACD_Momentum")["adjusted_p_value"]),
-    "tsla_macd_combined": float(first(selection / "all_families/selection_risk/family_selection_risk.csv", ticker="TSLA", strategy_family="MACD_Momentum")["adjusted_p_value"]),
-    "tsla_macd_zero_cost": float(first(selection / "cost_zero/selection_risk/family_selection_risk.csv", ticker="TSLA", strategy_family="MACD_Momentum")["adjusted_p_value"]),
-    "tsla_macd_high_cost": float(first(selection / "cost_high/selection_risk/family_selection_risk.csv", ticker="TSLA", strategy_family="MACD_Momentum")["adjusted_p_value"]),
-    "tsla_regime_bull_low_volatility": float(first(selection / "all_families/selection_risk/regime_selection_risk.csv", ticker="TSLA", strategy_family="MACD_Momentum", regime="bull/low_volatility")["adjusted_p_value"]),
-    "momentum_probability_positive_active": float(first(portfolio / "portfolio_momentum_top_n/statistics/portfolio_policy_robustness.csv")["probability_positive_active"]),
-    "momentum_probability_sharpe_positive": float(first(portfolio / "portfolio_momentum_top_n/statistics/sharpe_inference.csv")["probability_sharpe_positive"]),
-    "equal_weight_probability_sharpe_exceeds_benchmark": float(first(portfolio / "portfolio_equal_weight/statistics/sharpe_inference.csv")["probability_sharpe_exceeds_benchmark"]),
-}
+baseline_path = MIGRATION / "baseline_comparison.csv"
+baseline_rows = list(csv.DictReader(baseline_path.open()))
+new_values = {row["result"]: float(row["migrated_value"]) for row in baseline_rows}
 legacy = {row["result"]: float(row["macos_value"]) for row in csv.DictReader((ROOT / "tests/fixtures/audit/cross_platform_stochastic.csv").open())}
 legacy["tsla_macd_high_cost"] = 0.0709291
 
