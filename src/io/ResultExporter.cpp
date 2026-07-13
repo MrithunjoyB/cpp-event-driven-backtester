@@ -23,7 +23,7 @@ std::ofstream open_output(const std::string& filepath) {
     if (!output.is_open()) {
         throw std::runtime_error("Could not open result file for writing: " + filepath);
     }
-    output << std::fixed << std::setprecision(6);
+    output << std::fixed << std::setprecision(12);
     return output;
 }
 
