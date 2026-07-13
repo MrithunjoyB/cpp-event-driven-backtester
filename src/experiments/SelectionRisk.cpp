@@ -32,6 +32,13 @@ constexpr int kSchemaVersion = 3;
 constexpr int kSimulations = 1000;
 constexpr double kAnnualization = 252.0;
 
+std::ofstream csv_output(const std::string& path, std::ios::openmode mode = std::ios::out) {
+    std::ofstream output(path, mode);
+    if (!output.is_open()) throw std::runtime_error("Could not open selection-risk output: " + path);
+    output << std::setprecision(12);
+    return output;
+}
+
 class BuyAndHoldStrategy final : public Strategy {
 public:
     std::string name() const override { return "Buy_And_Hold_Benchmark"; }
@@ -125,7 +132,7 @@ std::vector<StrategySpec> specs_for(const std::string& strategy) {
 
 void write_manifest(const config::ExperimentConfig& experiment, const std::string& directory,
                     std::size_t definitions, std::size_t observations, int block_length) {
-    std::ofstream out(directory + "/selection_risk_manifest.json");
+    auto out = csv_output(directory + "/selection_risk_manifest.json");
     out << "{\n"
         << "  \"schema_version\": 3,\n"
         << "  \"experiment_id\": \"" << experiment.name << "\",\n"
@@ -387,7 +394,7 @@ void SelectionRiskAnalyzer::run_experiment(const config::ExperimentConfig& exper
     regime_statistical.simulations = kSimulations;
     regime_statistical.minimum_observations = 30;
     regime_statistical.annualization_factor = kAnnualization;
-    auto regime_out = std::ofstream(directory + "/regime_selection_risk.csv");
+    auto regime_out = csv_output(directory + "/regime_selection_risk.csv");
     regime_out << "schema_version,experiment_id,ticker,strategy_family,regime,eligible_candidates,common_observations,observed_best_mean_active_return,adjusted_p_value,seed,simulations,block_length,method,rng_engine,rng_mapping,stochastic_methodology_version\n";
     for (const auto& ticker : experiment.tickers) {
         std::map<std::string, std::string> regime_by_date;
@@ -429,7 +436,7 @@ void SelectionRiskAnalyzer::run_experiment(const config::ExperimentConfig& exper
         row.oos_rank = rank;
     }
 
-    auto deployable = std::ofstream(directory + "/selected_deployable_oos_returns.csv");
+    auto deployable = csv_output(directory + "/selected_deployable_oos_returns.csv");
     deployable << "schema_version,experiment_id,ticker,strategy_family,window_id,date,candidate_id,parameter_serialization,portfolio_value,daily_return,cumulative_oos_return,continuity_type,history_type\n";
     for (const auto& ticker : experiment.tickers) {
         std::set<std::string> families;
@@ -461,12 +468,12 @@ void SelectionRiskAnalyzer::run_experiment(const config::ExperimentConfig& exper
         }
     }
 
-    auto definitions_out = std::ofstream(directory + "/candidate_definitions.csv");
+    auto definitions_out = csv_output(directory + "/candidate_definitions.csv");
     definitions_out << "schema_version,experiment_id,strategy_family,ticker,candidate_id,parameter_serialization,identity_context,benchmark,commission_bps,slippage_bps,history_type\n";
     for (const auto& value : definitions) definitions_out << kSchemaVersion << ',' << value.experiment_id << ',' << value.family << ',' << value.ticker << ',' << value.candidate_id << ',' << value.parameters << ',' << value.identity_context << ',' << experiment.benchmark.ticker << ',' << experiment.execution.commission_bps << ',' << experiment.execution.slippage_bps << ",counterfactual_normalized_diagnostic\n";
 
-    auto eligibility = std::ofstream(directory + "/candidate_eligibility.csv");
-    auto metrics = std::ofstream(directory + "/candidate_window_metrics.csv");
+    auto eligibility = csv_output(directory + "/candidate_eligibility.csv");
+    auto metrics = csv_output(directory + "/candidate_window_metrics.csv");
     eligibility << "schema_version,experiment_id,strategy_family,ticker,window_id,candidate_id,parameter_serialization,train_start,train_end,test_start,test_end,eligible,rejection_reason,selected,training_rank,training_objective\n";
     metrics << "schema_version,experiment_id,strategy_family,ticker,window_id,candidate_id,parameter_serialization,train_start,train_end,test_start,test_end,train_observations,test_observations,eligible,selected,training_objective,training_rank,oos_rank,oos_return,benchmark_return,active_return,sharpe,sortino,volatility,max_drawdown,trade_count,turnover,transaction_costs,liquidation_costs,history_type\n";
     for (const auto& value : windows) {
@@ -474,7 +481,7 @@ void SelectionRiskAnalyzer::run_experiment(const config::ExperimentConfig& exper
         metrics << kSchemaVersion << ',' << experiment.name << ',' << value.candidate.family << ',' << value.candidate.ticker << ',' << value.window_id << ',' << value.candidate.candidate_id << ',' << value.candidate.parameters << ',' << value.train_start << ',' << value.train_end << ',' << value.test_start << ',' << value.test_end << ',' << value.train_observations << ',' << value.test_observations << ',' << value.eligible << ',' << value.selected << ',' << value.training_objective << ',' << value.training_rank << ',' << value.oos_rank << ',' << value.oos_return << ',' << value.benchmark_return << ',' << value.active_return << ',' << value.sharpe << ',' << value.sortino << ',' << value.volatility << ',' << value.max_drawdown << ',' << value.trade_count << ',' << value.turnover << ',' << value.transaction_costs << ',' << value.liquidation_costs << ",counterfactual_normalized_diagnostic\n";
     }
 
-    auto returns = std::ofstream(directory + "/candidate_oos_returns.csv");
+    auto returns = csv_output(directory + "/candidate_oos_returns.csv");
     returns << "schema_version,experiment_id,strategy_family,ticker,window_id,date,candidate_id,diagnostic_value,daily_return,benchmark_return,active_return,selected,tradability_status,valuation_status,annualization_convention,cost_model,continuity_type,history_type\n";
     for (const auto& value : observations) returns << kSchemaVersion << ',' << experiment.name << ',' << value.family << ',' << value.ticker << ',' << value.window_id << ',' << value.date << ',' << value.candidate_id << ',' << value.diagnostic_value << ',' << value.candidate_return << ',' << value.benchmark_return << ',' << value.active_return << ',' << value.selected << ",tradable,observed,252_ticker_trading_observations,commission_bps=" << experiment.execution.commission_bps << ";slippage_bps=" << experiment.execution.slippage_bps << ",normalized_window,counterfactual_diagnostic\n";
     returns.close();
@@ -486,10 +493,10 @@ void SelectionRiskAnalyzer::run_experiment(const config::ExperimentConfig& exper
     statistical.simulations = kSimulations;
     statistical.minimum_observations = 30;
     statistical.annualization_factor = kAnnualization;
-    auto family_out = std::ofstream(directory + "/family_selection_risk.csv");
-    auto cross_out = std::ofstream(directory + "/cross_family_selection_risk.csv");
-    auto bootstrap_out = std::ofstream(directory + "/multiple_testing_bootstrap_distribution.csv");
-    auto multiple_out = std::ofstream(directory + "/multiple_testing_summary.csv");
+    auto family_out = csv_output(directory + "/family_selection_risk.csv");
+    auto cross_out = csv_output(directory + "/cross_family_selection_risk.csv");
+    auto bootstrap_out = csv_output(directory + "/multiple_testing_bootstrap_distribution.csv");
+    auto multiple_out = csv_output(directory + "/multiple_testing_summary.csv");
     const std::string risk_header = "schema_version,experiment_id,ticker,strategy_family,configured_candidates,eligible_candidates,common_observations,common_start,common_end,observed_best_mean_active_return,adjusted_p_value,seed,simulations,block_length,method,rng_engine,rng_mapping,stochastic_methodology_version,null_hypothesis,centering\n";
     family_out << risk_header; cross_out << risk_header; multiple_out << risk_header;
     bootstrap_out << "schema_version,experiment_id,ticker,strategy_family,simulation,max_centered_mean_active_return,seed,block_length,bootstrap_method,rng_engine,rng_mapping,stochastic_methodology_version\n";
@@ -529,19 +536,19 @@ void SelectionRiskAnalyzer::run_experiment(const config::ExperimentConfig& exper
     }
     if (family_name(experiment.strategy) != "all") {
         cross_out.close();
-        cross_out = std::ofstream(directory + "/cross_family_selection_risk.csv", std::ios::trunc);
+        cross_out = csv_output(directory + "/cross_family_selection_risk.csv", std::ios::out | std::ios::trunc);
         cross_out << "schema_version,experiment_id,status,note\n" << kSchemaVersion << ',' << experiment.name
                   << ",not_applicable,single_family_experiment\n";
     }
 
-    auto selection = std::ofstream(directory + "/candidate_selection_history.csv");
+    auto selection = csv_output(directory + "/candidate_selection_history.csv");
     selection << "schema_version,experiment_id,ticker,strategy_family,window_id,candidate_id,parameter_serialization,training_rank,training_objective,oos_active_return\n";
     for (const auto& row : windows) if (row.selected)
         selection << kSchemaVersion << ',' << experiment.name << ',' << row.candidate.ticker << ',' << row.candidate.family << ',' << row.window_id << ',' << row.candidate.candidate_id << ',' << row.candidate.parameters << ',' << row.training_rank << ',' << row.training_objective << ',' << row.active_return << '\n';
 
-    auto frequency = std::ofstream(directory + "/candidate_parameter_frequency.csv");
-    auto ranks = std::ofstream(directory + "/candidate_rank_stability.csv");
-    auto degradation = std::ofstream(directory + "/is_oos_degradation.csv");
+    auto frequency = csv_output(directory + "/candidate_parameter_frequency.csv");
+    auto ranks = csv_output(directory + "/candidate_rank_stability.csv");
+    auto degradation = csv_output(directory + "/is_oos_degradation.csv");
     frequency << "schema_version,experiment_id,ticker,strategy_family,candidate_id,parameter_serialization,eligible_windows,selected_windows,selection_frequency,positive_oos_window_frequency,benchmark_beating_window_frequency\n";
     ranks << "schema_version,experiment_id,ticker,strategy_family,candidate_id,average_training_rank,training_rank_stddev,average_oos_rank,oos_rank_stddev,is_oos_spearman_rank_correlation,average_oos_active_return,median_oos_active_return,worst_oos_active_return,best_oos_active_return\n";
     degradation << "schema_version,experiment_id,ticker,strategy_family,candidate_id,mean_is_return,mean_oos_active_return,is_to_oos_return_degradation,mean_is_sharpe,mean_oos_sharpe,is_to_oos_sharpe_degradation\n";
@@ -567,7 +574,7 @@ void SelectionRiskAnalyzer::run_experiment(const config::ExperimentConfig& exper
         degradation << kSchemaVersion << ',' << experiment.name << ',' << definition.ticker << ',' << definition.family << ',' << definition.candidate_id << ',' << mean(is_objective) << ',' << mean(oos_active) << ',' << mean(oos_active) - mean(is_objective) << ',' << mean(is_sharpe) << ',' << mean(oos_sharpe) << ',' << mean(oos_sharpe) - mean(is_sharpe) << '\n';
     }
 
-    auto parameter_values = std::ofstream(directory + "/parameter_value_frequency.csv");
+    auto parameter_values = csv_output(directory + "/parameter_value_frequency.csv");
     parameter_values << "schema_version,experiment_id,ticker,strategy_family,parameter_name,parameter_value,eligible_windows,selected_windows,selection_frequency\n";
     std::map<std::tuple<std::string, std::string, std::string, std::string>, std::pair<int, int>> parameter_counts;
     for (const auto& row : windows) if (row.eligible) {
@@ -580,13 +587,13 @@ void SelectionRiskAnalyzer::run_experiment(const config::ExperimentConfig& exper
     }
     for (const auto& value : parameter_counts) parameter_values << kSchemaVersion << ',' << experiment.name << ',' << std::get<0>(value.first) << ',' << std::get<1>(value.first) << ',' << std::get<2>(value.first) << ',' << std::get<3>(value.first) << ',' << value.second.first << ',' << value.second.second << ',' << static_cast<double>(value.second.second) / value.second.first << '\n';
 
-    auto family_frequency = std::ofstream(directory + "/family_selection_frequency.csv");
+    auto family_frequency = csv_output(directory + "/family_selection_frequency.csv");
     family_frequency << "schema_version,experiment_id,ticker,strategy_family,selected_windows,total_family_selections,family_selection_share\n";
     std::map<std::pair<std::string, std::string>, int> family_counts; std::map<std::string, int> ticker_counts;
     for (const auto& row : windows) if (row.selected) { ++family_counts[{row.candidate.ticker, row.candidate.family}]; ++ticker_counts[row.candidate.ticker]; }
     for (const auto& value : family_counts) family_frequency << kSchemaVersion << ',' << experiment.name << ',' << value.first.first << ',' << value.first.second << ',' << value.second << ',' << ticker_counts[value.first.first] << ',' << static_cast<double>(value.second) / ticker_counts[value.first.first] << '\n';
 
-    auto transitions = std::ofstream(directory + "/parameter_transition_matrix.csv");
+    auto transitions = csv_output(directory + "/parameter_transition_matrix.csv");
     transitions << "schema_version,experiment_id,ticker,strategy_family,from_candidate_id,to_candidate_id,transition_count\n";
     for (const auto& ticker : experiment.tickers) {
         std::map<std::pair<std::string, std::string>, int> counts;
@@ -600,7 +607,7 @@ void SelectionRiskAnalyzer::run_experiment(const config::ExperimentConfig& exper
         }
     }
 
-    auto neighbourhood = std::ofstream(directory + "/neighbourhood_sensitivity.csv");
+    auto neighbourhood = csv_output(directory + "/neighbourhood_sensitivity.csv");
     neighbourhood << "schema_version,experiment_id,ticker,strategy_family,window_id,selected_candidate_id,neighbour_candidate_id,neighbour_definition,oos_active_return_difference,oos_sharpe_difference,oos_drawdown_difference,training_rank_difference,isolated_optimum\n";
     for (const auto& selected_row : windows) if (selected_row.selected) {
         auto family_specs = specs_for(selected_row.candidate.family);
@@ -618,10 +625,10 @@ void SelectionRiskAnalyzer::run_experiment(const config::ExperimentConfig& exper
             neighbourhood << kSchemaVersion << ',' << experiment.name << ',' << selected_row.candidate.ticker << ',' << selected_row.candidate.family << ',' << selected_row.window_id << ',' << selected_row.candidate.candidate_id << ',' << neighbor->candidate.candidate_id << ",adjacent_canonical_grid_index," << active_difference << ',' << selected_row.sharpe - neighbor->sharpe << ',' << selected_row.max_drawdown - neighbor->max_drawdown << ',' << neighbor->training_rank - selected_row.training_rank << ',' << (std::abs(active_difference) > 0.10 ? 1 : 0) << '\n';
         }
     }
-    auto warnings = std::ofstream(directory + "/selection_risk_warnings.csv");
+    auto warnings = csv_output(directory + "/selection_risk_warnings.csv");
     warnings << "schema_version,experiment_id,severity,warning\n" << kSchemaVersion << ',' << experiment.name << ",warning,regime_subsets_with_fewer_than_30_common_observations_are_reported_as_insufficient\n";
     write_manifest(experiment, directory, definitions.size(), observations.size(), manifest_block);
-    std::ofstream execution_metadata(directory + "/parallel_execution_metadata.json");
+    auto execution_metadata = csv_output(directory + "/parallel_execution_metadata.json");
     execution_metadata << "{\n  \"execution_mode\": \"" << executor.mode() << "\",\n"
                        << "  \"effective_threads\": " << executor.threads() << ",\n"
                        << "  \"parallel_scope\": \"independent_candidate_training_and_oos_simulation\",\n"
@@ -630,7 +637,7 @@ void SelectionRiskAnalyzer::run_experiment(const config::ExperimentConfig& exper
     const auto milliseconds = [](Clock::time_point begin, Clock::time_point end) {
         return std::chrono::duration<double, std::milli>(end - begin).count();
     };
-    std::ofstream counters(directory + "/performance_counters.csv");
+    auto counters = csv_output(directory + "/performance_counters.csv");
     counters << "stage,milliseconds\n"
              << "data_loading," << milliseconds(performance_start, data_load_complete) << '\n'
              << "candidate_and_benchmark_evaluation," << milliseconds(data_load_complete, candidate_evaluation_complete) << '\n'
