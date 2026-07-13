@@ -12,9 +12,11 @@ The manifest schema is versioned at `manifests/schema/reproducibility-manifest-v
 | --- | --- |
 | Exact byte | Identical verified inputs and byte-stable artifact SHA-256 values. Used only when serialization and metadata are stable. |
 | Canonical semantic | Identical schemas, row order, values, identities, selections, trades, accounting, statistics, seeds, warnings, and methodology metadata after documented volatile JSON fields are excluded. No financial value is rounded. |
-| Methodological | Same verified inputs, configuration, and methodology with explicit field-level tolerances. The current canonical manifests do not use this fallback. |
+| Methodological | Same verified inputs, configuration, and methodology with explicit field-level tolerances or a declared shape-only policy for raw stochastic paths. |
 
 PNG/SVG/PDF figures are presentation-only because renderer, font, compression, and metadata differences are platform-sensitive. `performance_counters.csv` and `parallel_execution_metadata.json` are environment-only. Known volatile JSON fields include timestamps, staging output paths, host/user fields, elapsed time, and compiled commit metadata; the manifest independently verifies source provenance.
+
+The C++ bootstrap currently uses the standard library's integer-distribution mapping. Fixed seeds are deterministic within one standard-library implementation, but libc++ and libstdc++ generate different resampled paths. Changing that generator would alter the established methodology outputs, so this stage does not rewrite it. Raw bootstrap distribution/path files therefore require identical schema, row count, seed, method, simulation count, and validator success rather than cross-platform variate identity. Derived bootstrap summaries use explicit field-level tolerances recorded in each manifest: return upper bounds permit at most 3.0, return lower bounds 0.25, Sharpe fields 0.10, probability/p-value fields 0.01, and the remaining distribution summary fields their documented per-column limits. Deterministic simulation, portfolio, attribution, selection, and input-series artifacts remain zero-tolerance canonical semantic comparisons.
 
 CSV semantic hashing parses the exact cell strings and preserves header and row order. JSON hashing sorts keys recursively, normalizes path separators, and removes only declared volatile fields. Markdown/text hashing normalizes line endings. No tolerance or numerical rounding is applied. Every output records its type, schema, size, row count where applicable, byte hash where stable, semantic hash, required status, validator, and parent lineage.
 
@@ -90,4 +92,4 @@ No existing build or result directory is required. Generated outputs, caches, fa
 
 ## Limitations
 
-The manifests cannot repair incomplete upstream corporate-action provenance or grant redistribution rights. Exact compiler-level floating-point portability is not asserted; Linux and macOS are required to satisfy canonical semantic equality. Figure appearance can vary with platform rendering. The compatible-descendant commit policy is explicit but weaker than a manifest regenerated at a final release commit, so it remains a release acceptance item.
+The manifests cannot repair incomplete upstream corporate-action provenance or grant redistribution rights. Exact compiler-level bootstrap variate portability is not asserted; Linux and macOS must satisfy the declared mixed semantic/methodological artifact policies without changing validated conclusions. Figure appearance can vary with platform rendering. The compatible-descendant commit policy is explicit but weaker than a manifest regenerated at a final release commit, so it remains a release acceptance item.

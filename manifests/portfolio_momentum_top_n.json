@@ -1400,13 +1400,14 @@
       },
       {
         "artifact_type": "csv",
+        "comparison_policy": "shape_only",
         "parents": [
           "canonical_inputs",
           "resolved_configuration",
           "quant_cli"
         ],
         "path": "statistics/bootstrap_metric_distributions.csv",
-        "reproducibility_level": "canonical_semantic",
+        "reproducibility_level": "methodological",
         "required": true,
         "row_count": 1001,
         "schema": {
@@ -1436,21 +1437,22 @@
             "information_ratio"
           ]
         },
-        "semantic_sha256": "6c8fd86953659ed8b9d3f4165a9e70af499ff904aff70108bc0875b497eb9bea",
-        "sha256": "3b7ac6f33741c4e27820598aced69ed05827880db0a2ad53d5ed918d27989463",
+        "semantic_sha256": null,
+        "sha256": null,
         "size_bytes": 235749,
         "tolerance": null,
         "validator": "reproducibility_validator"
       },
       {
         "artifact_type": "csv",
+        "comparison_policy": "shape_only",
         "parents": [
           "canonical_inputs",
           "resolved_configuration",
           "quant_cli"
         ],
         "path": "statistics/bootstrap_paths_sample.csv",
-        "reproducibility_level": "canonical_semantic",
+        "reproducibility_level": "methodological",
         "required": true,
         "row_count": 43801,
         "schema": {
@@ -1472,21 +1474,66 @@
             "return"
           ]
         },
-        "semantic_sha256": "53808e86cde9caa307403c9121cf29aaef31e36fe8843706939b8d252d16d184",
-        "sha256": "adc81f1c55606d6ec6241294e79b900a679760106cf21a626e253b2660957b3c",
+        "semantic_sha256": null,
+        "sha256": null,
         "size_bytes": 6805085,
         "tolerance": null,
         "validator": "reproducibility_validator"
       },
       {
         "artifact_type": "csv",
+        "comparison_policy": "numeric_field_tolerance",
+        "expected_rows": [
+          {
+            "annualization_method": "source_result_factor=365.250000",
+            "benchmark": "SPY",
+            "block_length": "13",
+            "candidate_count": "1",
+            "confidence_level": "0.95",
+            "experiment_id": "portfolio_momentum_top_n",
+            "input_series": "portfolio_policy_union_returns",
+            "lower_bound": "-0.471531",
+            "mean": "1.849810",
+            "median": "1.201805",
+            "method": "moving_block_circular",
+            "metric": "cumulative_return",
+            "observation_count": "2190",
+            "probability": "0.150000",
+            "schema_version": "3",
+            "seed": "47",
+            "simulation_count": "1000",
+            "standard_deviation": "2.294526",
+            "upper_bound": "7.975463"
+          },
+          {
+            "annualization_method": "source_result_factor=365.250000",
+            "benchmark": "SPY",
+            "block_length": "13",
+            "candidate_count": "1",
+            "confidence_level": "0.95",
+            "experiment_id": "portfolio_momentum_top_n",
+            "input_series": "portfolio_policy_union_returns",
+            "lower_bound": "-0.181526",
+            "mean": "0.594557",
+            "median": "0.595482",
+            "method": "moving_block_circular",
+            "metric": "sharpe",
+            "observation_count": "2190",
+            "probability": "0.923000",
+            "schema_version": "3",
+            "seed": "47",
+            "simulation_count": "1000",
+            "standard_deviation": "0.409042",
+            "upper_bound": "1.400348"
+          }
+        ],
         "parents": [
           "canonical_inputs",
           "resolved_configuration",
           "quant_cli"
         ],
         "path": "statistics/bootstrap_summary.csv",
-        "reproducibility_level": "canonical_semantic",
+        "reproducibility_level": "methodological",
         "required": true,
         "row_count": 3,
         "schema": {
@@ -1512,10 +1559,17 @@
             "probability"
           ]
         },
-        "semantic_sha256": "82a44a426d55a4b0a7381e73ff7af4e9dad0b60a43e61356ec0cb82a4d8860af",
-        "sha256": "d2409a48266b503a222fda1246ed75a5d39c4709b21829609d0c68cc3c92b004",
+        "semantic_sha256": null,
+        "sha256": null,
         "size_bytes": 653,
-        "tolerance": null,
+        "tolerance": {
+          "lower_bound": 0.25,
+          "mean": 0.2,
+          "median": 0.15,
+          "probability": 0.01,
+          "standard_deviation": 1.0,
+          "upper_bound": 3.0
+        },
         "validator": "reproducibility_validator"
       },
       {
@@ -1610,13 +1664,35 @@
       },
       {
         "artifact_type": "csv",
+        "comparison_policy": "numeric_field_tolerance",
+        "expected_rows": [
+          {
+            "annualization_method": "source_result_factor=365.250000",
+            "benchmark": "SPY",
+            "block_length": "13",
+            "candidate_count": "1",
+            "confidence_level": "0.95",
+            "eligible_count": "1",
+            "experiment_id": "portfolio_momentum_top_n",
+            "input_series": "portfolio_policy_union_returns",
+            "method": "moving_block_circular",
+            "null_hypothesis": "no_candidate_outperforms_benchmark_in_expected_return",
+            "observation_count": "2190",
+            "observed_best_mean": "0.000092",
+            "p_value": "0.337662",
+            "schema_version": "3",
+            "seed": "47",
+            "simulation_count": "1000",
+            "test_method": "centered_moving_block_reality_check"
+          }
+        ],
         "parents": [
           "canonical_inputs",
           "resolved_configuration",
           "quant_cli"
         ],
         "path": "statistics/multiple_testing_summary.csv",
-        "reproducibility_level": "canonical_semantic",
+        "reproducibility_level": "methodological",
         "required": true,
         "row_count": 2,
         "schema": {
@@ -1640,10 +1716,12 @@
             "null_hypothesis"
           ]
         },
-        "semantic_sha256": "c7c16ac37e350563c8563121fc294cc821cacd8b98feccd7206731472f6abfe8",
-        "sha256": "497f9672395327656e338e3054a6358c9deb53a78f9b7c14bbe61ab4bb231127",
+        "semantic_sha256": null,
+        "sha256": null,
         "size_bytes": 485,
-        "tolerance": null,
+        "tolerance": {
+          "p_value": 0.01
+        },
         "validator": "reproducibility_validator"
       },
       {
@@ -1762,13 +1840,37 @@
       },
       {
         "artifact_type": "csv",
+        "comparison_policy": "numeric_field_tolerance",
+        "expected_rows": [
+          {
+            "annualization_method": "source_result_factor=365.250000",
+            "benchmark": "SPY",
+            "block_length": "13",
+            "candidate_count": "1",
+            "confidence_level": "0.95",
+            "experiment_id": "portfolio_momentum_top_n",
+            "input_series": "portfolio_policy_union_returns",
+            "method": "moving_block_circular",
+            "observation_count": "2190",
+            "policy": "portfolio_momentum_top_n",
+            "probability_loss": "0.150000",
+            "probability_positive_active": "0.478000",
+            "return_lower": "-0.471531",
+            "return_upper": "7.975463",
+            "schema_version": "3",
+            "seed": "47",
+            "sharpe_lower": "-0.181526",
+            "sharpe_upper": "1.400348",
+            "simulation_count": "1000"
+          }
+        ],
         "parents": [
           "canonical_inputs",
           "resolved_configuration",
           "quant_cli"
         ],
         "path": "statistics/portfolio_policy_robustness.csv",
-        "reproducibility_level": "canonical_semantic",
+        "reproducibility_level": "methodological",
         "required": true,
         "row_count": 2,
         "schema": {
@@ -1794,21 +1896,50 @@
             "probability_loss"
           ]
         },
-        "semantic_sha256": "e1f7258591a091cc42b002c790ba6b1b7dd67465fc55da506e8b47f1914b3477",
-        "sha256": "8f103e27669180213a0f1c7ce920297ee20cb6a9e85de3f832ec4efb24ad9d0d",
+        "semantic_sha256": null,
+        "sha256": null,
         "size_bytes": 490,
-        "tolerance": null,
+        "tolerance": {
+          "probability_loss": 0.01,
+          "probability_positive_active": 0.01,
+          "return_lower": 0.25,
+          "return_upper": 3.0,
+          "sharpe_lower": 0.1,
+          "sharpe_upper": 0.1
+        },
         "validator": "reproducibility_validator"
       },
       {
         "artifact_type": "csv",
+        "comparison_policy": "numeric_field_tolerance",
+        "expected_rows": [
+          {
+            "annualization_method": "source_result_factor=365.250000",
+            "benchmark": "SPY",
+            "block_length": "13",
+            "candidate_count": "1",
+            "confidence_level": "0.95",
+            "experiment_id": "portfolio_momentum_top_n",
+            "input_series": "portfolio_policy_union_returns",
+            "method": "moving_block_circular",
+            "observation_count": "2190",
+            "probability_sharpe_exceeds_benchmark": "0.344000",
+            "probability_sharpe_positive": "0.923000",
+            "schema_version": "3",
+            "seed": "47",
+            "sharpe_lower": "-0.181526",
+            "sharpe_mean": "0.594557",
+            "sharpe_upper": "1.400348",
+            "simulation_count": "1000"
+          }
+        ],
         "parents": [
           "canonical_inputs",
           "resolved_configuration",
           "quant_cli"
         ],
         "path": "statistics/sharpe_inference.csv",
-        "reproducibility_level": "canonical_semantic",
+        "reproducibility_level": "methodological",
         "required": true,
         "row_count": 2,
         "schema": {
@@ -1832,10 +1963,16 @@
             "probability_sharpe_exceeds_benchmark"
           ]
         },
-        "semantic_sha256": "1fe2b53492ed2d191398eb3299e640098826e6a3b6ee008084fb0906385cedcd",
-        "sha256": "bbe67426e9369a8c6450374b69ce678370270fc5957b42a99a7da5998628399f",
+        "semantic_sha256": null,
+        "sha256": null,
         "size_bytes": 454,
-        "tolerance": null,
+        "tolerance": {
+          "probability_sharpe_exceeds_benchmark": 0.01,
+          "probability_sharpe_positive": 0.01,
+          "sharpe_lower": 0.1,
+          "sharpe_mean": 0.1,
+          "sharpe_upper": 0.1
+        },
         "validator": "reproducibility_validator"
       },
       {
@@ -1897,18 +2034,19 @@
       },
       {
         "artifact_type": "md",
+        "comparison_policy": "presence_only",
         "parents": [
           "canonical_inputs",
           "resolved_configuration",
           "quant_cli"
         ],
         "path": "statistics/statistical_report.md",
-        "reproducibility_level": "canonical_semantic",
+        "reproducibility_level": "methodological",
         "required": true,
         "row_count": null,
         "schema": null,
-        "semantic_sha256": "263a06a30ef3909ecaed9b7231a6c21e113553ed4deed2aafb62401ffc47f848",
-        "sha256": "263a06a30ef3909ecaed9b7231a6c21e113553ed4deed2aafb62401ffc47f848",
+        "semantic_sha256": null,
+        "sha256": null,
         "size_bytes": 731,
         "tolerance": null,
         "validator": "reproducibility_validator"

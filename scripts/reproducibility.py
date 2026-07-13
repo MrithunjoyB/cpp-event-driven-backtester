@@ -160,7 +160,13 @@ def validate_manifest(manifest, path=None):
             errors.append(f"missing artifact parents: {item.get('path')}")
         tolerance = item.get("tolerance")
         if tolerance not in (None, 0, 0.0):
-            errors.append(f"unsupported tolerance for {item.get('path')}")
+            valid_tolerance = (item.get("reproducibility_level") == "methodological" and
+                               item.get("comparison_policy") == "numeric_field_tolerance" and
+                               isinstance(tolerance, dict) and tolerance and
+                               all(isinstance(value, (int, float)) and value > 0 for value in tolerance.values()) and
+                               isinstance(item.get("expected_rows"), list))
+            if not valid_tolerance:
+                errors.append(f"unsupported tolerance for {item.get('path')}")
     volatile = manifest.get("known_volatile_fields", [])
     if len(volatile) != len(set(volatile)):
         errors.append("duplicate volatile field")
@@ -282,6 +288,41 @@ def compare_inventory(directory, manifest):
             status = "presentation_generated" if item["reproducibility_level"] == "presentation_only" else "environment_recorded"
             results.append({"path": name, "status": status})
             continue
+        if item["reproducibility_level"] == "methodological":
+            policy = item.get("comparison_policy")
+            if row_count(path) != item.get("row_count"):
+                raise ReproducibilityError(f"methodological row-count mismatch: {name}")
+            if policy == "shape_only":
+                results.append({"path": name, "status": "methodological_shape_match"})
+                continue
+            if policy == "presence_only":
+                results.append({"path": name, "status": "methodological_presence_match"})
+                continue
+            if policy == "numeric_field_tolerance":
+                with path.open(newline="", encoding="utf-8-sig") as handle:
+                    actual_rows = list(csv.DictReader(handle))
+                expected_rows = item.get("expected_rows", [])
+                if len(actual_rows) != len(expected_rows):
+                    raise ReproducibilityError(f"methodological row mismatch: {name}")
+                tolerances = item["tolerance"]
+                for expected_row, actual_row in zip(expected_rows, actual_rows):
+                    if set(expected_row) != set(actual_row):
+                        raise ReproducibilityError(f"methodological schema mismatch: {name}")
+                    for field, expected_value in expected_row.items():
+                        if expected_value == actual_row[field]:
+                            continue
+                        if field not in tolerances:
+                            raise ReproducibilityError(f"untolerated field mismatch: {name}:{field}")
+                        try:
+                            difference = abs(float(expected_value) - float(actual_row[field]))
+                        except ValueError as error:
+                            raise ReproducibilityError(f"nonnumeric tolerated field: {name}:{field}") from error
+                        if difference > tolerances[field]:
+                            raise ReproducibilityError(
+                                f"methodological tolerance exceeded: {name}:{field} ({difference} > {tolerances[field]})")
+                results.append({"path": name, "status": "methodological_tolerance_match", "tolerance": tolerances})
+                continue
+            raise ReproducibilityError(f"unknown methodological comparison policy: {name}")
         semantic = semantic_hash(path, manifest["known_volatile_fields"])
         if semantic != item.get("semantic_sha256"):
             raise ReproducibilityError(f"semantic output mismatch: {name}")
