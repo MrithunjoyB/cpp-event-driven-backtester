@@ -39,7 +39,10 @@ int main() {
     bool propagated = false;
     try {
         (void)DeterministicExecutor("parallel", 4).map(16, [](std::size_t index) {
-            if (index == 5) throw std::runtime_error("fixture failure"); return index;
+            if (index == 5) {
+                throw std::runtime_error("fixture failure");
+            }
+            return index;
         });
     } catch (const std::runtime_error&) { propagated = true; }
     check(propagated, "worker exception propagated");

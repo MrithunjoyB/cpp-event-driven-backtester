@@ -587,7 +587,8 @@ int main() {
         }
     });
     run_case("Portfolio output validator catches invalid file pattern", [&] {
-        std::system("mkdir -p test_results/invalid_validator/portfolio");
+        const int mkdir_code = std::system("mkdir -p test_results/invalid_validator/portfolio");
+        require(mkdir_code == 0, "could not create invalid-validator fixture directory");
         std::ofstream bad("test_results/invalid_validator/portfolio/portfolio_equity_curve.csv");
         bad << "date,portfolio_value,cash,total_holdings_value,total_return,drawdown,gross_exposure\n";
         bad << "2024-01-01,100,-1,101,0,0,1.01\n";
