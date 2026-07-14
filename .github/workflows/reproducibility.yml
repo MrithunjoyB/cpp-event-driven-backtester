@@ -2,6 +2,11 @@ name: Complete Research Reconstruction
 
 on:
   workflow_dispatch:
+    inputs:
+      commit_sha:
+        description: Exact 40-character commit SHA to reconstruct
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -9,15 +14,25 @@ permissions:
 jobs:
   canonical-suite:
     runs-on: ubuntu-latest
+    env:
+      CANDIDATE_SHA: ${{ inputs.commit_sha }}
     steps:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          ref: ${{ inputs.commit_sha }}
+      - name: Verify exact candidate
+        run: |
+          test "$(git rev-parse HEAD)" = "$CANDIDATE_SHA"
+          printf '%s' "$CANDIDATE_SHA" | grep -Eq '^[0-9a-f]{40}$'
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: "3.12"
           cache: pip
-      - run: python3 -m pip install -r requirements-validation.txt
+          cache-dependency-path: requirements-validation.lock
+      - run: python3 -m pip install --require-hashes -r requirements-validation.lock
       - run: python3 scripts/validate_synthetic_market_data.py data/synthetic --regenerate-check
       - run: python3 scripts/validate_public_data_boundary.py
+      - run: python3 scripts/validate_release_provenance.py --candidate "$CANDIDATE_SHA"
       - run: python3 scripts/validate_reproducibility.py manifests --verify-inputs
       - run: python3 scripts/reproduce.py --manifest manifests/public_reproducibility_suite.json --output-directory ${{ runner.temp }}/public-synthetic-suite --build-directory build-reproduce --execution-mode parallel --threads 4 --allow-compatible-environment --keep-failed-output --json-report ${{ runner.temp }}/public-synthetic-suite-report.json
       - run: python3 scripts/validate_reproducibility.py manifests --verify-inputs --report ${{ runner.temp }}/public-synthetic-suite-report.json

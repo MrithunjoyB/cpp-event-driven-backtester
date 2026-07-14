@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(CppEventDrivenBacktester VERSION 2.0.0 LANGUAGES CXX)
+project(CppEventDrivenBacktester VERSION 1.0.0 LANGUAGES CXX)
 
 option(QUANT_ENABLE_TESTS "Build deterministic test targets" ON)
 option(QUANT_ENABLE_SANITIZERS "Enable AddressSanitizer and UndefinedBehaviorSanitizer" OFF)
@@ -44,10 +44,10 @@ function(quant_apply_project_options target)
     if(QUANT_ENABLE_STRICT_WARNINGS)
         if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
             target_compile_options(${target} PRIVATE
-                -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wshadow
+                -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wshadow -Werror
             )
         elseif(MSVC)
-            target_compile_options(${target} PRIVATE /W4)
+            target_compile_options(${target} PRIVATE /W4 /WX)
         endif()
     endif()
 
@@ -115,6 +115,12 @@ if(BUILD_TESTING AND QUANT_ENABLE_TESTS)
     set_tests_properties(public_data_boundary_tests PROPERTIES WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
     add_test(NAME public_data_boundary_validator COMMAND ${Python3_EXECUTABLE} scripts/validate_public_data_boundary.py)
     set_tests_properties(public_data_boundary_validator PROPERTIES WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+    add_test(NAME release_metadata_tests COMMAND ${Python3_EXECUTABLE} tests/test_release_metadata.py --cli $<TARGET_FILE:quant_cli>)
+    set_tests_properties(release_metadata_tests PROPERTIES WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+    add_test(NAME release_provenance_tests COMMAND ${Python3_EXECUTABLE} tests/test_release_provenance.py)
+    set_tests_properties(release_provenance_tests PROPERTIES WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+    add_test(NAME release_artifact_tests COMMAND ${Python3_EXECUTABLE} tests/test_release_artifacts.py --cli $<TARGET_FILE:quant_cli>)
+    set_tests_properties(release_artifact_tests PROPERTIES WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
     add_test(NAME cli_help COMMAND quant_cli help)
     add_test(NAME cli_version COMMAND quant_cli version)

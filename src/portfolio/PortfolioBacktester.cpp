@@ -13,7 +13,8 @@ double mean(const std::vector<double>& values) {
     if (values.empty()) {
         return 0.0;
     }
-    return std::accumulate(values.begin(), values.end(), 0.0) / values.size();
+    return std::accumulate(values.begin(), values.end(), 0.0) /
+           static_cast<double>(values.size());
 }
 
 double stdev(const std::vector<double>& values) {
@@ -26,7 +27,7 @@ double stdev(const std::vector<double>& values) {
         double diff = value - avg;
         sum += diff * diff;
     }
-    return std::sqrt(sum / (values.size() - 1));
+    return std::sqrt(sum / static_cast<double>(values.size() - 1));
 }
 
 double covariance(const std::vector<double>& x, const std::vector<double>& y) {
@@ -41,7 +42,7 @@ double covariance(const std::vector<double>& x, const std::vector<double>& y) {
     for (std::size_t i = 0; i < n; ++i) {
         sum += (x[i] - mx) * (y[i] - my);
     }
-    return sum / (n - 1);
+    return sum / static_cast<double>(n - 1);
 }
 
 double variance(const std::vector<double>& values) {
@@ -110,7 +111,8 @@ double PortfolioBacktester::value_at_risk_95(std::vector<double> returns) {
         return 0.0;
     }
     std::sort(returns.begin(), returns.end());
-    std::size_t index = static_cast<std::size_t>(std::floor(0.05 * (returns.size() - 1)));
+    std::size_t index = static_cast<std::size_t>(
+        std::floor(0.05 * static_cast<double>(returns.size() - 1)));
     return returns[index];
 }
 
@@ -119,7 +121,8 @@ double PortfolioBacktester::expected_shortfall_95(std::vector<double> returns) {
         return 0.0;
     }
     std::sort(returns.begin(), returns.end());
-    std::size_t index = static_cast<std::size_t>(std::floor(0.05 * (returns.size() - 1)));
+    std::size_t index = static_cast<std::size_t>(
+        std::floor(0.05 * static_cast<double>(returns.size() - 1)));
     const auto tail_end = static_cast<std::vector<double>::difference_type>(index + 1);
     std::vector<double> tail(returns.begin(), returns.begin() + tail_end);
     return mean(tail);
@@ -347,7 +350,8 @@ PortfolioBacktestResult PortfolioBacktester::run() {
         if (d > 0) {
             double ew = 0.0;
             for (const auto& ticker : config_.tickers) {
-                ew += close_return(history[ticker], indices_for_date(history, dates[d - 1])[ticker], indices[ticker]) / config_.tickers.size();
+                ew += close_return(history[ticker], indices_for_date(history, dates[d - 1])[ticker], indices[ticker]) /
+                      static_cast<double>(config_.tickers.size());
             }
             benchmark_returns.push_back(ew);
         }
@@ -391,7 +395,7 @@ PortfolioSummary PortfolioBacktester::summarize(
     for (const auto& ticker : config_.tickers) {
         double start = history.at(ticker)[first[ticker]].close;
         double end = history.at(ticker)[last[ticker]].close;
-        ew_end += start > 0.0 ? (end / start) / config_.tickers.size() : 0.0;
+        ew_end += start > 0.0 ? (end / start) / static_cast<double>(config_.tickers.size()) : 0.0;
     }
     summary.equal_weight_benchmark_return = ew_end - 1.0;
     if (history.count(config_.benchmark_ticker)) {
@@ -399,8 +403,10 @@ PortfolioSummary PortfolioBacktester::summarize(
         double end = history.at(config_.benchmark_ticker)[last[config_.benchmark_ticker]].close;
         summary.spy_benchmark_return = start > 0.0 ? (end / start) - 1.0 : 0.0;
     }
-    summary.average_cash_allocation = dates.empty() ? 0.0 : cash_allocation_sum / dates.size();
-    summary.average_gross_exposure = dates.empty() ? 0.0 : gross_exposure_sum / dates.size();
+    summary.average_cash_allocation = dates.empty()
+        ? 0.0 : cash_allocation_sum / static_cast<double>(dates.size());
+    summary.average_gross_exposure = dates.empty()
+        ? 0.0 : gross_exposure_sum / static_cast<double>(dates.size());
     std::vector<double> returns;
     for (std::size_t i = 1; i < equity.size(); ++i) {
         if (equity[i - 1].portfolio_value > 0.0) {

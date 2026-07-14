@@ -1,6 +1,7 @@
 #include "quant/app/Application.h"
 #include "quant/config/ConfigLoader.h"
 #include "quant/domain/Errors.h"
+#include "quant/random/StableRng.h"
 
 #include <cstdlib>
 #include <iostream>
@@ -87,7 +88,10 @@ int main(int argc, char** argv) {
         }
         const std::string command = argv[1];
         if (command == "version" || command == "--version") {
-            std::cout << QUANT_PROJECT_VERSION << '\n';
+            std::cout << "cpp-event-driven-backtester " << QUANT_PROJECT_VERSION << '\n'
+                      << "stochastic_methodology_version="
+                      << quant::random::kStochasticMethodologyVersion << '\n'
+                      << "rng_mapping=" << quant::random::kRngMapping << '\n';
             return 0;
         }
         if (command == "list-strategies") {

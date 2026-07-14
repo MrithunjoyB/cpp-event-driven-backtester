@@ -8,7 +8,7 @@ cmake --build build --parallel
 ctest --test-dir build --output-on-failure
 ```
 
-The migration tree registers 27 targets covering the synthetic regression suite, typed date/config behavior, causal methodology, exporters, deterministic bootstrap analysis, stable RNG vectors, bounded execution, reproducibility, final-audit gates, public data boundaries, user inputs, and CLI smoke checks. Tests never download live data.
+The v1.0.0 tree registers 30 targets covering the synthetic regression suite, typed date/config behavior, causal methodology, exporters, deterministic bootstrap analysis, stable RNG vectors, bounded execution, reproducibility, release metadata, provenance and artifact validation, final-audit gates, public data boundaries, user inputs, and CLI smoke checks. Tests never download live data.
 
 `synthetic_data_tests` verifies byte-stable generation, hashes, equity/crypto calendars, schema, OHLC invariants, and corruption rejection. `user_market_data_tests` covers provider-neutral schema validation, local hash manifests, malformed inputs, and missing files. `public_data_boundary_tests` plus `public_data_boundary_validator` reject removed hashes/rows, provider paths, local placeholders, network acquisition, stale manifests, and tracked result artifacts.
 
@@ -44,13 +44,14 @@ python3 scripts/benchmark_performance.py --build build --baseline baseline.json
 python3 scripts/validate_performance_results.py results/performance
 ```
 
-`reproducibility_tests` contains 46 deterministic cases covering schema/identity validation, hashes, canonicalization, input/config corruption, inventory completeness, lineage, suite composition, tolerance rejection, and provenance policies. End-to-end checks use:
+`reproducibility_tests` contains deterministic cases covering schema/identity validation, hashes, canonicalization, input/config corruption, inventory completeness, lineage, suite composition, tolerance rejection, and provenance policies. `release_provenance_tests` independently rejects runtime changes after manifest capture, and `release_metadata_tests` checks version, links, licenses, dependency locks, inventory, and immutable Action references. End-to-end checks use:
 
 ```bash
 python3 scripts/validate_reproducibility.py manifests --verify-inputs
 python3 scripts/reproduce.py --manifest manifests/public_synthetic_single_ma.json --verify-only --allow-compatible-environment
 python3 scripts/reproduce.py --manifest manifests/public_reproducibility_suite.json \
   --output-directory results/reproduced/public-synthetic-suite --allow-compatible-environment
+python3 scripts/validate_release_provenance.py
 ```
 
 The dedicated `selection_risk_tests` target checks stable candidate identity, strict common-date panel construction, duplicate/non-finite rejection, minimum samples, deterministic moving-block resampling, max-statistic calculation, null fixtures, and bootstrap metadata. Production exports are independently checked with:

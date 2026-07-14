@@ -10,13 +10,14 @@ double sample_stdev(const std::vector<double>& values) {
     if (values.size() < 2) {
         return 0.0;
     }
-    double avg = std::accumulate(values.begin(), values.end(), 0.0) / values.size();
+    double avg = std::accumulate(values.begin(), values.end(), 0.0) /
+                 static_cast<double>(values.size());
     double sum = 0.0;
     for (double value : values) {
         double diff = value - avg;
         sum += diff * diff;
     }
-    return std::sqrt(sum / (values.size() - 1));
+    return std::sqrt(sum / static_cast<double>(values.size() - 1));
 }
 
 double trailing_volatility(const std::vector<Bar>& bars, std::size_t decision_index, int lookback) {
@@ -130,7 +131,7 @@ std::map<std::string, double> AllocationPolicy::enforce_constraints(
         if (leftover <= 1e-10 || room.empty()) {
             break;
         }
-        double add = leftover / room.size();
+        double add = leftover / static_cast<double>(room.size());
         for (const auto& ticker : room) {
             weights[ticker] = std::min(max_weight, weights[ticker] + add);
         }

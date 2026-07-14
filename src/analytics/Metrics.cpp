@@ -10,7 +10,8 @@ double mean(const std::vector<double>& values) {
     if (values.empty()) {
         return 0.0;
     }
-    return std::accumulate(values.begin(), values.end(), 0.0) / values.size();
+    return std::accumulate(values.begin(), values.end(), 0.0) /
+           static_cast<double>(values.size());
 }
 
 double sample_stddev(const std::vector<double>& values) {
@@ -23,7 +24,7 @@ double sample_stddev(const std::vector<double>& values) {
         double diff = value - avg;
         variance += diff * diff;
     }
-    return std::sqrt(variance / (values.size() - 1));
+    return std::sqrt(variance / static_cast<double>(values.size() - 1));
 }
 }
 

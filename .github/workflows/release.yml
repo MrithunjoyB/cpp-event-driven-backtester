@@ -1,0 +1,133 @@
+name: v1.0.0 Release Candidate Validation
+
+on:
+  workflow_dispatch:
+    inputs:
+      commit_sha:
+        description: Exact 40-character release-candidate commit SHA
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: v1-release-candidate-${{ inputs.commit_sha }}
+  cancel-in-progress: false
+
+jobs:
+  platform-package:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform_name: linux
+          - os: macos-latest
+            platform_name: macos
+    runs-on: ${{ matrix.os }}
+    env:
+      CANDIDATE_SHA: ${{ inputs.commit_sha }}
+      PLATFORM_NAME: ${{ matrix.platform_name }}
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          ref: ${{ inputs.commit_sha }}
+      - name: Verify exact candidate
+        run: |
+          test "$(git rev-parse HEAD)" = "$CANDIDATE_SHA"
+          printf '%s' "$CANDIDATE_SHA" | grep -Eq '^[0-9a-f]{40}$'
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-validation.lock
+      - name: Install hash-locked validation environment
+        run: python3 -m pip install --require-hashes -r requirements-validation.lock
+      - name: Validate source and public boundary
+        run: |
+          python3 scripts/validate_synthetic_market_data.py data/synthetic --regenerate-check
+          python3 scripts/validate_public_data_boundary.py
+          python3 scripts/validate_release_provenance.py --candidate "$CANDIDATE_SHA"
+          python3 scripts/validate_reproducibility.py manifests --verify-inputs
+      - name: Build and test
+        run: |
+          cmake -S . -B build-release -DCMAKE_BUILD_TYPE=Release -DQUANT_ENABLE_STRICT_WARNINGS=ON
+          cmake --build build-release --parallel 2
+          ctest --test-dir build-release --output-on-failure
+      - name: Package and smoke test target binary
+        run: |
+          ARCHITECTURE="$(uname -m)"
+          mkdir -p dist
+          {
+            printf 'platform=%s\n' "$PLATFORM_NAME"
+            printf 'architecture=%s\n' "$ARCHITECTURE"
+            printf 'python=%s\n' "$(python3 --version 2>&1)"
+            printf 'pip=%s\n' "$(python3 -c 'import pip; print(pip.__version__)')"
+            printf 'cmake=%s\n' "$(cmake --version | head -1)"
+            printf 'compiler=%s\n' "$(c++ --version | head -1)"
+            printf 'kernel=%s\n' "$(uname -s)"
+          } > "dist/${PLATFORM_NAME}-toolchain.txt"
+          python3 scripts/release_artifacts.py package-binary \
+            --cli build-release/quant_cli --platform "$PLATFORM_NAME" \
+            --architecture "$ARCHITECTURE" --output-directory dist
+          PACKAGE="$(find dist -maxdepth 1 -name "cpp-event-driven-backtester-v1.0.0-${PLATFORM_NAME}-*.tar.gz" -print -quit)"
+          test -n "$PACKAGE"
+          python3 scripts/release_artifacts.py smoke-package --archive "$PACKAGE" \
+            --report "dist/${PLATFORM_NAME}-package-smoke.json"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: v1.0.0-${{ matrix.platform_name }}-${{ inputs.commit_sha }}
+          path: dist/
+          if-no-files-found: error
+          retention-days: 7
+
+  aggregate-release-assets:
+    needs: platform-package
+    runs-on: ubuntu-latest
+    env:
+      CANDIDATE_SHA: ${{ inputs.commit_sha }}
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          ref: ${{ inputs.commit_sha }}
+      - name: Verify exact candidate
+        run: |
+          test "$(git rev-parse HEAD)" = "$CANDIDATE_SHA"
+          printf '%s' "$CANDIDATE_SHA" | grep -Eq '^[0-9a-f]{40}$'
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-validation.lock
+      - run: python3 -m pip install --require-hashes -r requirements-validation.lock
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: v1.0.0-*-${{ inputs.commit_sha }}
+          path: dist
+          merge-multiple: true
+      - name: Generate source, SBOM, report, and checksums
+        run: |
+          python3 scripts/release_artifacts.py package-source \
+            --commit "$CANDIDATE_SHA" --output-directory dist
+          python3 scripts/release_artifacts.py sbom \
+            --commit "$CANDIDATE_SHA" \
+            --output dist/cpp-event-driven-backtester-v1.0.0-sbom.spdx.json
+          cp docs/RELEASE_NOTES_v1.0.0.md \
+            dist/cpp-event-driven-backtester-v1.0.0-release-notes.md
+          {
+            printf 'platform=linux-aggregation\n'
+            printf 'python=%s\n' "$(python3 --version 2>&1)"
+            printf 'pip=%s\n' "$(python3 -c 'import pip; print(pip.__version__)')"
+          } > dist/release-aggregation-toolchain.txt
+          python3 scripts/release_artifacts.py validate --directory dist \
+            --report dist/cpp-event-driven-backtester-v1.0.0-release-validation-report.json
+          python3 scripts/release_artifacts.py checksums --directory dist
+          python3 scripts/release_artifacts.py validate --directory dist --require-checksums \
+            --required-platforms linux,macos
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: v1.0.0-validated-assets-${{ inputs.commit_sha }}
+          path: dist/
+          if-no-files-found: error
+          retention-days: 14

@@ -6,6 +6,8 @@ The system supports reproducible strategy and allocation-policy experiments on d
 
 Development is AI-assisted and remains directed, reviewed, and maintained by Mrithunjoy Basumatary. AI systems are not project authors or copyright holders.
 
+The executable version is `1.0.0`. The annotated `v1.0.0` tag and corresponding GitHub Release, when present, are the authoritative immutable release identity; branch state is not a substitute for a release tag.
+
 ## Research Scope
 
 Historical strategy evaluation is vulnerable to timing errors, optimistic execution assumptions, benchmark mismatches, calendar misalignment, accounting omissions, and selection bias. This repository addresses those problems through causal signal-to-fill timing, explicit costs, calendar-duration walk-forward tests, continuous out-of-sample capital, benchmark execution parity, and validated portfolio accounting.
@@ -95,19 +97,30 @@ python3 scripts/reproduce.py --manifest manifests/public_reproducibility_suite.j
 
 The current public canonical outputs use synthetic data and provide software, accounting, inference, and reproducibility evidence only. Their returns and statistical values are not empirical market findings and must not be interpreted as profitability evidence.
 
-Earlier repository revisions evaluated user-obtained AAPL, MSFT, SPY, TSLA, and BTC-USD data. That historical local research reported an equal-weight return of approximately **536.94%**, active return of **425.47%** versus SPY, and a worst drawdown of **-48.77%**. Approximately **64.94%** of net profit was attributed to BTC-USD and TSLA, indicating material concentration. Moving-block bootstrap results favored Inverse Volatility most strongly, Equal Weight also showed comparatively strong evidence, and Momentum Top-N remained inconclusive.
-
-Those findings are historical, not forecasts, and are no longer public-canonical: the underlying provider files are not redistributed, and reproduction requires equivalent lawfully obtained inputs. Audit summaries remain for methodological traceability. See [Data Provenance](docs/DATA_PROVENANCE.md) and [Final Audit](docs/FINAL_AUDIT.md).
+Earlier repository revisions evaluated user-obtained market data. Those historical outputs are not release-canonical: the inputs are not redistributed, and reconstruction requires equivalent lawfully obtained data. Audit summaries remain only for methodological traceability. See [Data Provenance](docs/DATA_PROVENANCE.md) and [Final Audit](docs/FINAL_AUDIT.md).
 
 Stochastic methodology version 2 still uses `mt19937` with the repository-owned `portable_bounded_v1` mapping. Public synthetic reports label their evidence boundary directly and are generated under ignored `results/public_synthetic/` paths.
 
 ## Build
 
 ```bash
+python3 -m pip install --require-hashes -r requirements-validation.lock
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build --parallel
 ctest --test-dir build --output-on-failure
 ```
+
+## Quick Start
+
+```bash
+python3 scripts/generate_synthetic_market_data.py
+python3 scripts/validate_synthetic_market_data.py --regenerate-check
+./build/quant_cli validate-config --config configs/portfolio_equal_weight.json
+./build/quant_cli run --config configs/portfolio_equal_weight.json
+python3 scripts/validate_results.py results/public_synthetic/portfolio_equal_weight
+```
+
+Generated outputs remain under ignored `results/` paths. Public synthetic returns are software-validation evidence, not empirical market evidence.
 
 ## CLI and Configuration
 
@@ -127,7 +140,7 @@ On the measured Apple M1 Release workload, immutable data and benchmark reuse re
 
 ## Validation
 
-The migration tree has 27 CTest targets, including deterministic synthetic generation, user-data validation, public-boundary corruption tests, and an executable tracked-tree gate in addition to the existing quantitative, reproducibility, audit, and CLI coverage. The public synthetic regression snapshot check matches 8/8 scenarios.
+The v1.0.0 tree has 30 CTest targets, including deterministic synthetic generation, user-data validation, public-boundary corruption tests, release provenance closure, version consistency, archive/SBOM corruption tests, and the existing quantitative, reproducibility, audit, and CLI coverage. The public synthetic regression snapshot check matches 8/8 scenarios.
 
 Validation also includes strict compiler warnings, ASan, UBSan, TSan, Linux and macOS Release CI, schema/result validation, dedicated attribution and statistical corruption tests, parallel package equivalence, and Python reference cross-checks. See [Testing](docs/TESTING.md) for commands and test boundaries.
 
@@ -139,7 +152,7 @@ See [Result Schema](docs/RESULT_SCHEMA.md) for output filenames, columns, units,
 
 ## Reproducibility
 
-Reproducibility mechanisms include offline fixed-point fixture generation, versioned manifests, hash-verified synthetic inputs, resolved configurations, deterministic seeds, a repository-owned stable bounded sampler, schema/build/dependency provenance, atomic reconstruction, regression snapshots, Python references, and CI. The public suite is `public_reproducibility_suite`; optional acquisition and user-local files are excluded.
+Reproducibility mechanisms include offline fixed-point fixture generation, versioned manifests, hash-verified synthetic inputs, hash-locked Python validation dependencies, resolved configurations, deterministic seeds, a repository-owned stable bounded sampler, bounded implementation-to-manifest provenance, atomic reconstruction, regression snapshots, Python references, and CI. The public suite is `public_reproducibility_suite`; optional acquisition and user-local files are excluded. This is a controlled reconstruction contract, not a claim of hermetic system-toolchain reproduction.
 
 ## Documentation
 
@@ -160,6 +173,7 @@ Reproducibility mechanisms include offline fixed-point fixture generation, versi
 - [RNG Methodology](docs/RNG_METHODOLOGY.md)
 - [Final Audit](docs/FINAL_AUDIT.md)
 - [Limitations](docs/LIMITATIONS.md)
+- [Release Policy](docs/RELEASE_POLICY.md)
 
 ## Limitations
 
@@ -173,14 +187,18 @@ Reproducibility mechanisms include offline fixed-point fixture generation, versi
 - Attribution is a historical accounting decomposition, not a claim of economic causality.
 - Statistical evidence from historical samples does not imply future profitability.
 
+## What This Platform Does Not Do
+
+It is not a broker gateway, order-management system, live-trading service, investment adviser, or tick-level market simulator. It does not claim exchange-certified calendars, complete corporate-action provenance for user data, arbitrary-platform binary portability, or future profitability.
+
 ## Development Roadmap
 
 ### Near-Term Roadmap
 
-1. Complete final release acceptance checks and curate release artifacts.
-2. Hash-pin Python validation distributions and reviewed GitHub Actions revisions.
-3. Produce final release notes without changing migrated methodology.
-4. Prepare `v1.0.0` only after final CI and reconstruction remain green.
+1. Preserve the immutable v1.0.0 methodology and provenance boundary through versioned maintenance releases.
+2. Add authoritative exchange calendars and stronger corporate-action providers where licensing and versioning permit.
+3. Improve repeated-data and indicator caching without changing canonical semantics.
+4. Extend experiment manifests with fuller operating-system package provenance.
 
 ### Longer-Term Extensions
 
@@ -196,6 +214,8 @@ Possible future directions, not current capabilities or committed deliverables:
 ## License and Data Terms
 
 The project source code, documentation, configuration, and original test fixtures are licensed under the [Apache License 2.0](LICENSE). Copyright 2026 Mrithunjoy Basumatary. See [NOTICE](NOTICE) for attribution and scope.
+
+Academic and technical citation metadata is provided in [CITATION.cff](CITATION.cff). Security reporting and contribution expectations are documented in [SECURITY.md](SECURITY.md) and [CONTRIBUTING.md](CONTRIBUTING.md).
 
 The bundled files in `data/synthetic/` are independently generated project fixtures covered by Apache-2.0. Third-party and user-supplied market data is excluded from the current tree and the license grant; users must supply data they are independently entitled to use. Historical commits still contain formerly tracked Yahoo-derived files, as documented in [Data Provenance](docs/DATA_PROVENANCE.md). No history rewrite was performed.
 

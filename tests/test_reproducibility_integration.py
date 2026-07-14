@@ -32,9 +32,9 @@ with tempfile.TemporaryDirectory() as temporary:
     (root / "data").mkdir(); (root / "configs").mkdir(); (root / "build").mkdir()
     (root / "data/input.csv").write_text("Date,Close\n2020-01-01,1\n")
     (root / "configs/test.json").write_text('{"output_directory":"unused"}\n')
-    (root / "requirements-validation.txt").write_text("")
+    (root / "requirements-validation.lock").write_text("")
     cli = root / "build/quant_cli"
-    cli.write_text("#!/bin/sh\necho 2.0.0\n"); cli.chmod(0o755)
+    cli.write_text("#!/bin/sh\necho 1.0.0\n"); cli.chmod(0o755)
     subprocess.run(["git", "init", "-q"], cwd=root, check=True)
     subprocess.run(["git", "config", "user.email", "fixture@example.invalid"], cwd=root, check=True)
     subprocess.run(["git", "config", "user.name", "Fixture"], cwd=root, check=True)
@@ -47,7 +47,7 @@ with tempfile.TemporaryDirectory() as temporary:
         "package_type": "fixture", "description": "fixture", "created_by": "test",
         "source_commit": commit, "source_tree_policy": "exact_commit",
         "repository": "fixture", "build": {"cxx_standard": 17},
-        "runtime_environment": {"dependency_lock": "requirements-validation.txt"},
+        "runtime_environment": {"dependency_lock": "requirements-validation.lock"},
         "inputs": [{"logical_name": "input", "role": "fixture", "path": "data/input.csv",
                     "size_bytes": (root / "data/input.csv").stat().st_size, "sha256": sha256_file(root / "data/input.csv")}],
         "configuration": {"path": "configs/test.json", "sha256": sha256_file(root / "configs/test.json"),

@@ -18,7 +18,7 @@ PNG/SVG/PDF figures are presentation-only because renderer, font, compression, a
 
 Stochastic methodology version 2 uses `mt19937` with the repository-owned `portable_bounded_v1` mapping. Raw retained paths, bootstrap distributions, summaries, probabilities, max-statistic draws, and adjusted p-values are canonical semantic artifacts; the old shape-only and broad numerical tolerance policies are retired. Presentation files remain presence-validated and the non-inferential rank-correlation diagnostic retains a `1e-15` floating-point tolerance.
 
-Public migration manifests identify the exact committed implementation boundary `062d9cf221157c01c92a3f5c8e672a8b1dfdbf06`; manifest commit `cc218d14e5fcc5a38e787b034496df9fd6f47a67` records the corresponding canonical artifact identities. Because generated manifests necessarily enter Git afterward, reconstruction on a reviewed descendant requires the explicit `--allow-compatible-environment` ancestry check. A future release tag must bind the tag target and package identities without pretending a committed file can contain its own commit SHA. Legacy provider-data manifests remain recoverable from Git history but are not valid public inputs.
+Release manifests identify the exact committed implementation/configuration boundary. Because generated manifests necessarily enter Git afterward, `audit/release_v1/provenance.json` separately identifies the manifest commit. Reconstruction on the final release descendant requires `--allow-compatible-environment`, which now invokes `scripts/validate_release_provenance.py`: the implementation-to-manifest diff may contain only `manifests/`, and the manifest-to-candidate diff may contain only `audit/release_v1/`. Arbitrary descendants are rejected. This avoids the impossible claim that a committed manifest self-references its own commit SHA. Legacy provider-data manifests remain recoverable from Git history but are not valid public inputs.
 
 One compiler-sensitive diagnostic field, `is_oos_spearman_rank_correlation`, permits `1e-15` absolute variation; observed GCC/AppleClang variation is approximately `1.83e-17`. Candidate rank ordering and every selection field remain exact.
 
@@ -28,11 +28,11 @@ CSV semantic hashing parses the exact cell strings and preserves header and row 
 
 `manifest_id` is SHA-256 over canonical JSON containing the schema version, experiment/package identity, implementation source commit, ordered logical input hashes, configuration hash, methodology version, seed, and execution policy. It excludes timestamps, hostnames, usernames, output paths, and thread scheduling. Suite IDs use the same sorted, compact JSON convention.
 
-The current manifests identify the committed deterministic-arithmetic implementation boundary. Reconstruction either targets that implementation commit or accepts a reviewed descendant only through the explicit compatible-environment ancestry policy.
+The current manifests identify the committed deterministic-arithmetic implementation boundary. Reconstruction either targets that implementation commit or accepts the bounded manifest/evidence descendant only after executable provenance closure.
 
 ## Environment and Dependencies
 
-Manifests record compiler, CMake, C++ standard, build type, strict-warning mode, OS, architecture, Python, CLI version, binary SHA-256, locale, timezone, and dependency lock. Validation/report dependencies are pinned in `requirements-validation.txt` and used by public CI; acquisition dependencies are separated in `requirements-acquisition.txt`. `requirements.txt` remains a convenience union, not the canonical CI environment.
+Manifests record compiler, CMake, C++ standard, build type, strict-warning mode, OS, architecture, Python, CLI version, binary SHA-256, locale, timezone, and dependency lock. Validation/report dependencies are hash-locked in `requirements-validation.lock` and used by public CI; optional acquisition dependencies are separately hash-locked in `requirements-acquisition.lock`. The `.txt` files remain direct-input specifications, and `requirements.txt` remains a convenience union. Hash locking constrains Python distributions but does not make operating-system compilers and libraries hermetic.
 
 Compiler and standard-library identities are recorded but are not part of semantic identity. Linux and macOS execute the same repository-owned integer mapping and reference vectors. Locale is forced to `C`, timezone to `UTC`, and Matplotlib uses an isolated cache. Platform-specific figures are generated and validated for presence, not byte identity.
 
@@ -72,7 +72,7 @@ The tracked public set contains 13 synthetic packages: a representative single s
 ```bash
 git clone https://github.com/MrithunjoyB/cpp-event-driven-backtester.git
 cd cpp-event-driven-backtester
-python3 -m pip install -r requirements-validation.txt
+python3 -m pip install --require-hashes -r requirements-validation.lock
 python3 scripts/generate_synthetic_market_data.py
 python3 scripts/validate_synthetic_market_data.py --regenerate-check
 python3 scripts/validate_public_data_boundary.py
@@ -82,7 +82,7 @@ python3 scripts/reproduce.py --manifest manifests/public_reproducibility_suite.j
   --allow-compatible-environment
 ```
 
-No existing build or result directory is required. Generated outputs, caches, failed stages, and machine-specific benchmark artifacts remain ignored.
+No existing build or result directory is required. Generated outputs, caches, failed stages, release archives, and machine-specific benchmark artifacts remain ignored.
 
 ## Threat Model
 

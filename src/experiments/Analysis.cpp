@@ -116,7 +116,8 @@ double mean(const std::vector<double>& values) {
     if (values.empty()) {
         return 0.0;
     }
-    return std::accumulate(values.begin(), values.end(), 0.0) / values.size();
+    return std::accumulate(values.begin(), values.end(), 0.0) /
+           static_cast<double>(values.size());
 }
 
 double stdev(const std::vector<double>& values) {
@@ -129,7 +130,7 @@ double stdev(const std::vector<double>& values) {
         double diff = value - avg;
         sum += diff * diff;
     }
-    return std::sqrt(sum / (values.size() - 1));
+    return std::sqrt(sum / static_cast<double>(values.size() - 1));
 }
 
 void write_regime_row(std::ofstream& out, const std::string& regime, const std::string& ticker, const std::string& strategy,

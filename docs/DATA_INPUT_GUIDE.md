@@ -39,7 +39,7 @@ Re-run validation and local manifest generation before reconstruction. A changed
 Optional acquisition is isolated from canonical reconstruction:
 
 ```bash
-python3 -m pip install -r requirements-acquisition.txt
+python3 -m pip install --require-hashes -r requirements-acquisition.lock
 python3 scripts/download_data.py --output-directory data/local
 ```
 

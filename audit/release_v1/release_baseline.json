@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "recorded_at_utc": "2026-07-14T12:59:20Z",
+  "repository": "MrithunjoyB/cpp-event-driven-backtester",
+  "release_target": "v1.0.0",
+  "branch": "main",
+  "baseline_commit": "e60f52509859357aeffec9fea4353b60a3d2173c",
+  "origin_main_commit": "e60f52509859357aeffec9fea4353b60a3d2173c",
+  "working_tree_clean": true,
+  "local_v1_tag_exists": false,
+  "remote_v1_tag_exists": false,
+  "github_release_exists": false,
+  "tracked_generated_results": 0,
+  "remediation_ancestry": [
+    "622669517e3328692e31f7997ec0023a72342a95",
+    "90d4502203c9166c68b64fdfee336be753328d5a",
+    "d5abbd3e270172199097799c49413a7163353a25",
+    "d2e37c6417a1db524d95f27dcb645eacfb02608d",
+    "062d9cf221157c01c92a3f5c8e672a8b1dfdbf06",
+    "cc218d14e5fcc5a38e787b034496df9fd6f47a67",
+    "e60f52509859357aeffec9fea4353b60a3d2173c"
+  ],
+  "version_state": {
+    "cmake_project_version": "2.0.0",
+    "requested_release_version": "1.0.0",
+    "cli_version_source": "CMake PROJECT_VERSION via QUANT_PROJECT_VERSION",
+    "consistent": false
+  },
+  "release_surfaces": {
+    "ci_workflows": [
+      ".github/workflows/ci.yml",
+      ".github/workflows/reproducibility.yml"
+    ],
+    "release_workflow_present": false,
+    "package_script_present": false,
+    "sbom_present": false,
+    "citation_present": false,
+    "security_policy_present": false,
+    "contributing_guide_present": false
+  },
+  "supply_chain_state": {
+    "github_actions_immutable_sha_pinned": true,
+    "direct_python_versions_pinned": true,
+    "python_distribution_hashes_pinned": false
+  },
+  "public_data_state": {
+    "canonical_assets": 5,
+    "canonical_package_manifests": 13,
+    "canonical_suite_plans": 2,
+    "tracked_yahoo_derived_csvs": 0,
+    "tracked_results": 0
+  },
+  "initial_release_blockers": [
+    "Project and CLI version is 2.0.0 instead of the requested 1.0.0 release identity",
+    "No transactional cross-platform release packaging and validation workflow",
+    "No validated release SBOM, checksum set, or package smoke-test path",
+    "Python validation dependencies are not installed from a hash-verified lock"
+  ]
+}

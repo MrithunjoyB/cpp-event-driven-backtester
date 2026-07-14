@@ -362,11 +362,12 @@ def verify_dependencies(root, lock_path):
     results = []
     for line in (root / normalize_path(lock_path)).read_text().splitlines():
         line = line.strip()
-        if not line or line.startswith("#"):
+        if (not line or line.startswith("#") or line.startswith("--hash=") or
+                line == "\\"):
             continue
         if "==" not in line:
             raise ReproducibilityError(f"dependency lock entry is not exact: {line}")
-        name, expected = line.split("==", 1)
+        name, expected = line.rstrip(" \\").split("==", 1)
         try:
             actual = importlib.metadata.version(name)
         except importlib.metadata.PackageNotFoundError as error:
@@ -400,6 +401,14 @@ def reconstruct(root, manifest, output_directory, build_dir, execution_mode, thr
         raise ReproducibilityError("repository is dirty; commit/stash tracked changes or pass --allow-dirty")
     if actual_commit != manifest["source_commit"] and not allow_compatible_environment:
         raise ReproducibilityError(f"wrong Git commit: expected {manifest['source_commit']}, found {actual_commit}")
+    if actual_commit != manifest["source_commit"]:
+        try:
+            from validate_release_provenance import validate_compatible_source
+            validate_compatible_source(root, manifest["source_commit"], actual_commit)
+        except (ImportError, OSError, ValueError, RuntimeError) as error:
+            raise ReproducibilityError(
+                f"compatible descendant failed release provenance closure: {error}"
+            ) from error
     input_results = verify_inputs(root, manifest)
     dependency_results = verify_dependencies(root, manifest["runtime_environment"]["dependency_lock"])
     if verify_only:

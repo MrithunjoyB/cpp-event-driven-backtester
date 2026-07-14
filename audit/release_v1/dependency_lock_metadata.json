@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-07-14T00:00:00Z",
+  "generator": "pip-tools",
+  "generator_version": "7.5.3",
+  "generator_python_version": "3.9.6",
+  "resolver": "backtracking",
+  "hash_mode": "all published distribution hashes returned by the configured package index",
+  "locks": [
+    {
+      "path": "requirements-validation.lock",
+      "input": "requirements-validation.txt",
+      "sha256": "91d160b5a3339bd138de6da46cf55c9c4c8a0150889c16d7127d22ae8fa6cca1",
+      "verified_install": true
+    },
+    {
+      "path": "requirements-acquisition.lock",
+      "input": "requirements-acquisition.txt",
+      "sha256": "86a14597e60e137f3b22065141156d7d27411139fddbf7d8b1c80e2586b35d5e",
+      "verified_install": true
+    }
+  ],
+  "limitations": "Hashes constrain selected Python distributions. Package-index availability, Python itself, compilers, operating-system libraries, and GitHub runner images are not vendored or hermetic."
+}

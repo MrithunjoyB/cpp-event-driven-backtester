@@ -46,7 +46,7 @@ bad = copy.deepcopy(manifest); bad["configuration"]["sha256"] = "0" * 64
 rejected(lambda: verify_inputs(ROOT, bad), "config hash rejection")
 check("starting_capital" in manifest["configuration"]["resolved"], "resolved config preserved")
 check(manifest["build"]["cxx_standard"] == 17, "build metadata")
-check(manifest["runtime_environment"]["dependency_lock"] == "requirements-validation.txt", "dependency metadata")
+check(manifest["runtime_environment"]["dependency_lock"] == "requirements-validation.lock", "dependency metadata")
 
 with tempfile.TemporaryDirectory() as temporary:
     root = Path(temporary)

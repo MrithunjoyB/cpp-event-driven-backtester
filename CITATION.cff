@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+message: "If you use this software in research, cite this release."
+title: "C++ Systematic Strategy Evaluation and Robustness Platform"
+type: software
+authors:
+  - family-names: Basumatary
+    given-names: Mrithunjoy
+version: 1.0.0
+date-released: 2026-07-14
+repository-code: "https://github.com/MrithunjoyB/cpp-event-driven-backtester"
+url: "https://github.com/MrithunjoyB/cpp-event-driven-backtester/releases/tag/v1.0.0"
+license: Apache-2.0
+abstract: >-
+  A modular C++17 platform for causal backtesting, shared-cash portfolio
+  simulation, calendar-aware out-of-sample evaluation, benchmark-relative
+  analysis, attribution, and dependence-preserving statistical inference.
+keywords:
+  - quantitative-finance
+  - backtesting
+  - reproducible-research
+  - C++17
+  - statistical-inference
