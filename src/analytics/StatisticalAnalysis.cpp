@@ -54,7 +54,10 @@ StatisticalResult StatisticalAnalyzer::bootstrap(const std::string& id,const std
  out.probability_loss=loss/n;out.probability_positive_active=pos/n;out.probability_benchmark_underperformance=under/n;out.probability_sharpe_positive=shpos/n;out.probability_sharpe_exceeds_benchmark=shexceed/n;return out;
 }
 MultipleTestingResult StatisticalAnalyzer::reality_check(const std::vector<std::vector<double>>& c,const StatisticalConfig& config){
- if(c.empty())throw MethodologyError("Reality check requires candidates");std::size_t n=c.front().size();if(static_cast<int>(n)<config.minimum_observations)throw MethodologyError("Reality check sample too small");for(auto&x:c)if(x.size()!=n)throw MethodologyError("Candidate return lengths differ");
+ if(c.empty())throw MethodologyError("Reality check requires candidates");
+ std::size_t n=c.front().size();
+ if(static_cast<int>(n)<config.minimum_observations)throw MethodologyError("Reality check sample too small");
+ for(auto&x:c)if(x.size()!=n)throw MethodologyError("Candidate return lengths differ");
  double observed=-1e300;for(auto&x:c)observed=std::max(observed,mean(x));int block=config.block_length>0?config.block_length:suggested_block_length(n);if(block<=0||block>static_cast<int>(n))throw ConfigurationError("Invalid reality-check block length");
  std::mt19937 rng(config.seed);int exceed=0;std::vector<double> distribution;distribution.reserve(static_cast<std::size_t>(config.simulations));for(int s=0;s<config.simulations;++s){auto idx=sample_indices(n,block,BootstrapMethod::MovingBlock,rng);double best=-1e300;for(auto&x:c){double m=mean(x),v=0;for(auto i:idx)v+=x[i]-m;best=std::max(best,v/static_cast<double>(n));}distribution.push_back(best);exceed+=best>=observed;}
  MultipleTestingResult result{"centered_moving_block_reality_check",static_cast<int>(c.size()),static_cast<int>(c.size()),observed,(1.0+exceed)/(config.simulations+1.0),config.seed,config.simulations,block,std::move(distribution)};

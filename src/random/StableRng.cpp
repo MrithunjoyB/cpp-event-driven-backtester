@@ -3,17 +3,22 @@
 #include "quant/domain/Errors.h"
 
 #include <cstdint>
+#include <limits>
 
 namespace quant::random {
 
 BoundedSample StableRng::bounded(std::mt19937& engine, const std::uint32_t bound) {
     if (bound == 0U) throw ConfigurationError("Stable bounded RNG requires a positive bound");
+    static_assert(std::mt19937::min() == 0U, "mt19937 output must start at zero");
+    static_assert(
+        std::mt19937::max() == std::numeric_limits<std::uint32_t>::max(),
+        "mt19937 output must fit exactly in uint32_t");
 
     // Unsigned wraparound defines 2^32 - bound; the remainder is 2^32 mod bound.
     const std::uint32_t rejection_threshold = static_cast<std::uint32_t>(-bound) % bound;
     std::uint64_t consumed = 0;
     for (;;) {
-        const std::uint32_t word = engine();
+        const std::uint32_t word = static_cast<std::uint32_t>(engine());
         ++consumed;
         const std::uint64_t product = static_cast<std::uint64_t>(word) * static_cast<std::uint64_t>(bound);
         const std::uint32_t low = static_cast<std::uint32_t>(product);
