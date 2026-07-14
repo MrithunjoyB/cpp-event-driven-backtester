@@ -32,6 +32,13 @@
       "closure": "Validation and optional acquisition environments have separate pip-compile locks with distribution hashes, verified installs, inventory equality tests, and CI --require-hashes."
     },
     {
+      "id": "REL-H-004",
+      "severity": "High",
+      "status": "resolved",
+      "title": "Exact-SHA release workflows used a shallow checkout that omitted provenance ancestors",
+      "closure": "All workflow steps that execute release provenance closure now fetch complete ancestry. The validator was not weakened, and manifests were recaptured from the corrected workflow boundary."
+    },
+    {
       "id": "REL-M-002",
       "severity": "Medium",
       "status": "resolved",
