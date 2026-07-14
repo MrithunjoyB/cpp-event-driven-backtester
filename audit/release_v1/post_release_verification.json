@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "release": "v1.0.0",
+  "verification_date": "2026-07-14",
+  "release_url": "https://github.com/MrithunjoyB/cpp-event-driven-backtester/releases/tag/v1.0.0",
+  "release_title": "v1.0.0 — Reproducible C++ Quantitative Research Platform",
+  "published_at": "2026-07-14T15:15:33Z",
+  "public": true,
+  "draft": false,
+  "prerelease": false,
+  "tag": {
+    "name": "v1.0.0",
+    "annotated": true,
+    "object_sha": "20ac53c5e4b61ae7b431d5bb263f246e35f8d2a2",
+    "target_sha": "2f86b71dbc9f29dbda861942d8afbb10c04b6625",
+    "message": "cpp-event-driven-backtester v1.0.0"
+  },
+  "provenance": {
+    "implementation_commit": "0b4f401e8ee7238e43b61e5116d18c332ef5b4ed",
+    "manifest_commit": "ca172ff9914f52359302a2ba54b22c049d94342a",
+    "release_commit": "2f86b71dbc9f29dbda861942d8afbb10c04b6625",
+    "stochastic_methodology_version": 2,
+    "rng_mapping": "portable_bounded_v1",
+    "financial_methodology_changed": false,
+    "semantic_tolerances_widened": false
+  },
+  "exact_sha_workflows": [
+    {"name": "CMake CI", "run_id": 29343627624, "head_sha": "2f86b71dbc9f29dbda861942d8afbb10c04b6625", "status": "passed"},
+    {"name": "Complete Research Reconstruction", "run_id": 29343836747, "head_sha": "2f86b71dbc9f29dbda861942d8afbb10c04b6625", "status": "passed"},
+    {"name": "v1.0.0 Release Candidate Validation", "run_id": 29343849747, "head_sha": "2f86b71dbc9f29dbda861942d8afbb10c04b6625", "status": "passed"}
+  ],
+  "assets": [
+    {"name": "SHA256SUMS", "size_bytes": 1185, "sha256": "9abaae1e956c96d4e5d80d25b967b8f9b06d5b6c58e182a6ae33dcc16d670556"},
+    {"name": "cpp-event-driven-backtester-v1.0.0-linux-x86_64.tar.gz", "size_bytes": 750507, "sha256": "749a5f1c81d03407e689e195b6f7c2e40a78f4dcca1750a7162cd71f5afb6ecb"},
+    {"name": "cpp-event-driven-backtester-v1.0.0-macos-arm64.tar.gz", "size_bytes": 654609, "sha256": "50a3b29c3eb7374694c8a1d7379bae704edb63a9d940bf61037db290f91490d5"},
+    {"name": "cpp-event-driven-backtester-v1.0.0-release-notes.md", "size_bytes": 4258, "sha256": "71ea8076974eab9f43dc20fdd7cd9520605882654d2916d87f898ac731ad9603"},
+    {"name": "cpp-event-driven-backtester-v1.0.0-release-validation-report.json", "size_bytes": 962, "sha256": "152df5314b15b424d95a17c63443ddb7eae571f5fea6d86c1f0333628b5540ad"},
+    {"name": "cpp-event-driven-backtester-v1.0.0-reproducibility.tar.gz", "size_bytes": 910775, "sha256": "93db985c797a02b25ce690971fa67166a54f71572f5a493290b737336784bd98"},
+    {"name": "cpp-event-driven-backtester-v1.0.0-sbom.spdx.json", "size_bytes": 27070, "sha256": "d8f86a0c5803bdf430276753785e77db229d719f63046c5a7012ba469c3ac083"},
+    {"name": "linux-package-smoke.json", "size_bytes": 449, "sha256": "3e1f65bc782d49cd164e774c8e8f26347444be60b40c60a9e0663e56946ae064"},
+    {"name": "linux-toolchain.txt", "size_bytes": 161, "sha256": "0fb2b7600daf68adb3ab7c66cca1e358ff93ca5b385e4100d308085d8a75f8e3"},
+    {"name": "macos-package-smoke.json", "size_bytes": 448, "sha256": "f76acc842345ac6c57b9e494b10dc1825d81b39a751adbcb4c8d180038deb28a"},
+    {"name": "macos-toolchain.txt", "size_bytes": 164, "sha256": "8b7033ef5c026e0be055d5d0ca40f10a51741a36695a1873d1c9b1b544898717"},
+    {"name": "release-aggregation-toolchain.txt", "size_bytes": 60, "sha256": "e5e656f8cdc21ee0fbc81e9c7ce9620d35580189c789eaf1c20c56213dc74f77"}
+  ],
+  "verification": [
+    {"name": "new clean tag checkout", "status": "passed"},
+    {"name": "local and remote annotated tag identity", "status": "passed"},
+    {"name": "public release metadata", "status": "passed"},
+    {"name": "download every release asset", "status": "passed", "evidence": "12/12"},
+    {"name": "SHA256SUMS", "status": "passed", "evidence": "11/11 checksummed assets"},
+    {"name": "SPDX parsing", "status": "passed", "evidence": "SPDX 2.3, 35 packages"},
+    {"name": "archive structure and extraction", "status": "passed", "evidence": "Linux 28 files, macOS 28 files, reproducibility bundle 228 files"},
+    {"name": "Linux package smoke", "status": "passed_by_byte_identity", "evidence": "Published SHA-256 equals the target-runner-smoked exact-candidate artifact; 7 generated CSVs"},
+    {"name": "macOS package smoke after download", "status": "passed", "evidence": "7 generated CSVs"},
+    {"name": "fresh strict Release build from tag", "status": "passed"},
+    {"name": "CTest from tag", "status": "passed", "evidence": "30/30"},
+    {"name": "complete canonical reconstruction from tag", "status": "passed", "evidence": "13 packages and 2 suite plans"},
+    {"name": "public-data boundary on tag and downloaded archives", "status": "passed"},
+    {"name": "secret and developer-local path scan", "status": "passed"},
+    {"name": "README local links", "status": "passed", "evidence": "48 links"},
+    {"name": "CITATION.cff version and release date", "status": "passed"},
+    {"name": "public visibility and complete asset inventory", "status": "passed"},
+    {"name": "stale release-claim scan", "status": "passed"}
+  ],
+  "post_release_defects": [],
+  "remaining_findings": [
+    {"severity": "Informational", "description": "Operating-system toolchains are recorded but not hermetically vendored."},
+    {"severity": "Informational", "description": "Removed third-party market data remains in historical Git objects but is excluded from and rejected by the current release boundary."}
+  ],
+  "immutability": "The v1.0.0 tag and published assets were not moved, replaced, or mutated during verification. This report is an audit-only main-branch descendant and does not alter the released tag.",
+  "status": "passed"
+}
