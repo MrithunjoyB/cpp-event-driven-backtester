@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "release": "v1.0.0",
-  "implementation_commit": "fb05aac0960c281365cac16ac5f2e0376b197a1d",
-  "manifest_commit": "6e6954a83d76a902429345420b5cd1ac8432dbc5",
+  "implementation_commit": "0b4f401e8ee7238e43b61e5116d18c332ef5b4ed",
+  "manifest_commit": "ca172ff9914f52359302a2ba54b22c049d94342a",
   "stochastic_methodology_version": 2,
   "rng_mapping": "portable_bounded_v1",
   "financial_methodology_changed": false

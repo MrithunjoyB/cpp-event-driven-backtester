@@ -35,8 +35,8 @@
       "id": "REL-H-004",
       "severity": "High",
       "status": "resolved",
-      "title": "Exact-SHA release workflows used a shallow checkout that omitted provenance ancestors",
-      "closure": "All workflow steps that execute release provenance closure now fetch complete ancestry. The validator was not weakened, and manifests were recaptured from the corrected workflow boundary."
+      "title": "CI workflows used shallow checkouts that omitted provenance ancestors",
+      "closure": "All CI and exact-SHA workflow steps that execute release provenance closure now fetch complete ancestry. The validator was not weakened, and manifests were recaptured from the corrected workflow boundary."
     },
     {
       "id": "REL-M-002",
@@ -44,6 +44,13 @@
       "status": "resolved",
       "title": "Strict-warning mode permitted warnings",
       "closure": "Proven safe size conversions are explicit and supported GCC/Clang/MSVC warning modes use warnings-as-errors. Financial formulas are unchanged."
+    },
+    {
+      "id": "REL-H-005",
+      "severity": "High",
+      "status": "resolved",
+      "title": "GCC warnings-as-errors rejected non-portable source and test constructs",
+      "closure": "Misleading single-line control flow was expanded, the stable-RNG conversion was range-proven and explicit, and a fixture setup return value is checked. GCC Release and sanitizer builds compile cleanly; financial and stochastic methodology are unchanged."
     },
     {
       "id": "REL-L-001",
