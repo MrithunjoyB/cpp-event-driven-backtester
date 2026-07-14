@@ -341,7 +341,7 @@
       "reports"
     ]
   },
-  "manifest_id": "sha256:f9ede932b5b4c049b50086713509e190ff259028969ca86295df524bd4191f52",
+  "manifest_id": "sha256:7ebf24c0a124a027cee1c194b23f59c0868e5ba2e2ee8a4e98ec0353ddbc20ae",
   "manifest_schema_version": 1,
   "methodology": {
     "adjustment_policy": "raw_price",
@@ -387,7 +387,7 @@
           "root_type": "dict"
         },
         "semantic_sha256": "881b8c6cc4a54cd4aa33645b8a074b6ba9e2ff7e63103be37cc5fb00c90c78e0",
-        "sha256": "a1827b2cfc2ec12976e3d84b91d5b5b9591507ccdc88d8a2f3f89ea7fd82e746",
+        "sha256": "42f097b82a7a771cc0c3f6ddb34fbe6218c6ac10bcc3073cc151278239948835",
         "size_bytes": 492,
         "tolerance": null,
         "validator": "reproducibility_validator"
@@ -1888,7 +1888,7 @@
         },
         "semantic_sha256": null,
         "sha256": null,
-        "size_bytes": 191,
+        "size_bytes": 194,
         "tolerance": null,
         "validator": "reproducibility_validator"
       },
@@ -1978,7 +1978,7 @@
           "root_type": "dict"
         },
         "semantic_sha256": "8499e6e61f9a1b71364769fa52c79dc6d07e9ce5378a35cf3b772fb51a59fb8a",
-        "sha256": "6d63aca9a07353005baf09622457f45df85c654b3cb390d1498462c4450ae2d6",
+        "sha256": "263810cb56a51b4040c1df44a36c68a3ddd2066a5a8a056f6657d5acfb9943ff",
         "size_bytes": 1028,
         "tolerance": null,
         "validator": "reproducibility_validator"
@@ -2059,7 +2059,7 @@
     "python": "3.9.6",
     "timezone": "UTC"
   },
-  "source_commit": "d5abbd3e270172199097799c49413a7163353a25",
+  "source_commit": "062d9cf221157c01c92a3f5c8e672a8b1dfdbf06",
   "source_tree_policy": "exact_commit",
   "validators": [
     {
