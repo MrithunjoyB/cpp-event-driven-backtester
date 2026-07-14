@@ -27,4 +27,4 @@ python3 scripts/reproduce.py --manifest manifests/public_reproducibility_suite.j
   --allow-compatible-environment
 ```
 
-The data-redistribution blocker is closed for a future tag targeting the post-migration tree when these commands, full tests, clean reconstruction, and required remote CI are green. This stage does not create `v1.0.0` and does not assert historical erasure or legal guarantees.
+The data-redistribution blocker is closed for handoff to final release engineering. Candidate `cc218d14e5fcc5a38e787b034496df9fd6f47a67` passed the full local gate, exact-SHA Linux/macOS Release CI and Linux sanitizer CI in run `29332687893`, and the complete 13-package reconstruction in run `29332736581`. This stage does not create `v1.0.0` and does not assert historical erasure or legal guarantees.

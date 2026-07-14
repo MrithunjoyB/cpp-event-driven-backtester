@@ -18,7 +18,7 @@ PNG/SVG/PDF figures are presentation-only because renderer, font, compression, a
 
 Stochastic methodology version 2 uses `mt19937` with the repository-owned `portable_bounded_v1` mapping. Raw retained paths, bootstrap distributions, summaries, probabilities, max-statistic draws, and adjusted p-values are canonical semantic artifacts; the old shape-only and broad numerical tolerance policies are retired. Presentation files remain presence-validated and the non-inferential rank-correlation diagnostic retains a `1e-15` floating-point tolerance.
 
-Public migration manifests identify the exact committed implementation boundary `01198f25...`. Because generated manifests necessarily enter Git afterward, reconstruction on a descendant requires the explicit `--allow-compatible-environment` ancestry check. A future release gate must bind the tag target and package identities without pretending a committed file can contain its own commit SHA. Legacy provider-data manifests remain recoverable from Git history but are not valid public inputs.
+Public migration manifests identify the exact committed implementation boundary `062d9cf221157c01c92a3f5c8e672a8b1dfdbf06`; manifest commit `cc218d14e5fcc5a38e787b034496df9fd6f47a67` records the corresponding canonical artifact identities. Because generated manifests necessarily enter Git afterward, reconstruction on a reviewed descendant requires the explicit `--allow-compatible-environment` ancestry check. A future release tag must bind the tag target and package identities without pretending a committed file can contain its own commit SHA. Legacy provider-data manifests remain recoverable from Git history but are not valid public inputs.
 
 One compiler-sensitive diagnostic field, `is_oos_spearman_rank_correlation`, permits `1e-15` absolute variation; observed GCC/AppleClang variation is approximately `1.83e-17`. Candidate rank ordering and every selection field remain exact.
 
@@ -28,7 +28,7 @@ CSV semantic hashing parses the exact cell strings and preserves header and row 
 
 `manifest_id` is SHA-256 over canonical JSON containing the schema version, experiment/package identity, implementation source commit, ordered logical input hashes, configuration hash, methodology version, seed, and execution policy. It excludes timestamps, hostnames, usernames, output paths, and thread scheduling. Suite IDs use the same sorted, compact JSON convention.
 
-The current manifests identify the committed RNG migration implementation boundary. Because manifests necessarily enter Git after the code they describe, reconstruction checks out or otherwise targets that exact implementation commit; release-candidate validation does not accept a compatible-descendant policy.
+The current manifests identify the committed deterministic-arithmetic implementation boundary. Reconstruction either targets that implementation commit or accepts a reviewed descendant only through the explicit compatible-environment ancestry policy.
 
 ## Environment and Dependencies
 
