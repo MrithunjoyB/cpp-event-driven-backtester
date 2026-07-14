@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "release": "v1.0.0",
+  "audit_scope": "Independent release correctness, provenance, supply-chain, licensing, data-boundary, packaging, documentation, and claims review",
+  "findings": [
+    {
+      "id": "REL-H-001",
+      "severity": "High",
+      "status": "resolved",
+      "title": "Project and CLI identified as 2.0.0 for a requested 1.0.0 release",
+      "closure": "CMake is the 1.0.0 source of truth; CLI, citation, changelog, release notes, packages, and automated consistency tests agree."
+    },
+    {
+      "id": "REL-H-002",
+      "severity": "High",
+      "status": "resolved",
+      "title": "Compatible-descendant reconstruction accepted arbitrary post-manifest code changes",
+      "closure": "Executable provenance closure limits implementation-to-manifest changes to manifests/ and later changes to audit/release_v1/ evidence only."
+    },
+    {
+      "id": "REL-H-003",
+      "severity": "High",
+      "status": "resolved",
+      "title": "No transactional cross-platform release packaging and validation path",
+      "closure": "Exact-SHA Linux/macOS packaging, target-runner smoke tests, archive scans, source bundle, SBOM, checksums, and aggregate validation are implemented without automatic publication."
+    },
+    {
+      "id": "REL-M-001",
+      "severity": "Medium",
+      "status": "resolved",
+      "title": "Python distributions were version-pinned but not hash-locked",
+      "closure": "Validation and optional acquisition environments have separate pip-compile locks with distribution hashes, verified installs, inventory equality tests, and CI --require-hashes."
+    },
+    {
+      "id": "REL-M-002",
+      "severity": "Medium",
+      "status": "resolved",
+      "title": "Strict-warning mode permitted warnings",
+      "closure": "Proven safe size conversions are explicit and supported GCC/Clang/MSVC warning modes use warnings-as-errors. Financial formulas are unchanged."
+    },
+    {
+      "id": "REL-L-001",
+      "severity": "Low",
+      "status": "resolved",
+      "title": "No current release citation, security, contribution, or immutability policy",
+      "closure": "CITATION.cff, SECURITY.md, CONTRIBUTING.md, and docs/RELEASE_POLICY.md are present and link/version tested."
+    },
+    {
+      "id": "REL-I-001",
+      "severity": "Informational",
+      "status": "accepted",
+      "title": "Operating-system toolchains are recorded but not hermetically vendored",
+      "closure": "Linux/macOS runner tool versions are recorded in release assets; semantic cross-platform validation is required and the limitation is documented."
+    },
+    {
+      "id": "REL-I-002",
+      "severity": "Informational",
+      "status": "accepted",
+      "title": "Historical commits retain removed third-party market data",
+      "closure": "No history rewrite is performed. Current-tree and release-archive validators reject paths, full hashes, and sampled rows; the historical boundary is documented."
+    }
+  ],
+  "open_critical": 0,
+  "open_high": 0
+}
