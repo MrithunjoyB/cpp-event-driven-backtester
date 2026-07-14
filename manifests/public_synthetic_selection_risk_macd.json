@@ -3,7 +3,7 @@
     "build_type": "Release",
     "compiler_policy": "recorded_not_identity_bound",
     "cxx_standard": 17,
-    "required_cli_version": "2.0.0",
+    "required_cli_version": "1.0.0",
     "sanitizer": "none",
     "strict_warnings": true,
     "system": "CMake"
@@ -341,7 +341,7 @@
       "reports"
     ]
   },
-  "manifest_id": "sha256:cb41c38dc20662cc694ed735520e3f8ef9cc6ab3b6234b8d6b68b7929210a08e",
+  "manifest_id": "sha256:53d90ca0f94f3f22fab52118b696d72380b3f41a2655708c91976a45a41b18fd",
   "manifest_schema_version": 1,
   "methodology": {
     "adjustment_policy": "raw_price",
@@ -386,8 +386,8 @@
         "schema": {
           "root_type": "dict"
         },
-        "semantic_sha256": "881b8c6cc4a54cd4aa33645b8a074b6ba9e2ff7e63103be37cc5fb00c90c78e0",
-        "sha256": "8604ee12c69c6f1d9c84eac0f8450aec057a73715f56adc0972be2a5ff00a776",
+        "semantic_sha256": "34fe8649a0ee6805a33e506f0f76b954b98000b210a5e948535be3add4f2c623",
+        "sha256": "db8a380792152e41a19c9eb9683ce803b27a7564926b6390c811b10f9e0934e2",
         "size_bytes": 492,
         "tolerance": null,
         "validator": "reproducibility_validator"
@@ -1578,7 +1578,7 @@
           "root_type": "dict"
         },
         "semantic_sha256": "006159036345dce10b7832b529238d41b2f3c77f4b160314515479cc4b81e4b1",
-        "sha256": "95e61c5154b683e4b6f90cae4476b3e3d5322960f4fd6eab95cdf200c01d937e",
+        "sha256": "4c55c48b63da81eade6c28330f4698ba0306102935a230307908789112c1eb78",
         "size_bytes": 1013,
         "tolerance": null,
         "validator": "reproducibility_validator"
@@ -1653,13 +1653,13 @@
   "repository": "https://github.com/MrithunjoyB/cpp-event-driven-backtester",
   "reproducibility_level": "canonical_semantic",
   "runtime_environment": {
-    "dependency_lock": "requirements-validation.txt",
+    "dependency_lock": "requirements-validation.lock",
     "locale": "C",
     "platform_policy": "semantic_cross_platform",
     "python": "3.9.6",
     "timezone": "UTC"
   },
-  "source_commit": "062d9cf221157c01c92a3f5c8e672a8b1dfdbf06",
+  "source_commit": "e9da3b5d6b60630b7573174e3b440b45c0152fa1",
   "source_tree_policy": "exact_commit",
   "validators": [
     {

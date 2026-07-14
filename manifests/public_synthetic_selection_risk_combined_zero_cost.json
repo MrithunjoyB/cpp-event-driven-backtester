@@ -3,7 +3,7 @@
     "build_type": "Release",
     "compiler_policy": "recorded_not_identity_bound",
     "cxx_standard": 17,
-    "required_cli_version": "2.0.0",
+    "required_cli_version": "1.0.0",
     "sanitizer": "none",
     "strict_warnings": true,
     "system": "CMake"
@@ -341,7 +341,7 @@
       "reports"
     ]
   },
-  "manifest_id": "sha256:734b00fa49c66cf1bb5eefe73320dd596b858c2eee6214795f12b2359bf67c59",
+  "manifest_id": "sha256:2b80d7e2b4601c9378bd78fe641bc9b8115a8f881f9f3c40a34913a9fc2705c4",
   "manifest_schema_version": 1,
   "methodology": {
     "adjustment_policy": "raw_price",
@@ -386,8 +386,8 @@
         "schema": {
           "root_type": "dict"
         },
-        "semantic_sha256": "881b8c6cc4a54cd4aa33645b8a074b6ba9e2ff7e63103be37cc5fb00c90c78e0",
-        "sha256": "7bef1c4dafbc485bcae8ba524c2b899f5d28fef3726f557e00c936ceac842790",
+        "semantic_sha256": "34fe8649a0ee6805a33e506f0f76b954b98000b210a5e948535be3add4f2c623",
+        "sha256": "53082eab410a543d0c8e919af61dbb93c41edee8564b9822e5016d09c2682410",
         "size_bytes": 492,
         "tolerance": null,
         "validator": "reproducibility_validator"
@@ -4464,7 +4464,7 @@
         },
         "semantic_sha256": null,
         "sha256": null,
-        "size_bytes": 197,
+        "size_bytes": 196,
         "tolerance": null,
         "validator": "reproducibility_validator"
       },
@@ -4554,7 +4554,7 @@
           "root_type": "dict"
         },
         "semantic_sha256": "f9f936809ec0c2b18f19414113d74baf1339f7aa7472c734c387436612f4e6cb",
-        "sha256": "a849c82cd3f7477e1be4aff2e4ddef9f517477087834e4208a906a9be34ee6a0",
+        "sha256": "b2ec755af0d8eaacf6285351c9bb423841265e90fabf353a57f611125e9b6f66",
         "size_bytes": 1023,
         "tolerance": null,
         "validator": "reproducibility_validator"
@@ -4629,13 +4629,13 @@
   "repository": "https://github.com/MrithunjoyB/cpp-event-driven-backtester",
   "reproducibility_level": "canonical_semantic",
   "runtime_environment": {
-    "dependency_lock": "requirements-validation.txt",
+    "dependency_lock": "requirements-validation.lock",
     "locale": "C",
     "platform_policy": "semantic_cross_platform",
     "python": "3.9.6",
     "timezone": "UTC"
   },
-  "source_commit": "062d9cf221157c01c92a3f5c8e672a8b1dfdbf06",
+  "source_commit": "e9da3b5d6b60630b7573174e3b440b45c0152fa1",
   "source_tree_policy": "exact_commit",
   "validators": [
     {

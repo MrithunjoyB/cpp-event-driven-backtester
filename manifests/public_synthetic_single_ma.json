@@ -3,7 +3,7 @@
     "build_type": "Release",
     "compiler_policy": "recorded_not_identity_bound",
     "cxx_standard": 17,
-    "required_cli_version": "2.0.0",
+    "required_cli_version": "1.0.0",
     "sanitizer": "none",
     "strict_warnings": true,
     "system": "CMake"
@@ -275,7 +275,7 @@
       "reports"
     ]
   },
-  "manifest_id": "sha256:8cc296a2637ed562583f20bb6fa4c4d6ce82cbeba5f9ed54edf079d2d3c4f5b6",
+  "manifest_id": "sha256:0444d7e4a446632ca6adfc3823a7aea6a49f48adbd9bab0e1bf3fbbee8a8a527",
   "manifest_schema_version": 1,
   "methodology": {
     "adjustment_policy": "raw_price",
@@ -474,9 +474,9 @@
         "schema": {
           "root_type": "dict"
         },
-        "semantic_sha256": "6f3a92026a67a7b7f3757d992cb1a71d2535cfc9e559f9a4020ca97ae2654f8a",
-        "sha256": "85ce43cfab06db7e40a43419caed0ebd02c033b4b37fc04aeab9de69a0df981f",
-        "size_bytes": 458,
+        "semantic_sha256": "41c16ad80819e1e3e8f8d03c090100a759df80503a6c07e3cf708705140d6e0b",
+        "sha256": "e3052cffe9a707d1e752dad3214b5b9699c7fcd2a924d811ee878e769af2150b",
+        "size_bytes": 491,
         "tolerance": null,
         "validator": "reproducibility_validator"
       },
@@ -573,13 +573,13 @@
   "repository": "https://github.com/MrithunjoyB/cpp-event-driven-backtester",
   "reproducibility_level": "canonical_semantic",
   "runtime_environment": {
-    "dependency_lock": "requirements-validation.txt",
+    "dependency_lock": "requirements-validation.lock",
     "locale": "C",
     "platform_policy": "semantic_cross_platform",
     "python": "3.9.6",
     "timezone": "UTC"
   },
-  "source_commit": "062d9cf221157c01c92a3f5c8e672a8b1dfdbf06",
+  "source_commit": "e9da3b5d6b60630b7573174e3b440b45c0152fa1",
   "source_tree_policy": "exact_commit",
   "validators": [
     {
