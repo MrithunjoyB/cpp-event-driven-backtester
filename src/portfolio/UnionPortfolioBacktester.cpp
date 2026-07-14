@@ -209,7 +209,7 @@ PortfolioBacktestResult PortfolioBacktester::run_union() {
             const auto& state = session.assets.at(ticker);
             if (!state.mark.available && shares[ticker] != 0.0)
                 throw quant::SimulationError("Valuation mark unavailable for held asset " + ticker + " on " + session.date);
-            holdings += shares[ticker] * state.mark.price;
+            holdings = std::fma(shares[ticker], state.mark.price, holdings);
             if (!state.mark.current) ++stale_count;
         }
         const double value = cash + holdings;
