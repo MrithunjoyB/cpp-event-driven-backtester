@@ -1,5 +1,6 @@
 #include "PortfolioBacktester.h"
 
+#include <algorithm>
 #include <cmath>
 #include <cstdint>
 #include <cstring>
@@ -72,6 +73,23 @@ int main() {
     if (fused_holdings == separately_rounded_holdings ||
         double_bits(fused_holdings) != UINT64_C(0x40f5a70827d566cf) ||
         double_bits(deterministic_result.equity_curve[2].total_holdings_value) != double_bits(fused_holdings)) return 1;
+
+    const auto dividend = std::find_if(deterministic_result.corporate_actions.begin(),
+        deterministic_result.corporate_actions.end(), [](const auto& action) {
+            return action.date == "2020-03-16" && action.ticker == "SYN_EQ_A" &&
+                action.action_type == "cash_dividend";
+        });
+    const auto prior_equity = std::find_if(deterministic_result.equity_curve.begin(),
+        deterministic_result.equity_curve.end(), [](const auto& point) { return point.date == "2020-03-15"; });
+    if (dividend == deterministic_result.corporate_actions.end() ||
+        prior_equity == deterministic_result.equity_curve.end()) return 1;
+    constexpr double dividend_close = 151.726462;
+    volatile double separately_marked_value = dividend->quantity_before * dividend_close;
+    const double separately_rounded_before_value = prior_equity->cash + separately_marked_value;
+    const double fused_before_value = std::fma(dividend->quantity_before, dividend_close, prior_equity->cash);
+    if (fused_before_value == separately_rounded_before_value ||
+        double_bits(fused_before_value) != UINT64_C(0x40e135940de01a93) ||
+        double_bits(dividend->portfolio_value_before) != double_bits(fused_before_value)) return 1;
     auto deferred_config = base();
     deferred_config.tickers = {"DEFEQ", "DEFBTC"};
     deferred_config.benchmark_ticker = "DEFEQ";

@@ -103,7 +103,7 @@ PortfolioBacktestResult PortfolioBacktester::run_union() {
                     to_string(config_.adjustment_policy), "csv:StockSplits"});
             }
             if (bar.dividends > 0.0) {
-                const double before_value = cash + shares[ticker] * bar.close;
+                const double before_value = std::fma(shares[ticker], bar.close, cash);
                 const double cash_effect = config_.adjustment_policy == AdjustmentPolicy::RawPrice
                     ? shares[ticker] * bar.dividends : 0.0;
                 cash += cash_effect;

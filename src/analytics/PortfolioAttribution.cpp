@@ -286,7 +286,9 @@ PortfolioAttributionResult PortfolioAttributionAnalyzer::analyze(
                                                                     : portfolio.equity_curve.back().date;
         double gross = 0.0, costs = 0.0, cash_after = 0.0, holding = 0.0;
         for (const auto& fill : portfolio.fills) if (fill.rebalance_id == rebalance.rebalance_id) {
-            gross += fill.quantity * fill.price; costs += fill.transaction_cost + fill.slippage_cost; cash_after = fill.cash_after;
+            gross = std::fma(static_cast<double>(fill.quantity), fill.price, gross);
+            costs += fill.transaction_cost + fill.slippage_cost;
+            cash_after = fill.cash_after;
         }
         for (const auto& asset : result.assets) if (asset.end_date > rebalance.execution_date && asset.end_date <= next)
             holding += asset.net_contribution;

@@ -5,6 +5,8 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
+#include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -13,6 +15,12 @@
 namespace {
 int cases = 0;
 int assertions = 0;
+std::uint64_t double_bits(double value) {
+    std::uint64_t bits = 0;
+    static_assert(sizeof(bits) == sizeof(value), "unexpected double width");
+    std::memcpy(&bits, &value, sizeof(bits));
+    return bits;
+}
 void check(bool condition, const std::string& name) {
     ++cases; ++assertions;
     if (!condition) throw std::runtime_error("FAILED: " + name);
@@ -78,6 +86,29 @@ int main() {
         check(!mixed.calendar_years.empty(), "calendar year aggregation");
         check(mixed.summary.end() != std::find_if(mixed.summary.begin(), mixed.summary.end(), [](const auto& row) { return row.component == "MIXBTC"; }), "BTC contribution");
         check(mixed.summary.end() == std::find_if(mixed.summary.begin(), mixed.summary.end(), [](const auto& row) { return row.component == "SYN_EQ_C"; }), "SYN_EQ_C absent from fixture");
+
+        auto deterministic_config = config(
+            {"SYN_EQ_A", "SYN_EQ_B", "SYN_BENCH", "SYN_EQ_C", "SYN_CRYPTO"}, "SYN_BENCH");
+        deterministic_config.data_dir = "data/synthetic";
+        const auto deterministic_portfolio = PortfolioBacktester(deterministic_config).run();
+        const auto deterministic_attribution = quant::analytics::PortfolioAttributionAnalyzer::analyze(
+            deterministic_portfolio, deterministic_config, "deterministic", 1e-8);
+        const auto rebalance = std::find_if(deterministic_attribution.rebalances.begin(),
+            deterministic_attribution.rebalances.end(),
+            [](const auto& row) { return row.rebalance_id == 34; });
+        check(rebalance != deterministic_attribution.rebalances.end(), "deterministic rebalance fixture");
+        double fused_gross = 0.0;
+        double separately_rounded_gross = 0.0;
+        for (const auto& fill : deterministic_portfolio.fills) {
+            if (fill.rebalance_id != 34) continue;
+            fused_gross = std::fma(static_cast<double>(fill.quantity), fill.price, fused_gross);
+            volatile double fill_value = static_cast<double>(fill.quantity) * fill.price;
+            separately_rounded_gross += fill_value;
+        }
+        check(fused_gross != separately_rounded_gross, "rebalance fixture exposes contraction difference");
+        check(double_bits(fused_gross) == UINT64_C(0x40cdc0a31ec2a353), "unexpected fused rebalance gross bits");
+        check(double_bits(rebalance->gross_trade_value) == double_bits(fused_gross),
+            "rebalance gross is not deterministic fused result");
 
         auto action_config = config({"ACT"}, "ACT");
         action_config.data_dir = "tests/fixtures/actions";
