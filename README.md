@@ -63,6 +63,12 @@ flowchart LR
 
 See [Architecture](docs/ARCHITECTURE.md) and [Data Model](docs/DATA_MODEL.md) for module and domain boundaries.
 
+## Companion Project: QuantForge AI
+
+[QuantForge AI](https://github.com/MrithunjoyB/quantforge-ai) is the separately released governance and evidence-review companion to this numerical research platform. It provides immutable experiment constitutions, validated evidence lineage, claim graphs, tamper-evident audit trails and replay, adversarial review, and deterministic verdict eligibility for quantitative claims. Its independently released governance foundation is available in the [QuantForge AI v0.1.0 release](https://github.com/MrithunjoyB/quantforge-ai/releases/tag/v0.1.0).
+
+The C++ engine remains the numerical execution, accounting, analytics, and reproducibility authority. Direct engine integration is planned work and is not part of the current C++ v1.0.0 or QuantForge AI v0.1.0 release.
+
 ## Research Workflow
 
 1. Generate and validate the public synthetic fixtures, or validate lawful user-supplied data locally.
@@ -208,6 +214,7 @@ Possible future directions, not current capabilities or committed deliverables:
 - Richer execution, liquidity, and partial-fill models
 - Derivatives and options backtesting
 - Machine-learning strategy adapters
+- Read-only governed integration with QuantForge AI for future evidence review, without transferring numerical authority from the C++ engine
 - Live paper-trading integration
 - Exchange-native calendar and corporate-action providers
 
