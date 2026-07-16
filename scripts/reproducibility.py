@@ -396,6 +396,7 @@ def reconstruct(root, manifest, output_directory, build_dir, execution_mode, thr
                 keep_failed_output=False, build=True, capture_expected=False):
     started = time.monotonic()
     actual_commit = git(root, "rev-parse", "HEAD")
+    release_provenance = None
     dirty = bool(git(root, "status", "--porcelain", "--untracked-files=no"))
     if dirty and not allow_dirty:
         raise ReproducibilityError("repository is dirty; commit/stash tracked changes or pass --allow-dirty")
@@ -404,16 +405,26 @@ def reconstruct(root, manifest, output_directory, build_dir, execution_mode, thr
     if actual_commit != manifest["source_commit"]:
         try:
             from validate_release_provenance import validate_compatible_source
-            validate_compatible_source(root, manifest["source_commit"], actual_commit)
+            compatible = validate_compatible_source(
+                root, manifest["source_commit"], actual_commit
+            )
+            release_provenance = {
+                "release": compatible["release"],
+                "release_candidate_commit": compatible["release_candidate_commit"],
+                "tag_object": compatible["tag_object"],
+                "tag_target": compatible["tag_target"],
+                "current_descendant": compatible["current_descendant"],
+            }
         except (ImportError, OSError, ValueError, RuntimeError) as error:
             raise ReproducibilityError(
-                f"compatible descendant failed release provenance closure: {error}"
+                f"compatible descendant failed immutable tagged-release validation: {error}"
             ) from error
     input_results = verify_inputs(root, manifest)
     dependency_results = verify_dependencies(root, manifest["runtime_environment"]["dependency_lock"])
     if verify_only:
         return {"status": "success", "mode": "verify_only", "manifest_id": manifest["manifest_id"],
                 "actual_commit": actual_commit, "inputs": input_results, "dependencies": dependency_results,
+                "release_provenance": release_provenance,
                 "elapsed_seconds": time.monotonic() - started}
     if build:
         subprocess.run(["cmake", "-S", str(root), "-B", str(build_dir), "-DCMAKE_BUILD_TYPE=Release",
@@ -457,7 +468,8 @@ def reconstruct(root, manifest, output_directory, build_dir, execution_mode, thr
         report = {
             "report_schema_version": 1, "status": "success", "manifest_id": manifest["manifest_id"],
             "source_commit": manifest["source_commit"], "actual_commit": actual_commit,
-            "source_commit_status": "exact" if actual_commit == manifest["source_commit"] else "compatible_override",
+            "source_commit_status": "exact" if actual_commit == manifest["source_commit"] else "compatible_tagged_descendant",
+            "release_provenance": release_provenance,
             "execution_mode": execution_mode, "threads": threads, "environment": environment(root, build_dir),
             "inputs": input_results, "dependencies": dependency_results, "commands": records, "outputs": output_results,
             "validators": [{"name": item["name"], "status": "passed"} for item in manifest["validators"]],

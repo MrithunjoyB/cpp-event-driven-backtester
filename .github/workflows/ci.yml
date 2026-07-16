@@ -29,8 +29,6 @@ jobs:
       - run: ./build/quant_cli validate-config --config configs/ma_walk_forward.json
       - run: ./build/quant_cli run --config configs/ma_walk_forward.json --dry-run
       - run: python3 scripts/validate_reproducibility.py manifests --verify-inputs
-      - run: python3 scripts/reproduce.py --manifest manifests/public_synthetic_single_ma.json --output-directory ${{ runner.temp }}/reproduced-single --build-directory build --no-build --allow-compatible-environment --json-report ${{ runner.temp }}/reconstruction-report.json
-      - run: python3 scripts/validate_reproducibility.py manifests/public_synthetic_single_ma.json --verify-inputs --report ${{ runner.temp }}/reconstruction-report.json
       - run: ./build/quant_cli --mode single --ticker SYN_EQ_A --strategy ma_cross
       - run: python3 scripts/validate_results.py results
       - run: ./build/quant_cli run --config configs/fixtures/mixed_union.json
@@ -49,6 +47,36 @@ jobs:
       - run: python3 scripts/test_parallel_equivalence.py --build build --packages ma --threads 1,2,4
       - run: MPLCONFIGDIR=${{ runner.temp }}/matplotlib python3 scripts/visualize_selection_risk.py --directory results/public_synthetic/selection_risk/ma/selection_risk
       - run: python3 scripts/generate_selection_risk_report.py --directory results/public_synthetic/selection_risk/ma/selection_risk
+
+  immutable-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-validation.lock
+      - name: Reconstruct immutable v1.0.0 from its exact annotated-tag target
+        run: >-
+          python3 scripts/reconstruct_tagged_release.py
+          --temporary-directory "${{ runner.temp }}"
+          --output-directory "${{ runner.temp }}/v1-public-synthetic-suite"
+          --build-directory "${{ runner.temp }}/v1-build"
+          --json-report "${{ runner.temp }}/v1-reconstruction-report.json"
+          --threads 4
+          --install-dependencies
+      - name: Upload failed immutable reconstruction evidence
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: failed-v1.0.0-reconstruction
+          path: ${{ runner.temp }}/v1-public-synthetic-suite.failed
+          if-no-files-found: ignore
+          retention-days: 3
 
   sanitizers:
     strategy:
