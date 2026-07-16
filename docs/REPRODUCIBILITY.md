@@ -18,7 +18,9 @@ PNG/SVG/PDF figures are presentation-only because renderer, font, compression, a
 
 Stochastic methodology version 2 uses `mt19937` with the repository-owned `portable_bounded_v1` mapping. Raw retained paths, bootstrap distributions, summaries, probabilities, max-statistic draws, and adjusted p-values are canonical semantic artifacts; the old shape-only and broad numerical tolerance policies are retired. Presentation files remain presence-validated and the non-inferential rank-correlation diagnostic retains a `1e-15` floating-point tolerance.
 
-Release manifests identify the exact committed implementation/configuration boundary. Because generated manifests necessarily enter Git afterward, `audit/release_v1/provenance.json` separately identifies the manifest commit. Reconstruction on the final release descendant requires `--allow-compatible-environment`, which now invokes `scripts/validate_release_provenance.py`: the implementation-to-manifest diff may contain only `manifests/`, and the manifest-to-candidate diff may contain only `audit/release_v1/`. Arbitrary descendants are rejected. This avoids the impossible claim that a committed manifest self-references its own commit SHA. Legacy provider-data manifests remain recoverable from Git history but are not valid public inputs.
+Release manifests identify the exact committed implementation/configuration boundary. Because generated manifests necessarily enter Git afterward, `audit/release_v1/provenance.json` separately identifies the manifest commit. Strict candidate validation requires an explicit candidate SHA: the implementation-to-manifest history may touch only `manifests/`, and the manifest-to-candidate history may touch only `audit/release_v1/`. This avoids the impossible claim that a committed manifest self-references its own commit SHA without allowing a later runtime, configuration, workflow, or documentation change into the release candidate.
+
+An already published release is validated from its annotated tag, not from current `HEAD`. The tag object and peeled target must match the independently recorded post-release identities, and the peeled target must pass the same strict closure. `validate_compatible_source` first validates that immutable tagged release, confirms the manifest source is the implementation boundary, and requires the tagged target to be an ancestor of the current commit. It reports the current descendant separately and never changes the recorded release-candidate identity. Output and manifest validators remain mandatory; canonical CI uses exact tagged-source reconstruction rather than this compatibility path.
 
 One compiler-sensitive diagnostic field, `is_oos_spearman_rank_correlation`, permits `1e-15` absolute variation; observed GCC/AppleClang variation is approximately `1.83e-17`. Candidate rank ordering and every selection field remain exact.
 
@@ -28,7 +30,7 @@ CSV semantic hashing parses the exact cell strings and preserves header and row 
 
 `manifest_id` is SHA-256 over canonical JSON containing the schema version, experiment/package identity, implementation source commit, ordered logical input hashes, configuration hash, methodology version, seed, and execution policy. It excludes timestamps, hostnames, usernames, output paths, and thread scheduling. Suite IDs use the same sorted, compact JSON convention.
 
-The current manifests identify the committed deterministic-arithmetic implementation boundary. Reconstruction either targets that implementation commit or accepts the bounded manifest/evidence descendant only after executable provenance closure.
+The current manifests identify the committed deterministic-arithmetic implementation boundary. Release reconstruction executes from the exact immutable tagged target, whose bounded manifest/evidence ancestry is validated independently. Ordinary current-main descendants are not represented as release candidates.
 
 ## Environment and Dependencies
 
@@ -58,6 +60,19 @@ python3 scripts/reproduce.py \
   --allow-compatible-environment \
   --json-report results/reproduced/canonical-suite-report.json
 ```
+
+For the published v1.0.0 release, prefer the isolated exact-source wrapper:
+
+```bash
+python3 scripts/reconstruct_tagged_release.py \
+  --temporary-directory /tmp \
+  --output-directory /tmp/v1-public-synthetic-suite \
+  --build-directory /tmp/v1-build \
+  --json-report /tmp/v1-reconstruction-report.json \
+  --threads 4 --install-dependencies
+```
+
+The wrapper accepts no release ref. It derives and verifies v1.0.0 from the immutable provenance and post-release identity records, checks out the peeled target in a detached temporary Git worktree, and leaves the invoking current-main or pull-request worktree unchanged.
 
 Use `--verify-only` to verify manifests, repository policy, inputs, configuration, and dependencies without running research. `--no-build` verifies and uses an existing binary. `--keep-failed-output` retains an isolated `.failed` staging directory for diagnosis. Serial mode requires one thread; supported parallel equivalence settings are 2, 4, and 8.
 

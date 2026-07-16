@@ -44,14 +44,16 @@ python3 scripts/benchmark_performance.py --build build --baseline baseline.json
 python3 scripts/validate_performance_results.py results/performance
 ```
 
-`reproducibility_tests` contains deterministic cases covering schema/identity validation, hashes, canonicalization, input/config corruption, inventory completeness, lineage, suite composition, tolerance rejection, and provenance policies. `release_provenance_tests` independently rejects runtime changes after manifest capture, and `release_metadata_tests` checks version, links, licenses, dependency locks, inventory, and immutable Action references. End-to-end checks use:
+`reproducibility_tests` contains deterministic cases covering schema/identity validation, hashes, canonicalization, input/config corruption, inventory completeness, lineage, suite composition, tolerance rejection, and provenance policies. `release_provenance_tests` independently covers explicit candidate closure; documentation, C++, configuration, and workflow rejection after manifest capture; reversed ancestry; missing, lightweight, moved, and non-descendant tags; compatible current descendants; exact detached-worktree checkout and cleanup; and the CI command contract. `release_metadata_tests` checks version, links, licenses, dependency locks, inventory, and immutable Action references. End-to-end checks use:
 
 ```bash
 python3 scripts/validate_reproducibility.py manifests --verify-inputs
 python3 scripts/reproduce.py --manifest manifests/public_synthetic_single_ma.json --verify-only --allow-compatible-environment
 python3 scripts/reproduce.py --manifest manifests/public_reproducibility_suite.json \
   --output-directory results/reproduced/public-synthetic-suite --allow-compatible-environment
-python3 scripts/validate_release_provenance.py
+python3 scripts/validate_release_provenance.py --tagged-release
+python3 scripts/validate_release_provenance.py \
+  --candidate 2f86b71dbc9f29dbda861942d8afbb10c04b6625
 ```
 
 The dedicated `selection_risk_tests` target checks stable candidate identity, strict common-date panel construction, duplicate/non-finite rejection, minimum samples, deterministic moving-block resampling, max-statistic calculation, null fixtures, and bootstrap metadata. Production exports are independently checked with:
